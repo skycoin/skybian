@@ -8,7 +8,7 @@ SILENT_REUSE_DOWNLOADS="yes"
 ROOT=`pwd`
 
 # Needed tools to run this script, space separated
-NEEDED_TOOLS="7z cut awk sha256sum gzip"
+NEEDED_TOOLS="7z cut awk sha256sum gzip tar dd resize2fs bc"
 
 # -ANSI-COLOR-CODES- #
 # to use them in Info/Warn/Error outputs.
@@ -27,10 +27,18 @@ GO_FILE=""
 FINAL_IMG_DIR=${ROOT}/output/final
 DOWNLOADS_DIR=${ROOT}/output/downloads
 FS_MNT_POINT=${ROOT}/output/mnt
-TIMAGE_DIR=${ROOT}/output/timge
+TIMAGE_DIR=${ROOT}/output/timage
 
 # IMG related vars
+ARMBIAN_IMG_7z=""
 ARMBIAN_IMG=""
 ARMBIAN_VERSION=""
 ARMBIAN_KERNEL_VERSION=""
-
+# Offset of the Armbian image for rootfs, in 512 bytes sectors
+ARMBIAN_IMG_OFFSET="8192"
+# this is a base name, we will work with partitions
+# BASE_IMG.MBR is the start "MBR" free space
+# BASE_IMG.ROOTFS is the root fs we work with (ext4)
+BASE_IMG=${TIMAGE_DIR}/base_image
+# how much will we increase the original image in MB
+BASE_IMG_ADDED_SPACE=1024

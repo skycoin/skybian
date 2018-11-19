@@ -53,19 +53,19 @@ function check_armbian_img_already_down() {
     rm *img* *txt *sha &> /dev/null
 
     # test if we have a file in there
-    local ARMBIAN_IMG=`ls | grep 7z | grep Armbian | grep Orangepiprime | sort -hr | head -n1`
-    if [ -z "${ARMBIAN_IMG}" ] ; then
+    local ARMBIAN_IMG_7z=`ls | grep 7z | grep Armbian | grep Orangepiprime | sort -hr | head -n1`
+    if [ -z "${ARMBIAN_IMG_7z}" ] ; then
         # no image in there, must download
         echo "false"
     else
         # sure we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
-            rm -f "${ARMBIAN_IMG}" &> /dev/null
+            rm -f "${ARMBIAN_IMG_7z}" &> /dev/null
             echo "false"
         else
             # reuse it, return the filename
-            echo "${ARMBIAN_IMG}"
+            echo "${ARMBIAN_IMG_7z}"
         fi
     fi
 }
@@ -77,7 +77,7 @@ function check_armbian_integrity() {
     cd ${DOWNLOADS_DIR}/armbian
 
     # test for downloaded file
-    if [ ! -f ${ARMBIAN_IMG} ] ; then
+    if [ ! -f ${ARMBIAN_IMG_7z} ] ; then
         # no file, exit
         exit 1
     fi
@@ -85,12 +85,12 @@ function check_armbian_integrity() {
     # TODO trap this
     # extract armbian
     echo "Info: Extracting downloaded file..."
-    `which 7z` e -bb0 -bd ${ARMBIAN_IMG} > /dev/null
+    `which 7z` e -bb0 -bd ${ARMBIAN_IMG_7z} > /dev/null
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         echo "Error: Downloaded file is corrupt, re-run the script to get it right."
-        rm ${ARMBIAN_IMG} &> /dev/null
+        rm ${ARMBIAN_IMG_7z} &> /dev/null
         exit 1
     fi
 
@@ -133,20 +133,25 @@ function get_armbian() {
         fi
     else
         # user feedback
-        ARMBIAN_IMG=${DOWNLOADED}
+        ARMBIAN_IMG_7z=${DOWNLOADED}
         echo "Info: reusing file:"
-        echo "      ${ARMBIAN_IMG}"
+        echo "      ${ARMBIAN_IMG_7z}"
     fi
     
     # get version & kernel version info
-    ARMBIAN_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $2 }'`
-    ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
+    ARMBIAN_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $2 }'`
+    ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
     
     # info to the user
-    echo "Info: Got armbian version '${ARMBIAN_VERSION}' with kernel version '${ARMBIAN_KERNEL_VERSION}'"
+    echo "Info: Got Armbian version: ${ARMBIAN_VERSION}"
+    echo "Info: Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 
     # extract and check it's integrity
     check_armbian_integrity
+
+    # get Armbian image name
+    local NAME=`echo ${ARMBIAN_IMG_7z} | rev | cut -d '.' -f 2- | rev`
+    ARMBIAN_IMG="${NAME}.img" 
 }
 
 
@@ -208,6 +213,66 @@ function get_go() {
 }
 
 
+# Increase the image size
+function increase_image_size() {
+    # Armbian image is tight packed, and we need room for adding our
+    # bins, apps & configs, so will make it bigger
+
+    # move to correct dir
+    cd ${TIMAGE_DIR}
+
+    # clean the folder
+    rm -f "*img *bin" &> /dev/null
+
+    # splitting the image to work with it
+    echo "Info: Preparing Armbin image, this may take a while..."
+    dd if="${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" of="${BASE_IMG}.MBR" bs=512 count="${ARMBIAN_IMG_OFFSET}"
+    dd if="${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" of="${BASE_IMG}.ROOTFS" bs=512 skip="${ARMBIAN_IMG_OFFSET}"
+
+    # create the added space file
+    echo "Info: Adding a extra space to the image."
+    dd if=/dev/zero of=./added_space.bin bs=1024k count=${BASE_IMG_ADDED_SPACE}
+
+    # acctually add space
+    cat ./added_space.bin >> "${BASE_IMG}.ROOTFS"
+
+    # resize to gain space
+    resize2fs "${BASE_IMG}.ROOTFS"
+
+    # erase extra blanck space
+    rm ./added_space.bin &> /dev/null
+}
+
+
+# build disk
+function build_disk() {
+    # move to correct dir
+    cd ${TIMAGE_DIR}
+
+    # built the disk
+    cat "${BASE_IMG}.MBR" > "${BASE_IMG}"
+    cat "${BASE_IMG}.ROOTFS" >> "${BASE_IMG}"
+
+    # # clean the workspace
+    # rm "${BASE_IMG}.MBR" &> /dev/null
+    # rm "${BASE_IMG}.ROOTFS" &> /dev/null
+}
+
+
+# mount the Armbian image to start manipulations
+function img_mount() {
+    # move to the right dir
+    cd ${TIMAGE_DIR}
+
+    # mount it
+    # TODO catch sudo commands
+    sudo mount -t auto "${BASE_IMG}.ROOTFS" "${FS_MNT_POINT}" -o loop,rw
+
+    # user info
+    echo "Info: RootFS is ready to work with in ${FS_MNT_POINT}"
+}
+
+
 # main exec block
 function main () {
     # test for needed tools
@@ -222,6 +287,12 @@ function main () {
     echo "Info: Downloading resources, this may take a while..."
     get_armbian
     get_go
+
+    # increase image size
+    increase_image_size
+
+    # Mount the Armbian image
+    img_mount
 
     # all good signal
     echo "All good so far"
