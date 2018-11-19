@@ -32,15 +32,18 @@ function create_folders() {
     #   /downloaded [all thing we doenload from the internet]
     #   /mnt [to mount resources, like img fs, etc]
     #   /timage [all image processing goes here]
+    #   /tmp [tmp dir to copy, move, etc]
 
     # fun is here
     cd ${ROOT}
 
     # create them
-    mkdir -p output/final output/mnt output/timage
-    mkdir -p output/downloads
-    mkdir -p output/downloads/armbian
-    mkdir -p output/downloads/go
+    mkdir -p ${ROOT}/output
+    mkdir -p ${FINAL_IMG_DIR}
+    mkdir -p ${FS_MNT_POINT}
+    mkdir -p ${DOWNLOADS_DIR} ${DOWNLOADS_DIR}/armbian ${DOWNLOADS_DIR}/go
+    mkdir -p ${TIMAGE_DIR}
+    mkdir -p ${TMP_DIR}
 }
 
 
@@ -249,6 +252,12 @@ function build_disk() {
     # move to correct dir
     cd ${TIMAGE_DIR}
 
+    # force a FS sync
+    sudo sync
+
+    # umount the base image
+    sudo umount ${FS_MNT_POINT}
+
     # built the disk
     cat "${BASE_IMG}.MBR" > "${BASE_IMG}"
     cat "${BASE_IMG}.ROOTFS" >> "${BASE_IMG}"
@@ -273,6 +282,27 @@ function img_mount() {
 }
 
 
+# install go inside the mnt mount point
+function install_go() {
+    # move to right dir
+    cd ${FS_MNT_POINT}
+
+    # create go dir
+    sudo mkdir -p ${FS_MNT_POINT}${GOROOT}
+
+    # extract golang
+    echo "Info: Installing ${GO_FILE} inside the image"
+    sudo cp ${DOWNLOADS_DIR}/go/${GO_FILE} ${FS_MNT_POINT}${GOROOT}/../
+    cd ${FS_MNT_POINT}${GOROOT}/../
+    sudo tar -xzf ${GO_FILE}
+    sudo rm ${GO_FILE}
+
+    # setting the GO env vars, just copy it to /etc/profiles.d/
+    sudo cp ${ROOT}/static/golang-env-settings.sh "${FS_MNT_POINT}/etc/profile.d/"
+    sudo chmod 0644 "${FS_MNT_POINT}/etc/profile.d/golang-env-settings.sh"
+}
+
+
 # main exec block
 function main () {
     # test for needed tools
@@ -293,6 +323,12 @@ function main () {
 
     # Mount the Armbian image
     img_mount
+
+    # install go
+    install_go
+
+    # build test disk
+    build_disk
 
     # all good signal
     echo "All good so far"

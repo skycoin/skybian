@@ -28,6 +28,7 @@ FINAL_IMG_DIR=${ROOT}/output/final
 DOWNLOADS_DIR=${ROOT}/output/downloads
 FS_MNT_POINT=${ROOT}/output/mnt
 TIMAGE_DIR=${ROOT}/output/timage
+TMP_DIR=${ROOT}/output/tmp
 
 # IMG related vars
 ARMBIAN_IMG_7z=""
@@ -42,3 +43,13 @@ ARMBIAN_IMG_OFFSET="8192"
 BASE_IMG=${TIMAGE_DIR}/base_image
 # how much will we increase the original image in MB
 BASE_IMG_ADDED_SPACE=1024
+
+# Go vars
+# WARNING! this must match the ones defined in skywire
+GOROOT=/usr/local/go
+GOPATH=/usr/local/skywire/go
+
+# Skywire vars
+SKYCOIN_DIR=${GOPATH}/src/github.com/skycoin
+SKYWIRE_DIR=${SKYCOIN_DIR}/skywire
+SKYWIRE_GIT_URL="https://github.com/skycoin/skywire.git"
