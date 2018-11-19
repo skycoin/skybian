@@ -258,13 +258,12 @@ function build_disk() {
     # umount the base image
     sudo umount ${FS_MNT_POINT}
 
+    # TODO: FS optimization before integration
+    # to shrink it down.
+
     # built the disk
     cat "${BASE_IMG}.MBR" > "${BASE_IMG}"
     cat "${BASE_IMG}.ROOTFS" >> "${BASE_IMG}"
-
-    # # clean the workspace
-    # rm "${BASE_IMG}.MBR" &> /dev/null
-    # rm "${BASE_IMG}.ROOTFS" &> /dev/null
 }
 
 
@@ -289,6 +288,7 @@ function install_go() {
 
     # create go dir
     sudo mkdir -p ${FS_MNT_POINT}${GOROOT}
+    sudo mkdir -p ${FS_MNT_POINT}${GOPATH} "${FS_MNT_POINT}${GOPATH}/src" "${FS_MNT_POINT}${GOPATH}/pkg" "${FS_MNT_POINT}${GOPATH}/bin"
 
     # extract golang
     echo "Info: Installing ${GO_FILE} inside the image"
