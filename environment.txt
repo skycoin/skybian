@@ -8,7 +8,7 @@ SILENT_REUSE_DOWNLOADS="yes"
 ROOT=`pwd`
 
 # Needed tools to run this script, space separated
-NEEDED_TOOLS="7z cut awk sha256sum"
+NEEDED_TOOLS="7z cut awk sha256sum gzip"
 
 # -ANSI-COLOR-CODES- #
 # to use them in Info/Warn/Error outputs.
@@ -19,7 +19,9 @@ NEEDED_TOOLS="7z cut awk sha256sum"
 
 # Internet resources
 ARMIAN_OPPRIME_DOWNLOAD_URL="https://dl.armbian.com/orangepiprime/Debian_stretch_next.7z"
-GO_ARM64_URL="https://dl.google.com/go/go1.11.2.linux-arm64.tar.gz"
+GO_VERSION="1.11.2"
+GO_ARM64_URL="https://dl.google.com/go/go${GO_VERSION}.linux-arm64.tar.gz"
+GO_FILE=""
 
 # Paths and destinations
 FINAL_IMG_DIR=${ROOT}/output/final

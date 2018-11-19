@@ -110,6 +110,12 @@ function check_armbian_integrity() {
 
 # Get the latest ARMBIAN image for Orange Pi Prime 
 function get_armbian() {
+    # change to dest dir
+    cd ${DOWNLOADS_DIR}/armbian
+
+    # user info
+    echo "Info: Getting Armbian image"
+
     # check if we have the the image already and 
     # actions to reuse/erase it
     local DOWNLOADED=`check_armbian_img_already_down`
@@ -117,12 +123,12 @@ function get_armbian() {
     # download it if needed
     if [ "$DOWNLOADED" == "false" ] ; then
         # yes get it down
-        wget -c ${ARMIAN_OPPRIME_DOWNLOAD_URL}
+        wget -cq ${ARMIAN_OPPRIME_DOWNLOAD_URL}
 
         # check for correct download
         if [ $? -ne 0 ] ; then
             echo "Error: Can't get the file, re-run the script to get it right."
-            rm ${ARMBIAN_IMG}  &> /dev/null
+            rm "*7z *html" &> /dev/null
             exit 1
         fi
     else
@@ -144,6 +150,64 @@ function get_armbian() {
 }
 
 
+# download go
+function download_go() {
+    # change destination directory
+    cd ${DOWNLOADS_DIR}/go
+
+    # download it
+    wget -cq "${GO_ARM64_URL}"
+
+    # TODO trap this
+    # check for correct download
+    if [ $? -ne 0 ] ; then
+        echo "Error: Can't get the file, re-run the script to get it right."
+        rm "*gz *html"  &> /dev/null
+        exit 1
+    fi
+}
+
+
+# get go for arm64, the version specified in the environment.txt file
+function get_go() {
+    # change destination directory
+    cd ${DOWNLOADS_DIR}/go
+
+    # user info
+    echo "Info: Getting go version ${GO_VERSION}"
+
+    # test if we have a file in there
+    GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1`
+    if [ -z "${GO_FILE}" ] ; then
+        # download it
+        download_go
+    else
+        # sure we have the image in there; but, we must reuse it?
+        if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
+            # we can not reuse it, must download, so erase it
+            rm -f "*gz *html" &> /dev/null
+
+            # now we get it
+            download_go
+        fi
+    fi
+
+    # get the filename
+    GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1`
+
+    # testing go file integrity
+    `which gzip` -kqt ${GO_FILE}
+
+    # TODO trap this
+    # check for correct extraction
+    if [ $? -ne 0 ] ; then
+        echo "Error: Downloaded file is corrupt, try again."
+        rm "*gz *html"  &> /dev/null
+        exit 1
+    fi
+}
+
+
 # main exec block
 function main () {
     # test for needed tools
@@ -157,6 +221,7 @@ function main () {
     # download resources
     echo "Info: Downloading resources, this may take a while..."
     get_armbian
+    get_go
 
     # all good signal
     echo "All good so far"
