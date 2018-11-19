@@ -1,5 +1,5 @@
-# Skybian: ARM OS for Skycoin.
+# Skybian: ARM OS for Skycoin
 
-OS for arm64 arch that will run the images for skycoin miners, based on [armian](https://www.armbian.com/) images
+This is the OS for the skycoin miners, based on [armbian](https://www.armbian.com/) images for the Orange Pi Prime.
 
 At the moment it's a Work In Progress.

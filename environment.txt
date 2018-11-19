@@ -1,0 +1,34 @@
+# This are the default vars to build the skybian os
+
+## Runtime switchs
+# will reuse downloads if they are correct [yes|no]
+SILENT_REUSE_DOWNLOADS="yes"
+
+# laoding the actual path
+ROOT=`pwd`
+
+# Needed tools to run this script, space separated
+NEEDED_TOOLS="7z cut awk sha256sum"
+
+# -ANSI-COLOR-CODES- #
+# to use them in Info/Warn/Error outputs.
+# Red="\033[0;31m"
+# Green="\033[0;32m"
+# Yellow="\033[0;33m"
+# Color_Off="\033[0m"
+
+# Internet resources
+ARMIAN_OPPRIME_DOWNLOAD_URL="https://dl.armbian.com/orangepiprime/Debian_stretch_next.7z"
+GO_ARM64_URL="https://dl.google.com/go/go1.11.2.linux-arm64.tar.gz"
+
+# Paths and destinations
+FINAL_IMG_DIR=${ROOT}/output/final
+DOWNLOADS_DIR=${ROOT}/output/downloads
+FS_MNT_POINT=${ROOT}/output/mnt
+TIMAGE_DIR=${ROOT}/output/timge
+
+# IMG related vars
+ARMBIAN_IMG=""
+ARMBIAN_VERSION=""
+ARMBIAN_KERNEL_VERSION=""
+
