@@ -16,6 +16,11 @@ We follow a few simple guidelines to archive our goal:
 * Prepare that image and install software and dependencies to run the code.
 * Build from one base root FS all the images for manager and nodes.
 * The scripts & tests must be fully automatic to integrate with other tools, to ease the dev cycle (travis et al)
+* All non-workspace related files and binaries (beside final images) is not covered on the repository (or it will grow 'ad infinitum' with useless data)
+
+## Where is the data?
+
+When you run the build.sh script it will create a ```output``` directory with all the relevant data on it, we fetch all needed tools from the internet.
 
 ## This is yet a Work In Progress
 
