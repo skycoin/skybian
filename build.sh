@@ -126,7 +126,7 @@ function get_armbian() {
     # download it if needed
     if [ "$DOWNLOADED" == "false" ] ; then
         # yes get it down
-        wget -cq ${ARMIAN_OPPRIME_DOWNLOAD_URL}
+        wget -cq ${ARMBIAN_OPPRIME_DOWNLOAD_URL}
 
         # check for correct download
         if [ $? -ne 0 ] ; then
@@ -146,7 +146,7 @@ function get_armbian() {
     ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
     
     # info to the user
-    echo "Info: Got Armbian version: ${ARMBIAN_VERSION}"
+    echo "Info: Armbian version: ${ARMBIAN_VERSION}"
     echo "Info: Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 
     # extract and check it's integrity
@@ -216,6 +216,21 @@ function get_go() {
 }
 
 
+# find a free loop device to use
+function find_free_loop() {
+    # loop until we find a free loop device
+    local OUT="used"
+    local DEV=""
+    while [ ! -z "${OUT}" ] ; do
+        DEV=`awk -v min=20 -v max=99 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
+        OUT=`losetup | grep /dev/loop$DEV`
+    done
+    
+    # output
+    echo "/dev/loop$DEV"
+}
+
+
 # Increase the image size
 function increase_image_size() {
     # Armbian image is tight packed, and we need room for adding our
@@ -227,23 +242,41 @@ function increase_image_size() {
     # clean the folder
     rm -f "*img *bin" &> /dev/null
 
-    # splitting the image to work with it
-    echo "Info: Preparing Armbin image, this may take a while..."
-    dd if="${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" of="${BASE_IMG}.MBR" bs=512 count="${ARMBIAN_IMG_OFFSET}"
-    dd if="${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" of="${BASE_IMG}.ROOTFS" bs=512 skip="${ARMBIAN_IMG_OFFSET}"
-
+    # copy the image here
+    echo "Info: Preparing Armbian image, this may take a while..."
+    rm "${BASE_IMG}" &> /dev/null
+    cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
+    
     # create the added space file
-    echo "Info: Adding a extra space to the image."
-    dd if=/dev/zero of=./added_space.bin bs=1024k count=${BASE_IMG_ADDED_SPACE}
+    echo "Info: Adding ${BASE_IMG_ADDED_SPACE}MB of a extra space to the image."
+    truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
 
-    # acctually add space
-    cat ./added_space.bin >> "${BASE_IMG}.ROOTFS"
+    # # add free space to the part 1 (parted way)
+    # local NSIZE=`env LANG=C parted "${BASE_IMG}" print all | grep Disk | grep MB | awk '{print $3}'`
+    # echo "p
+    # resizepart
+    # 1
+    # ${NSIZE}
+    # p
+    # q" | env LANG=C parted "${BASE_IMG}"
+
+    # add free space to the part 1 (sfdisk way)
+    echo ", +" | sfdisk -N1 "${BASE_IMG}"
+
+    # find a free loopdevice
+    IMG_LOOP=`find_free_loop`
+
+    # user info
+    echo "Info: Using ${IMG_LOOP} to mount the root fs."
+
+    # map p1 to a loop device to ease operation
+    local OFFSET=`echo $((${ARMBIAN_IMG_OFFSET} * 512))`
+    sudo losetup -o "${OFFSET}" "${IMG_LOOP}" "${BASE_IMG}"
 
     # resize to gain space
-    resize2fs "${BASE_IMG}.ROOTFS"
-
-    # erase extra blanck space
-    rm ./added_space.bin &> /dev/null
+    echo "Info: Make rootfs bigger & check integrity..."
+    sudo resize2fs "${IMG_LOOP}"
+    sudo e2fsck -fv "${IMG_LOOP}"
 }
 
 
@@ -255,15 +288,14 @@ function build_disk() {
     # force a FS sync
     sudo sync
 
+    # check integrity & fix minor errors
+    sudo e2fsck -fDy "${IMG_LOOP}"
+
+    # TODO: disk size trim
+    
     # umount the base image
-    sudo umount ${FS_MNT_POINT}
-
-    # TODO: FS optimization before integration
-    # to shrink it down.
-
-    # built the disk
-    cat "${BASE_IMG}.MBR" > "${BASE_IMG}"
-    cat "${BASE_IMG}.ROOTFS" >> "${BASE_IMG}"
+    sudo umount "${FS_MNT_POINT}"
+    sudo losetup -d "${IMG_LOOP}"
 }
 
 
@@ -274,7 +306,7 @@ function img_mount() {
 
     # mount it
     # TODO catch sudo commands
-    sudo mount -t auto "${BASE_IMG}.ROOTFS" "${FS_MNT_POINT}" -o loop,rw
+    sudo mount -t auto "${IMG_LOOP}" "${FS_MNT_POINT}" -o loop,rw
 
     # user info
     echo "Info: RootFS is ready to work with in ${FS_MNT_POINT}"

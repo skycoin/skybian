@@ -8,7 +8,7 @@ SILENT_REUSE_DOWNLOADS="yes"
 ROOT=`pwd`
 
 # Needed tools to run this script, space separated
-NEEDED_TOOLS="7z cut awk sha256sum gzip tar dd resize2fs bc"
+NEEDED_TOOLS="7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk"
 
 # -ANSI-COLOR-CODES- #
 # to use them in Info/Warn/Error outputs.
@@ -18,7 +18,7 @@ NEEDED_TOOLS="7z cut awk sha256sum gzip tar dd resize2fs bc"
 # Color_Off="\033[0m"
 
 # Internet resources
-ARMIAN_OPPRIME_DOWNLOAD_URL="https://dl.armbian.com/orangepiprime/Debian_stretch_next.7z"
+ARMBIAN_OPPRIME_DOWNLOAD_URL="https://dl.armbian.com/orangepiprime/Debian_stretch_next.7z"
 GO_VERSION="1.11.2"
 GO_ARM64_URL="https://dl.google.com/go/go${GO_VERSION}.linux-arm64.tar.gz"
 GO_FILE=""
@@ -43,6 +43,7 @@ ARMBIAN_IMG_OFFSET="8192"
 BASE_IMG=${TIMAGE_DIR}/base_image
 # how much will we increase the original image in MB
 BASE_IMG_ADDED_SPACE=1024
+IMG_LOOP=""
 
 # Go vars
 # WARNING! this must match the ones defined in skywire
