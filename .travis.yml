@@ -5,7 +5,7 @@ language: bash
 
 before_script:
   - sudo apt update
-  - sudo apt install -y p7zip-full rsync wget gawk gzip tar e2fsprogs mount
+  - sudo apt install -y p7zip-full
 
 script: 
   - bash build.sh
