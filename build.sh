@@ -139,7 +139,7 @@ function get_armbian() {
     # download it if needed
     if [ "$DOWNLOADED" == "false" ] ; then
         # yes get it down
-        wget -cq ${ARMBIAN_OPPRIME_DOWNLOAD_URL}
+        wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL}
 
         # check for correct download
         if [ $? -ne 0 ] ; then
@@ -178,7 +178,7 @@ function download_go() {
 
     # download it
     echo "Info: Getting go from the internet"
-    wget -cq "${GO_ARM64_URL}"
+    wget -c "${GO_ARM64_URL}"
 
     # TODO trap this
     # check for correct download
