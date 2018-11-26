@@ -8,7 +8,7 @@ before_script:
   - sudo apt install -y p7zip-full
 
 script: 
-  - ls -lh ./ && bash build.sh
+  - cd skybian && echo `pwd` && bash build.sh
 
 notifications:
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
