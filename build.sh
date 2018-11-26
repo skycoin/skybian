@@ -65,7 +65,7 @@ function check_armbian_img_already_down() {
     rm *img* *txt *sha &> /dev/null
 
     # test if we have a file in there
-    local ARMBIAN_IMG_7z=`ls | grep 7z | grep Armbian | grep Orangepiprime | sort -hr | head -n1`
+    local ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
     if [ -z "${ARMBIAN_IMG_7z}" ] ; then
         # no image in there, must download
         echo "false"
@@ -139,7 +139,7 @@ function get_armbian() {
     # download it if needed
     if [ "$DOWNLOADED" == "false" ] ; then
         # yes get it down
-        wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL}
+        wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL} -O 'armbian.7z'
 
         # check for correct download
         if [ $? -ne 0 ] ; then
@@ -154,6 +154,9 @@ function get_armbian() {
         echo "      ${ARMBIAN_IMG_7z}"
     fi
     
+    # extract and check it's integrity
+    check_armbian_integrity
+
     # get version & kernel version info
     ARMBIAN_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $2 }'`
     ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
@@ -162,8 +165,6 @@ function get_armbian() {
     echo "Info: Armbian version: ${ARMBIAN_VERSION}"
     echo "Info: Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 
-    # extract and check it's integrity
-    check_armbian_integrity
 
     # get Armbian image name
     local NAME=`echo ${ARMBIAN_IMG_7z} | rev | cut -d '.' -f 2- | rev`
