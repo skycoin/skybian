@@ -1,0 +1,9 @@
+sudo: required
+dist: bionic
+language: bash
+
+before_script:
+  - sudo apt install rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk
+
+script: 
+  - bash build.sh
