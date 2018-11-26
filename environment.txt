@@ -1,14 +1,14 @@
-# This are the default vars to build the skybian os
+# This are the default vars to build the Skybian os
 
 ## Runtime switchs
 # will reuse downloads if they are correct [yes|no]
 SILENT_REUSE_DOWNLOADS="yes"
 
-# laoding the actual path
+# loading the actual path
 ROOT=`pwd`
 
 # Needed tools to run this script, space separated
-NEEDED_TOOLS="7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk"
+NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk"
 
 # -ANSI-COLOR-CODES- #
 # to use them in Info/Warn/Error outputs.
@@ -47,6 +47,8 @@ IMG_LOOP=""
 
 # Go vars
 # WARNING! this must match the ones defined in skywire
+# see http://github.com/skycoin/skywire
+HOME=/root
 GOROOT=/usr/local/go
 GOPATH=/usr/local/skywire/go
 
@@ -54,3 +56,7 @@ GOPATH=/usr/local/skywire/go
 SKYCOIN_DIR=${GOPATH}/src/github.com/skycoin
 SKYWIRE_DIR=${SKYCOIN_DIR}/skywire
 SKYWIRE_GIT_URL="https://github.com/skycoin/skywire.git"
+
+# dev paths and things
+# TODO remove references to it from final code.
+DEV_LOCAL_SKYWIRE="/home/pavel/Documentos/Software/Simelo/Github/simelo-skywire"
