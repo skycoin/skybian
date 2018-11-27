@@ -89,7 +89,7 @@ function check_armbian_integrity() {
     cd ${DOWNLOADS_DIR}/armbian
 
     # test for downloaded file
-    if [ ! -f ${ARMBIAN_IMG_7z} ] ; then
+    if [ ! -f ${1} ] ; then
         # no file, exit
         echo "There is no armbian image on the download folder:"
         local LS=`ls ${DOWNLOADS_DIR}/armbian`
@@ -99,17 +99,17 @@ function check_armbian_integrity() {
     fi
 
     # debug
-    echo "Armbian file to process is: ${ARMBIAN_IMG_7z}"
+    echo "Armbian file to process is: ${1}"
 
     # TODO trap this
     # extract armbian
     echo "Info: Extracting downloaded file..."
-    `which 7z` e -bb3 ${ARMBIAN_IMG_7z}
+    `which 7z` e -bb3 ${1}
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         echo "Error: Downloaded file is corrupt, re-run the script to get it right."
-        rm ${ARMBIAN_IMG_7z} &> /dev/null
+        rm ${1} &> /dev/null
         exit 1
     fi
 
@@ -165,7 +165,7 @@ function get_armbian() {
     fi
     
     # extract and check it's integrity
-    check_armbian_integrity
+    check_armbian_integrity "${ARMBIAN_IMG_7z}"
 
     # get version & kernel version info
     ARMBIAN_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $2 }'`
