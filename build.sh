@@ -112,10 +112,9 @@ function get_armbian() {
     # extract and check it's integrity
     echo "Info: Armbian file to process is '${ARMBIAN_IMG_7z}'"
 
-    # TODO trap this
-    # extract armbian
-    echo "Info: Extracting downloaded file..."
-    `which 7z` e -bb3 "${ARMBIAN_IMG_7z}"
+    # testing integrity
+    echo "Info: Testing integrity"
+    7z t "${ARMBIAN_IMG_7z}"
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
@@ -124,7 +123,9 @@ function get_armbian() {
         exit 1
     fi
 
-    # TODO trap this
+    echo "Info: Testing integrity"
+    7z e "${ARMBIAN_IMG_7z}"
+
     # check integrity
     echo "Info: Testing image integrity..."
     `which sha256sum` -c --status sha256sum.sha
