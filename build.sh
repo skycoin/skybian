@@ -54,12 +54,32 @@ function create_folders() {
 }
 
 
-# check if we have a working armbian copy on local folders
-function check_armbian_img_already_down() {
-    # this is done to minimize the bandwidth use and speed up the dev process
-
+# download armbian
+function download_armbian() {
     # change to dest dir
     cd ${DOWNLOADS_DIR}/armbian
+    echo "Info: Downloading armbian from:"
+    echo "${ARMBIAN_OPPRIME_DOWNLOAD_URL}"
+
+    # get it
+    wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL} -O 'armbian.7z'
+
+    # check for correct download
+    if [ $? -ne 0 ] ; then
+        echo "Error: Can't get the armbian image file, a connection issue?."
+        rm "*7z *html *txt" &> /dev/null
+        exit 1
+    fi
+}
+
+
+# Get the latest ARMBIAN image for Orange Pi Prime
+function get_armbian() {
+    # change to dest dir
+    cd ${DOWNLOADS_DIR}/armbian
+
+    # user info
+    echo "Info: Getting Armbian image"
 
     # clean extracted files
     rm *img* *txt *sha &> /dev/null
@@ -68,60 +88,29 @@ function check_armbian_img_already_down() {
     ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
     if [ -z "${ARMBIAN_IMG_7z}" ] ; then
         # no image in there, must download
-        echo "false"
+        echo "Info: No cached image, downloading.."
+
+        # download it
+        download_armbian
     else
-        # sure we have the image in there; but, we must reuse it?
+        # we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
-            rm -f "${ARMBIAN_IMG_7z}" &> /dev/null
-            echo "false"
+            rm -f "armbian.7z" &> /dev/null
+            
+            # get it
+            download_armbian
         else
-            # reuse it, return the filename
-            echo "${ARMBIAN_IMG_7z}"
+            # use already downloaded image fi;e
+            echo "Info: reusing already downloaded file"
         fi
     fi
-}
 
-
-# Get the latest ARMBIAN image for Orange Pi Prime 
-function get_armbian() {
-    # change to dest dir
-    cd ${DOWNLOADS_DIR}/armbian
-
-    # user info
-    echo "Info: Getting Armbian image"
-
-    # check if we have the the image already and 
-    # actions to reuse/erase it
-    local DOWNLOADED=`check_armbian_img_already_down`
-
-    # debug
-    echo "Check for previous downloaded armbian file is: $DOWNLOADED"
-
-    # download it if needed
-    if [ "$DOWNLOADED" == "false" ] ; then
-        # yes get it down
-        echo "We need to download a new file."
-        wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL} -O 'armbian.7z'
-
-        # check for correct download
-        if [ $? -ne 0 ] ; then
-            echo "Error: Can't get the armbian image file, re-run the script to get it right."
-            rm "*7z *html *txt" &> /dev/null
-            exit 1
-        fi
-
-        # if you get to this point then reset to the actual filename
-        ARMBIAN_IMG_7z="armbian.7z"
-    else
-        # use already downloaded image fi;e
-        ARMBIAN_IMG_7z=${DOWNLOADED}
-        echo "Info: reusing file:"
-        echo "      ${ARMBIAN_IMG_7z}"
-    fi
+    # if you get to this point then reset to the actual filename
+    ARMBIAN_IMG_7z="armbian.7z"
     
     # extract and check it's integrity
-    echo "Armbian file to process is: ${ARMBIAN_IMG_7z}"
+    echo "Info: Armbian file to process is '${ARMBIAN_IMG_7z}'"
 
     # TODO trap this
     # extract armbian
