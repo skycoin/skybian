@@ -123,6 +123,7 @@ function get_armbian() {
         exit 1
     fi
 
+    # extract armbian
     echo "Info: Testing integrity"
     7z e "${ARMBIAN_IMG_7z}"
 
@@ -132,23 +133,25 @@ function get_armbian() {
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
-        echo "Error: Integrity of the file is compromised, re-run the script to get it right."
+        echo "Error: Integrity of the image is compromised, re-run the script to get it right."
         rm *img* *txt *sha *7z &> /dev/null
         exit 1
     fi
 
+    # get image filename
+    ARMBIAN_IMG=`ls | grep -E '.*\.img$'`
+
+    # imge integrity
+    echo "Info: Image integrity assured via sha256sum."
+    echo "Info: final image file is ${ARMBIAN_IMG}"
+
     # get version & kernel version info
-    ARMBIAN_VERSION=`ls '*.img' | awk -F '_' '{ print $2 }'`
-    ARMBIAN_KERNEL_VERSION=`ls '*.img' | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
+    ARMBIAN_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $2 }'`
+    ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
     
     # info to the user
-    echo "Info: Armbian version: ${ARMBIAN_VERSION}"
-    echo "Info: Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
-
-
-    # get Armbian image name
-    local NAME=`echo ${ARMBIAN_IMG_7z} | rev | cut -d '.' -f 2- | rev`
-    ARMBIAN_IMG="${NAME}.img" 
+    echo "    Armbian version: ${ARMBIAN_VERSION}"
+    echo "    Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 }
 
 
