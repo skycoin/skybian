@@ -80,9 +80,6 @@ function check_armbian_img_already_down() {
             echo "${ARMBIAN_IMG_7z}"
         fi
     fi
-
-    # debug
-    echo "Check armbian returned: ${ARMBIAN_IMG_7z}" 1>&2
 }
 
 
@@ -142,9 +139,13 @@ function get_armbian() {
     # actions to reuse/erase it
     local DOWNLOADED=`check_armbian_img_already_down`
 
+    # debug
+    echo "Check for previous downloaded armbian file is: $DOWNLOADED"
+
     # download it if needed
     if [ "$DOWNLOADED" == "false" ] ; then
         # yes get it down
+        echo "We need to download a new file."
         wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL} -O 'armbian.7z'
 
         # check for correct download
@@ -153,6 +154,9 @@ function get_armbian() {
             rm "*7z *html *txt" &> /dev/null
             exit 1
         fi
+
+        # if you get to this point then reset to the actual filename
+        ARMBIAN_IMG_7z="armbian.7z"
     else
         # use already downloaded image fi;e
         ARMBIAN_IMG_7z=${DOWNLOADED}
