@@ -65,7 +65,7 @@ function check_armbian_img_already_down() {
     rm *img* *txt *sha &> /dev/null
 
     # test if we have a file in there
-    local ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
+    ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
     if [ -z "${ARMBIAN_IMG_7z}" ] ; then
         # no image in there, must download
         echo "false"
@@ -101,7 +101,7 @@ function check_armbian_integrity() {
     # TODO trap this
     # extract armbian
     echo "Info: Extracting downloaded file..."
-    `which 7z` e -bb3 -bd ${ARMBIAN_IMG_7z}
+    `which 7z` e -bb3 ${ARMBIAN_IMG_7z}
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
