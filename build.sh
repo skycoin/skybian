@@ -83,50 +83,6 @@ function check_armbian_img_already_down() {
 }
 
 
-# Check armbian integrity
-function check_armbian_integrity() {
-    # change to dest dir
-    cd ${DOWNLOADS_DIR}/armbian
-
-    # test for downloaded file
-    if [ ! -f ${1} ] ; then
-        # no file, exit
-        echo "There is no armbian image on the download folder:"
-        local LS=`ls ${DOWNLOADS_DIR}/armbian`
-        printf "%s" "${LS}"
-        echo "Exit."
-        exit 1
-    fi
-
-    # debug
-    echo "Armbian file to process is: ${1}"
-
-    # TODO trap this
-    # extract armbian
-    echo "Info: Extracting downloaded file..."
-    `which 7z` e -bb3 ${1}
-
-    # check for correct extraction
-    if [ $? -ne 0 ] ; then
-        echo "Error: Downloaded file is corrupt, re-run the script to get it right."
-        rm ${1} &> /dev/null
-        exit 1
-    fi
-
-    # TODO trap this
-    # check integrity
-    echo "Info: Testing image integrity..."
-    `which sha256sum` -c --status sha256sum.sha
-
-    # check for correct extraction
-    if [ $? -ne 0 ] ; then
-        echo "Error: Integrity of the file is compromised, re-run the script to get it right."
-        rm *img* *txt *sha *7z &> /dev/null
-        exit 1
-    fi
-} 
-
-
 # Get the latest ARMBIAN image for Orange Pi Prime 
 function get_armbian() {
     # change to dest dir
@@ -165,11 +121,35 @@ function get_armbian() {
     fi
     
     # extract and check it's integrity
-    check_armbian_integrity "${ARMBIAN_IMG_7z}"
+    echo "Armbian file to process is: ${ARMBIAN_IMG_7z}"
+
+    # TODO trap this
+    # extract armbian
+    echo "Info: Extracting downloaded file..."
+    `which 7z` e -bb3 "${ARMBIAN_IMG_7z}"
+
+    # check for correct extraction
+    if [ $? -ne 0 ] ; then
+        echo "Error: Downloaded file is corrupt, re-run the script to get it right."
+        rm "${ARMBIAN_IMG_7z}" &> /dev/null
+        exit 1
+    fi
+
+    # TODO trap this
+    # check integrity
+    echo "Info: Testing image integrity..."
+    `which sha256sum` -c --status sha256sum.sha
+
+    # check for correct extraction
+    if [ $? -ne 0 ] ; then
+        echo "Error: Integrity of the file is compromised, re-run the script to get it right."
+        rm *img* *txt *sha *7z &> /dev/null
+        exit 1
+    fi
 
     # get version & kernel version info
-    ARMBIAN_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $2 }'`
-    ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG_7z} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
+    ARMBIAN_VERSION=`ls '*.img' | awk -F '_' '{ print $2 }'`
+    ARMBIAN_KERNEL_VERSION=`ls '*.img' | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
     
     # info to the user
     echo "Info: Armbian version: ${ARMBIAN_VERSION}"
