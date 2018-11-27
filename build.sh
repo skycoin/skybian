@@ -80,6 +80,9 @@ function check_armbian_img_already_down() {
             echo "${ARMBIAN_IMG_7z}"
         fi
     fi
+
+    # debug
+    echo "Check armbian returned: ${ARMBIAN_IMG_7z}" 1>&2
 }
 
 
@@ -97,6 +100,9 @@ function check_armbian_integrity() {
         echo "Exit."
         exit 1
     fi
+
+    # debug
+    echo "Armbian file to process is: ${ARMBIAN_IMG_7z}"
 
     # TODO trap this
     # extract armbian
