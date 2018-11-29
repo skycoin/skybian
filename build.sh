@@ -444,7 +444,6 @@ function fix_armian_defaults() {
     # disable the forced root password change and user creation
     echo "Info: Disabling some of the Armbian defaults"
     sudo rm ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
-    sudo rm ${FS_MNT_POINT}/root/.not_logged_in_yet
 
     # change root password
     echo "Info: Setting default password"
