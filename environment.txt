@@ -8,7 +8,7 @@ SILENT_REUSE_DOWNLOADS="yes"
 ROOT=`pwd`
 
 # Needed tools to run this script, space separated
-NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk"
+NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static"
 
 # -ANSI-COLOR-CODES- #
 # to use them in Info/Warn/Error outputs.

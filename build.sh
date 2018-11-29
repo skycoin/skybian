@@ -283,10 +283,6 @@ function build_disk() {
     # move to correct dir
     cd ${TIMAGE_DIR}
 
-    # force a FS sync
-    echo "Info: Forcing a fs rsync to umount the real fs"
-    sudo sync
-
     # check integrity & fix minor errors
     echo "Info: Checking the fs prior to umount"
     sudo e2fsck -fDy "${IMG_LOOP}"
@@ -301,7 +297,13 @@ function build_disk() {
     echo "Info: Freeing the loop device"
     sudo losetup -d "${IMG_LOOP}"
 
-    # TODO move the image to final dir.
+    # force a FS sync
+    echo "Info: Forcing a fs rsync to umount the real fs"
+    sudo sync
+
+    # copy the image to final dir.
+    echo "Info: Copy the image to final dir"
+    cp "${BASE_IMG}" "${FINAL_IMG_DIR}/skybian_manager.img"
 }
 
 
@@ -385,6 +387,85 @@ get_n_install_skywire() {
 }
 
 
+# enable chroot
+function enable_chroot() {
+    # copy the aarm64 static exec to be able to execute 
+    # things on the internal chroot
+    AARM64=`which qemu-aarch64-static`
+
+    # log
+    echo "Info: Setup of the chroot jail to be hable to exec command inside the roofs." 
+
+    # copy the static bin
+    sudo cp ${AARM64} ${FS_MNT_POINT}/usr/bin/
+}
+
+
+# disable chroot
+function disable_chroot() {
+    # remove the aarm64 static exec... disabling chrrot support
+    AARM64=`which qemu-aarch64-static`
+
+    # log
+    echo "Info: Disable the chroot jail." 
+
+    # remove the static bin
+    sudo rm ${FS_MNT_POINT}/usr/bin/qemu-aarch64-static
+}
+
+
+# work to be donde on chroot
+function do_in_chroot() {
+    # enter chroot and execute what is passed as argument
+    CMD="$@"
+    local DEST=${FS_MNT_POINT}
+
+    # mount some needed fs inside the image
+	sudo chroot "$DEST" mount -t proc proc /proc || true
+	sudo chroot "$DEST" mount -t sysfs sys /sys || true
+
+    # exec the commands
+	sudo chroot "$DEST" "${CMD}"
+
+    # umount the mounted fs
+	sudo chroot "$DEST" umount /sys
+	sudo chroot "$DEST" umount /proc
+}
+
+
+# fix some defaults on armian to skywire defaults
+function fix_armian_defaults() {
+    # armbian has some tricks in there to ease the operation.
+    # some of them are not needed on skywire, so we disable them
+    # 
+    # we are dealing with the chroot but enable systemd units for
+    # skywire is done later when creating the individual images.
+
+    # disable the forced root password change and user creation
+    echo "Info: Disabling some of the Armbian defaults"
+    sudo rm ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
+    sudo rm ${FS_MNT_POINT}/root/.not_logged_in_yet
+
+    # change root password
+    echo "Info: Setting default password"
+    sudo cp ${ROOT}/static/chroot_passwd.sh ${FS_MNT_POINT}/tmp
+    sudo chmod +x ${FS_MNT_POINT}/tmp/chroot_passwd.sh
+    do_in_chroot /tmp/chroot_passwd.sh
+    sudo rm ${FS_MNT_POINT}/tmp/chroot_passwd.sh
+
+    # copy default network interface device file
+    echo "Info: Setting default network link"
+    sudo cp ${ROOT}/static/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
+
+    # execute some extra commands inside the chroot
+    echo "Info: Executing extra configs."
+    sudo cp ${ROOT}/static/chroot_extra_commands.sh ${FS_MNT_POINT}/tmp
+    sudo chmod +x ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
+    do_in_chroot /tmp/chroot_extra_commands.sh
+    sudo rm ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
+}
+
+
 # main exec block
 function main () {
     # test for needed tools
@@ -412,12 +493,28 @@ function main () {
     # get skywire and move it inside the FS root
     get_n_install_skywire
 
+    # setup chroot
+    enable_chroot
+
+    # fixed for armbian defaults
+    fix_armian_defaults
+
+    # disable chroot
+    disable_chroot
+
+    # ROADMAP
+    # 1 - debug an fix base system
+    # 2 - FS optimize, partition trim, disk trim
+    # 3 - Iterate from 2 to 9 building images (build-disk modded) 
+    # 4 - way of publish the images.
+
     # build test disk
     build_disk
 
     # all good signal
     echo "All good so far"
 }
+
 
 # doit
 main

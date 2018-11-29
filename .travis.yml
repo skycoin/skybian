@@ -5,7 +5,7 @@ language: bash
 
 before_script:
   - sudo apt update
-  - sudo apt install -y p7zip-full
+  - sudo apt install -y p7zip-full qemu-user-static
 
 script: 
   - bash build.sh
