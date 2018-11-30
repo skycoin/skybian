@@ -354,7 +354,7 @@ get_n_install_skywire() {
 
         # dev env no need to do the github job, get it locally
         echo "Info: DEV trick: sync of the local skywire copy"
-        `which rsync` -av "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
+        `which rsync` -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
     else
         # else where, download from github
         cd "${DOWNLOADS_DIR}/"
@@ -449,8 +449,8 @@ function fix_armian_defaults() {
     sudo rm ${FS_MNT_POINT}/tmp/chroot_passwd.sh
 
     # copy default network interface device file
-    echo "Info: Setting default network link"
-    sudo cp ${ROOT}/static/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
+    # echo "Info: Setting default network link"
+    # sudo cp ${ROOT}/static/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
 
     # execute some extra commands inside the chroot
     echo "Info: Executing extra configs."
