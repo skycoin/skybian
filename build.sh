@@ -112,20 +112,16 @@ function get_armbian() {
     # extract and check it's integrity
     echo "Info: Armbian file to process is '${ARMBIAN_IMG_7z}'"
 
-    # testing integrity
-    echo "Info: Testing integrity"
-    7z t "${ARMBIAN_IMG_7z}"
+    # extract armbian
+    echo "Info: Extracting image"
+    7z e "${ARMBIAN_IMG_7z}"
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
-        echo "Error: Downloaded file is corrupt, re-run the script to get it right."
+        echo "Error: Extracting failed, file is corrupt, re-run the script to get it right."
         rm "${ARMBIAN_IMG_7z}" &> /dev/null
         exit 1
     fi
-
-    # extract armbian
-    echo "Info: Testing integrity"
-    7z e "${ARMBIAN_IMG_7z}"
 
     # check integrity
     echo "Info: Testing image integrity..."
