@@ -377,7 +377,7 @@ function install_go() {
     # extract golang
     info "Installing ${GO_FILE} inside the image"
     cd ${FS_MNT_POINT}${GOROOT}/../
-    sudo tar -xvzf ${DOWNLOADS_DIR}/go/${GO_FILE}
+    sudo tar -xzf ${DOWNLOADS_DIR}/go/${GO_FILE}
 
     # setting the GO env vars, just copy it to /etc/profiles.d/
     info "Setting up go inside the image"
