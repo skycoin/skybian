@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# Go vars
-# WARNING! this must match the ones defined in skywire
+# Go vars: WARNING! this must match the ones defined in skywire
 # see http://github.com/skycoin/skywire
 HOME=/root
 GOROOT=/usr/local/go
@@ -29,12 +28,6 @@ apt-get -y update
 #apt-get -y remove --purge [your_pkgs_here]
 # keep this ot the very end of this block
 apt-get clean
-
-# disable the NetworkManager-wait-online service, if the node has no internet
-# at boot time it will hang on boot by systemd, but it will be reachable
-# by ping but no net service at this point, this is a side effect of config
-# a static IP 
-# /bin/systemctl disable NetworkManager-wait-online
 
 # compile skywire (folder is already created by install skywire)
 cd ${SKYWIRE_DIR}/cmd
