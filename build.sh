@@ -438,9 +438,12 @@ function enable_chroot() {
     # copy the static bin
     sudo cp ${AARM64} ${FS_MNT_POINT}/usr/bin/
 
-    # touch /dev/null inside the chroot, some apps complains about it
-    sudo touch ${FS_MNT_POINT}/dev/null
-    sudo chmod 666 ${FS_MNT_POINT}/dev/null
+    # some required mounts
+    sudo mount -t sysfs none ${FS_MNT_POINT}/sys
+    sudo mount -t proc none ${FS_MNT_POINT}/proc
+    sudo mount --bind /dev/ ${FS_MNT_POINT}/dev
+    sudo mount --bind /dev/pts ${FS_MNT_POINT}/dev/pts
+    sudo mount -o bind /etc/resolv.conf ${FS_MNT_POINT}/resolv.conf
 }
 
 
@@ -455,27 +458,24 @@ function disable_chroot() {
     # remove the static bin
     sudo rm ${FS_MNT_POINT}/usr/bin/${AARM64}
 
-    # remove /dev/null hack
-    sudo rm ${FS_MNT_POINT}/dev/null
+    # umount temp mounts
+    sudo umount ${FS_MNT_POINT}/sys
+    sudo umount ${FS_MNT_POINT}/proc
+    sudo umount ${FS_MNT_POINT}/dev
+    sudo umount ${FS_MNT_POINT}/dev/pts
+    sudo umount ${FS_MNT_POINT}/resolv.conf
 }
 
 
 # work to be donde on chroot
 function do_in_chroot() {
     # enter chroot and execute what is passed as argument
+    # WARNING  this must be run after enable_chroot
+    # and NEVER BEFORE it
     CMD="$@"
-    local DEST=${FS_MNT_POINT}
-
-    # mount some needed fs inside the image
-	sudo chroot "$DEST" mount -t proc proc /proc || true
-	sudo chroot "$DEST" mount -t sysfs sys /sys || true
 
     # exec the commands
-	sudo chroot "$DEST" "${CMD}"
-
-    # umount the mounted fs
-	sudo chroot "$DEST" umount /sys
-	sudo chroot "$DEST" umount /proc
+	sudo chroot "${FS_MNT_POINT}" "${CMD}"
 }
 
 

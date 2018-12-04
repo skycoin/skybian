@@ -41,7 +41,7 @@ apt-get clean
 # there is a known issues about go and qemu, the most usefull workaround is to 
 # keep thread count low, see https://gist.github.com/ahrex/9a84f32a33aadc197a688d2158d7e2ea
 CORE=`lscpu -p  | sed -ne '/^[0-9]\+/ s/,.*$//pg' | sort -R | head -n 1`
-info "Compile Skywire inside the chroot with Go-Quemu Patch"
+info "Compile Skywire inside the chroot with Go-Qemu Patch"
 cd ${SKYWIRE_DIR}/cmd
 /usr/bin/taskset -c ${CORE} ${GOROOT}/bin/go install -v ./...
 
