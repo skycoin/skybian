@@ -51,6 +51,9 @@ function create_folders() {
     mkdir -p ${DOWNLOADS_DIR} ${DOWNLOADS_DIR}/armbian ${DOWNLOADS_DIR}/go
     mkdir -p ${TIMAGE_DIR}
     mkdir -p ${TMP_DIR}
+
+    # erase final images if there
+    rm -f ${FINAL_IMG_DIR}/*img &> /dev/null
 }
 
 
@@ -278,23 +281,27 @@ function build_disk() {
     # move to correct dir
     cd ${TIMAGE_DIR}
 
-    # check integrity & fix minor errors
-    echo "Info: Checking the fs prior to umount"
-    sudo e2fsck -fyvD "${IMG_LOOP}"
-
     # TODO: disk size trim
-    
-    # umount the base image
-    echo "Info: Umount the fs"
-    sudo umount "${FS_MNT_POINT}"
-
-    # freeing the loop device
-    echo "Info: Freeing the loop device"
-    sudo losetup -d "${IMG_LOOP}"
 
     # force a FS sync
     echo "Info: Forcing a fs rsync to umount the real fs"
     sudo sync
+
+    # umount the base image
+    echo "Info: Umount the fs"
+    sudo umount "${FS_MNT_POINT}"
+
+    # check integrity & fix minor errors
+    echo "Info: Checking the fs after umount"
+    sudo e2fsck -fyvD "${IMG_LOOP}"
+
+    # force a FS sync
+    echo "Info: Forcing a fs rsync to umount the loop device"
+    sudo sync
+
+    # freeing the loop device
+    echo "Info: Freeing the loop device"
+    sudo losetup -d "${IMG_LOOP}"
 
     # copy the image to final dir.
     echo "Info: Copy the image to final dir"
@@ -328,10 +335,8 @@ function install_go() {
 
     # extract golang
     echo "Info: Installing ${GO_FILE} inside the image"
-    sudo cp ${DOWNLOADS_DIR}/go/${GO_FILE} ${FS_MNT_POINT}${GOROOT}/../
     cd ${FS_MNT_POINT}${GOROOT}/../
-    sudo tar -xzf ${GO_FILE}
-    sudo rm ${GO_FILE}
+    sudo tar -xvzf ${DOWNLOADS_DIR}/go/${GO_FILE}
 
     # setting the GO env vars, just copy it to /etc/profiles.d/
     echo "Info: Setting up go inside the image"
@@ -479,7 +484,7 @@ function main () {
     install_go
 
     # get skywire and move it inside the FS root
-    get_n_install_skywire
+    # get_n_install_skywire
 
     # setup chroot
     enable_chroot

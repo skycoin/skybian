@@ -40,4 +40,7 @@ apt-get clean
 cd ${SKYWIRE_DIR}/cmd
 ${GOROOT}/bin/go install -v ./...
 
+# forge a time on the system to avoid fs dates are in the future
+/sbin/fake-hwclock save force
+
 # your custom commands here
