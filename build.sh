@@ -200,11 +200,10 @@ function get_go() {
     # testing go file integrity
     `which gzip` -kqt ${GO_FILE}
 
-    # TODO trap this
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         echo "Error: Downloaded file is corrupt, try again."
-        rm "*gz *html"  &> /dev/null
+        rm "*.gz *html"  &> /dev/null
         exit 1
     fi
 }
@@ -270,7 +269,7 @@ function increase_image_size() {
     # resize to gain space
     echo "Info: Make rootfs bigger & check integrity..."
     sudo resize2fs "${IMG_LOOP}"
-    sudo e2fsck -fv "${IMG_LOOP}"
+    sudo e2fsck -fpvD "${IMG_LOOP}"
 }
 
 
@@ -281,7 +280,7 @@ function build_disk() {
 
     # check integrity & fix minor errors
     echo "Info: Checking the fs prior to umount"
-    sudo e2fsck -fDy "${IMG_LOOP}"
+    sudo e2fsck -fyvD "${IMG_LOOP}"
 
     # TODO: disk size trim
     
@@ -375,11 +374,7 @@ get_n_install_skywire() {
     sudo mkdir -p "${FS_MNT_POINT}${SKYCOIN_DIR}"
 
     # copy it to the final dest
-    sudo `which rsync` -av "${DOWNLOADS_DIR}/skywire" "${FS_MNT_POINT}${SKYCOIN_DIR}"
-
-    # note the existence of the folder
-    echo "Listing of the final dir."
-    ls -l "${FS_MNT_POINT}${SKYCOIN_DIR}"
+    sudo `which rsync` -a "${DOWNLOADS_DIR}/skywire" "${FS_MNT_POINT}${SKYCOIN_DIR}"
 }
 
 
@@ -399,14 +394,14 @@ function enable_chroot() {
 
 # disable chroot
 function disable_chroot() {
-    # remove the aarm64 static exec... disabling chrrot support
-    AARM64=`which qemu-aarch64-static`
+    # remove the aarm64 static exec... disabling chroot support
+    AARM64="qemu-aarch64-static"
 
     # log
     echo "Info: Disable the chroot jail." 
 
     # remove the static bin
-    sudo rm ${FS_MNT_POINT}/usr/bin/qemu-aarch64-static
+    sudo rm ${FS_MNT_POINT}/usr/bin/${AARM64}
 }
 
 
@@ -433,13 +428,10 @@ function do_in_chroot() {
 function fix_armian_defaults() {
     # armbian has some tricks in there to ease the operation.
     # some of them are not needed on skywire, so we disable them
-    # 
-    # we are dealing with the chroot but enable systemd units for
-    # skywire is done later when creating the individual images.
 
     # disable the forced root password change and user creation
-    echo "Info: Disabling some of the Armbian defaults"
-    sudo rm ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
+    echo "Info: Disabling new user creation on Armbian"
+    sudo cp -f ${ROOT}/static/armbian-check-first-login.sh ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
 
     # change root password
     echo "Info: Setting default password"
@@ -482,7 +474,7 @@ function main () {
     # Mount the Armbian image
     img_mount
 
-    # install go
+    # install golang
     install_go
 
     # get skywire and move it inside the FS root
