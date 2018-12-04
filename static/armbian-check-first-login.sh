@@ -51,8 +51,6 @@ if [ -f /root/.not_logged_in_yet ] && [ -n "$BASH_VERSION" ] && [ "$-" != "${-#*
 		echo -e "anytime with next update. \e[0;31mYOU HAVE BEEN WARNED!\x1B[0m"
 		echo -e "\nThis image is provided \e[0;31mAS IS\x1B[0m with \e[0;31mNO WARRANTY\x1B[0m and \e[0;31mNO END USER SUPPORT!\x1B[0m.\n"
 	fi
-	echo "Creating a new user account. Press <Ctrl-C> to abort"
-	[ -n "$DESKTOPDETECT" ] && echo "Desktop environment will not be enabled if you abort the new user creation"
 	while [ -f "/root/.not_logged_in_yet" ]; do
 		touch /root/.activate_psd
 		touch /root/.Xauthority
