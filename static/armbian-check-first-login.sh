@@ -33,35 +33,6 @@ add_profile_sync_settings()
 	systemctl --user start psd.service >/dev/null 2>&1
 }
 
-add_user()
-{
-	read -t 0 temp
-	echo -e "\nPlease provide a username (eg. your forename): \c"
-	read -e username
-	RealUserName="$(echo "$username" | tr '[:upper:]' '[:lower:]' | tr -d -c '[:alnum:]')"
-	[ -z "$RealUserName" ] && return
-	echo "Trying to add user $RealUserName"
-	adduser $RealUserName || return
-	for additionalgroup in sudo netdev audio video dialout plugdev input bluetooth systemd-journal ssh; do
-		usermod -aG ${additionalgroup} ${RealUserName} 2>/dev/null
-	done
-	# fix for gksu in Xenial
-	touch /home/$RealUserName/.Xauthority
-	chown $RealUserName:$RealUserName /home/$RealUserName/.Xauthority
-	RealName="$(awk -F":" "/^${RealUserName}:/ {print \$5}" </etc/passwd | cut -d',' -f1)"
-	[ -z "$RealName" ] && RealName=$RealUserName
-	echo -e "\nDear ${RealName}, your account ${RealUserName} has been created and is sudo enabled."
-	echo -e "Please use this account for your daily work from now on.\n"
-	rm -f /root/.not_logged_in_yet
-	# set up profile sync daemon on desktop systems
-	which psd >/dev/null 2>&1
-	if [ $? -eq 0 ]; then
-		echo -e "${RealUserName} ALL=(ALL) NOPASSWD: /usr/bin/psd-overlay-helper" >> /etc/sudoers
-		touch /home/${RealUserName}/.activate_psd
-		chown $RealUserName:$RealUserName /home/${RealUserName}/.activate_psd
-	fi
-}
-
 if [ -f /root/.not_logged_in_yet ] && [ -n "$BASH_VERSION" ] && [ "$-" != "${-#*i}" ]; then
 	# detect desktop
 	desktop_nodm=$(dpkg-query -W -f='${db:Status-Abbrev}\n' nodm 2>/dev/null)
@@ -84,6 +55,7 @@ if [ -f /root/.not_logged_in_yet ] && [ -n "$BASH_VERSION" ] && [ "$-" != "${-#*
 	[ -n "$DESKTOPDETECT" ] && echo "Desktop environment will not be enabled if you abort the new user creation"
 	while [ -f "/root/.not_logged_in_yet" ]; do
 		touch /root/.activate_psd
+		touch /root/.Xauthority
 		rm -f /root/.not_logged_in_yet
 	done
 	# check for H3/legacy kernel to promote h3disp utility
