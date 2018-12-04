@@ -16,18 +16,41 @@ ROOT=`pwd`
 # function to see how they integrate to do the  whole job.
 ##############################################################################
 
+
+# function to log messages as info
+function info() {
+    printf '\033[0;32m[ Info ]\033[0m %s\n' "${1}"
+}
+
+
+# function to log messages as warnings
+function warn() {
+    printf '\033[0;33m[ Warning ]\033[0m %s\n' "${1}"
+}
+
+
+# function to log messages as info
+function error() {
+    printf '\033[0;31m[ Error ]\033[0m %s\n' "${1}"
+}
+
+
 # Test the needed tools to build the script, iterate over the needed tools
 # and warn if one is missing, exit 1 is generated
 function tool_test() {
+    # info
+    info "Testing the workspace for needed tools"
     for t in ${NEEDED_TOOLS} ; do 
         local BIN=`which ${t}`
         if [ -z "${BIN}" ] ; then
             # not found
-            echo "Error: need tool '${t}' and it's not found on the system."
-            echo "Please install it and run the build script again."
+            error "Need tool '${t}' and it's not found on the system. Please install it and run the build script again."
             exit 1
         fi
     done
+
+    # info
+    info "All tools are installed, going forward."
 }
 
 
@@ -43,6 +66,9 @@ function create_folders() {
 
     # fun is here
     cd ${ROOT}
+
+    # info
+    info "Creating output folder structure"
 
     # create them
     mkdir -p ${ROOT}/output
@@ -61,15 +87,14 @@ function create_folders() {
 function download_armbian() {
     # change to dest dir
     cd ${DOWNLOADS_DIR}/armbian
-    echo "Info: Downloading armbian from:"
-    echo "${ARMBIAN_OPPRIME_DOWNLOAD_URL}"
+    info "Downloading armbian from: ${ARMBIAN_OPPRIME_DOWNLOAD_URL}"
 
     # get it
     wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL} -O 'armbian.7z'
 
     # check for correct download
     if [ $? -ne 0 ] ; then
-        echo "Error: Can't get the armbian image file, a connection issue?."
+        error "Can't get the armbian image file, aborting... connection issue?."
         rm "*7z *html *txt" &> /dev/null
         exit 1
     fi
@@ -82,7 +107,7 @@ function get_armbian() {
     cd ${DOWNLOADS_DIR}/armbian
 
     # user info
-    echo "Info: Getting Armbian image"
+    info "Getting Armbian image, clearing dest dir first."
 
     # clean extracted files
     rm *img* *txt *sha &> /dev/null
@@ -91,7 +116,7 @@ function get_armbian() {
     ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
     if [ -z "${ARMBIAN_IMG_7z}" ] ; then
         # no image in there, must download
-        echo "Info: No cached image, downloading.."
+        info "No cached image, downloading.."
 
         # download it
         download_armbian
@@ -99,13 +124,15 @@ function get_armbian() {
         # we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
+            warn "Old copy detected but you stated not to reuse it"
             rm -f "armbian.7z" &> /dev/null
             
             # get it
+            info "Downloading.."
             download_armbian
         else
             # use already downloaded image fi;e
-            echo "Info: reusing already downloaded file"
+            warn "Reusing already downloaded file"
         fi
     fi
 
@@ -113,26 +140,26 @@ function get_armbian() {
     ARMBIAN_IMG_7z="armbian.7z"
     
     # extract and check it's integrity
-    echo "Info: Armbian file to process is '${ARMBIAN_IMG_7z}'"
+    info "Armbian file to process is '${ARMBIAN_IMG_7z}'"
 
     # extract armbian
-    echo "Info: Extracting image"
+    info "Extracting image"
     7z e "${ARMBIAN_IMG_7z}"
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
-        echo "Error: Extracting failed, file is corrupt, re-run the script to get it right."
+        error "Extracting failed, file is corrupt? Re-run the script to get it right."
         rm "${ARMBIAN_IMG_7z}" &> /dev/null
         exit 1
     fi
 
     # check integrity
-    echo "Info: Testing image integrity..."
+    info "Testing image integrity..."
     `which sha256sum` -c --status sha256sum.sha
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
-        echo "Error: Integrity of the image is compromised, re-run the script to get it right."
+        errorr "Integrity of the image is compromised, re-run the script to get it right."
         rm *img* *txt *sha *7z &> /dev/null
         exit 1
     fi
@@ -141,16 +168,16 @@ function get_armbian() {
     ARMBIAN_IMG=`ls | grep -E '.*\.img$'`
 
     # imge integrity
-    echo "Info: Image integrity assured via sha256sum."
-    echo "Info: final image file is ${ARMBIAN_IMG}"
+    info "Image integrity assured via sha256sum."
+    info "Final image file is ${ARMBIAN_IMG}"
 
     # get version & kernel version info
     ARMBIAN_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $2 }'`
     ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
     
     # info to the user
-    echo "    Armbian version: ${ARMBIAN_VERSION}"
-    echo "    Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
+    warn "    Armbian version: ${ARMBIAN_VERSION}"
+    warn "    Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 }
 
 
@@ -160,16 +187,19 @@ function download_go() {
     cd ${DOWNLOADS_DIR}/go
 
     # download it
-    echo "Info: Getting go from the internet"
+    info "Getting golang from the internet"
     wget -c "${GO_ARM64_URL}"
 
     # TODO trap this
     # check for correct download
     if [ $? -ne 0 ] ; then
-        echo "Error: Can't get the file, re-run the script to get it right."
+        error "Can't get the file, re-run the script to get it right."
         rm "*gz *html"  &> /dev/null
         exit 1
     fi
+
+    # info
+    info "Done, golang downloaded"
 }
 
 
@@ -179,7 +209,7 @@ function get_go() {
     cd ${DOWNLOADS_DIR}/go
 
     # user info
-    echo "Info: Getting go version ${GO_VERSION}"
+    info "Getting go version ${GO_VERSION}"
 
     # test if we have a file in there
     GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1`
@@ -190,10 +220,14 @@ function get_go() {
         # sure we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
+            warn "Golang archive present but you opt for not to reuse it"
             rm -f "*gz *html" &> /dev/null
 
             # now we get it
             download_go
+        else
+            # reuse the already downloaded file
+            warn "Using the already downloaded file as you commanded"
         fi
     fi
 
@@ -201,14 +235,18 @@ function get_go() {
     GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1`
 
     # testing go file integrity
+    info "Test downloaded file for integrity"
     `which gzip` -kqt ${GO_FILE}
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
-        echo "Error: Downloaded file is corrupt, try again."
+        error "Downloaded file is corrupt, try again."
         rm "*.gz *html"  &> /dev/null
         exit 1
     fi
+
+    # info
+    info "Downloaded file is ok"
 }
 
 
@@ -222,7 +260,7 @@ function find_free_loop() {
         OUT=`losetup | grep /dev/loop$DEV`
     done
     
-    # output
+    # output to other function
     echo "/dev/loop$DEV"
 }
 
@@ -239,12 +277,12 @@ function increase_image_size() {
     rm -f "*img *bin" &> /dev/null
 
     # copy the image here
-    echo "Info: Preparing Armbian image, this may take a while..."
+    info "Preparing the Armbian image."
     rm "${BASE_IMG}" &> /dev/null
     cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
     
     # create the added space file
-    echo "Info: Adding ${BASE_IMG_ADDED_SPACE}MB of a extra space to the image."
+    info "Adding ${BASE_IMG_ADDED_SPACE}MB of a extra space to the image."
     truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
 
     # # add free space to the part 1 (parted way)
@@ -263,15 +301,18 @@ function increase_image_size() {
     IMG_LOOP=`find_free_loop`
 
     # user info
-    echo "Info: Using ${IMG_LOOP} to mount the root fs."
+    info "Using ${IMG_LOOP} to mount the root fs."
 
     # map p1 to a loop device to ease operation
     local OFFSET=`echo $((${ARMBIAN_IMG_OFFSET} * 512))`
     sudo losetup -o "${OFFSET}" "${IMG_LOOP}" "${BASE_IMG}"
 
     # resize to gain space
-    echo "Info: Make rootfs bigger & check integrity..."
+    info "Make rootfs bigger"
     sudo resize2fs "${IMG_LOOP}"
+
+    # check fs
+    info "Check the FS after the expansion"
     sudo e2fsck -fpvD "${IMG_LOOP}"
 }
 
@@ -284,27 +325,27 @@ function build_disk() {
     # TODO: disk size trim
 
     # force a FS sync
-    echo "Info: Forcing a fs rsync to umount the real fs"
+    info "Forcing a fs rsync to umount the real fs"
     sudo sync
 
     # umount the base image
-    echo "Info: Umount the fs"
+    info "Umount the fs"
     sudo umount "${FS_MNT_POINT}"
 
     # check integrity & fix minor errors
-    echo "Info: Checking the fs after umount"
+    info "Checking the fs after umount"
     sudo e2fsck -fyvD "${IMG_LOOP}"
 
     # force a FS sync
-    echo "Info: Forcing a fs rsync to umount the loop device"
+    info "Forcing a fs rsync to umount the loop device"
     sudo sync
 
     # freeing the loop device
-    echo "Info: Freeing the loop device"
+    info "Freeing the loop device"
     sudo losetup -d "${IMG_LOOP}"
 
     # copy the image to final dir.
-    echo "Info: Copy the image to final dir"
+    info "Copy the image to final dir"
     cp "${BASE_IMG}" "${FINAL_IMG_DIR}/skybian_manager.img"
 }
 
@@ -315,11 +356,11 @@ function img_mount() {
     cd ${TIMAGE_DIR}
 
     # mount it
-    echo "Info: mounting root fs..."
+    info "Mounting root fs to work with"
     sudo mount -t auto "${IMG_LOOP}" "${FS_MNT_POINT}" -o loop,rw
 
     # user info
-    echo "Info: RootFS is ready to work with in ${FS_MNT_POINT}"
+    info "RootFS is ready to work with in ${FS_MNT_POINT}"
 }
 
 
@@ -329,17 +370,17 @@ function install_go() {
     cd ${FS_MNT_POINT}
 
     # create go dir
-    echo "Info: Creating the paths for Go"
+    info "Creating the paths for Go"
     sudo mkdir -p ${FS_MNT_POINT}${GOROOT}
     sudo mkdir -p ${FS_MNT_POINT}${GOPATH} "${FS_MNT_POINT}${GOPATH}/src" "${FS_MNT_POINT}${GOPATH}/pkg" "${FS_MNT_POINT}${GOPATH}/bin"
 
     # extract golang
-    echo "Info: Installing ${GO_FILE} inside the image"
+    info "Installing ${GO_FILE} inside the image"
     cd ${FS_MNT_POINT}${GOROOT}/../
     sudo tar -xvzf ${DOWNLOADS_DIR}/go/${GO_FILE}
 
     # setting the GO env vars, just copy it to /etc/profiles.d/
-    echo "Info: Setting up go inside the image"
+    info "Setting up go inside the image"
     sudo cp ${ROOT}/static/golang-env-settings.sh "${FS_MNT_POINT}/etc/profile.d/"
     sudo chmod 0644 "${FS_MNT_POINT}/etc/profile.d/golang-env-settings.sh"
 }
@@ -348,38 +389,40 @@ function install_go() {
 # get and install skywire inside the FS
 function get_n_install_skywire() {
     # get it on downloads, and if all is good then move it to final dest inside the image
+    info "Getting last version of Skywire to install inside the chroot"
 
     # get it from github / local is you are the dev
     local LH=`hostname`
     # TODO remove references to dev things from final code.
     if [ "$LH" == "agatha-lt" ] ; then
         #  creating the dest folder
+        info "Creating destination directory"
         mkdir -p "${DOWNLOADS_DIR}/skywire"
 
         # dev env no need to do the github job, get it locally
-        echo "Info: DEV trick: sync of the local skywire copy"
-        `which rsync` -av "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
+        warn "DEV trick: sync of the local skywire copy"
+        rsync -av "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
     else
         # else where, download from github
         cd "${DOWNLOADS_DIR}/"
 
         # get it from github
-        echo "Info: Cloning skywire to this download dir"
-        `which git` clone ${SKYWIRE_GIT_URL}
+        info "Cloning Skywire from the internet to the downloads dir"
+        git clone ${SKYWIRE_GIT_URL}
 
         # check for correct git clone command
         if [ $? -ne 0 ] ; then
-            echo "Error: git clone failed."
+            error "Git clone failed, network problem?"
             exit 1
         fi
     fi
 
     # create folder inside the image
-    echo "Info: Git clone ok, moving it to root fs"
+    info "Git clone succeed, moving it to root fs"
     sudo mkdir -p "${FS_MNT_POINT}${SKYCOIN_DIR}"
 
     # copy it to the final dest
-    sudo `which rsync` -a "${DOWNLOADS_DIR}/skywire" "${FS_MNT_POINT}${SKYCOIN_DIR}"
+    sudo rsync -a "${DOWNLOADS_DIR}/skywire" "${FS_MNT_POINT}${SKYCOIN_DIR}"
 }
 
 
@@ -390,7 +433,7 @@ function enable_chroot() {
     AARM64=`which qemu-aarch64-static`
 
     # log
-    echo "Info: Setup of the chroot jail to be able to exec command inside the roofs." 
+    info "Setup of the chroot jail to be able to exec command inside the roofs." 
 
     # copy the static bin
     sudo cp ${AARM64} ${FS_MNT_POINT}/usr/bin/
@@ -403,7 +446,7 @@ function disable_chroot() {
     AARM64="qemu-aarch64-static"
 
     # log
-    echo "Info: Disable the chroot jail." 
+    info "Disable the chroot jail." 
 
     # remove the static bin
     sudo rm ${FS_MNT_POINT}/usr/bin/${AARM64}
@@ -435,29 +478,30 @@ function fix_armian_defaults() {
     # some of them are not needed on skywire, so we disable them
 
     # disable the forced root password change and user creation
-    echo "Info: Disabling new user creation on Armbian"
+    info "Disabling new user creation on Armbian"
     sudo cp -f ${ROOT}/static/armbian-check-first-login.sh \
         ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
 
     # change root password
-    echo "Info: Setting default password"
+    info "Setting default password"
     sudo cp ${ROOT}/static/chroot_passwd.sh ${FS_MNT_POINT}/tmp
     sudo chmod +x ${FS_MNT_POINT}/tmp/chroot_passwd.sh
     do_in_chroot /tmp/chroot_passwd.sh
     sudo rm ${FS_MNT_POINT}/tmp/chroot_passwd.sh
 
     # copy default network interface device file
-    echo "Info: Setting default network link"
+    info "Setting default network link"
     sudo cp ${ROOT}/static/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
 
     # execute some extra commands inside the chroot
-    echo "Info: Executing extra configs."
+    info "Executing extra configs."
     sudo cp ${ROOT}/static/chroot_extra_commands.sh ${FS_MNT_POINT}/tmp
     sudo chmod +x ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
     do_in_chroot /tmp/chroot_extra_commands.sh
     sudo rm ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
 
     # header update: present it as skybian.
+    info "Headers update, now it presents itself as Skybian"
     sudo cp ${ROOT}/static/10-skybian-header ${FS_MNT_POINT}/etc/update-motd.d/
     sudo chmod +x ${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header
     sudo cp -f ${ROOT}/static/armbian-motd ${FS_MNT_POINT}/etc/default
@@ -467,15 +511,12 @@ function fix_armian_defaults() {
 # main exec block
 function main () {
     # test for needed tools
-    echo "Info: Testing for needed tools..."
     tool_test
 
     # create output folder and it's structure
-    echo "Info: Creating output folder structure..."
     create_folders
 
     # download resources
-    echo "Info: Downloading resources, this may take a while..."
     get_armbian
     get_go
 
@@ -510,7 +551,7 @@ function main () {
     build_disk
 
     # all good signal
-    echo "All good so far"
+    info "All good so far"
 }
 
 
