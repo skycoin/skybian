@@ -33,14 +33,17 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get -y update
 #apt-get -y install [your_pkgs_here]
 #apt-get -y remove --purge [your_pkgs_here]
-# keep this ot the very end of this block
-info "Cleanign the APT cache to make a smaller image"
+# keep this on the very end of this block
+info "Cleaning the APT cache to make a smaller image"
 apt-get clean
 
 # compile skywire (folder is already created by install skywire)
-info "Compile Skywire inside the chroot"
+# there is a known issues about go and qemu, the most usefull workaround is to 
+# keep thread count low, see https://gist.github.com/ahrex/9a84f32a33aadc197a688d2158d7e2ea
+CORE=`lscpu -p  | sed -ne '/^[0-9]\+/ s/,.*$//pg' | sort -R | head -n 1`
+info "Compile Skywire inside the chroot with Go-Quemu Patch"
 cd ${SKYWIRE_DIR}/cmd
-${GOROOT}/bin/go install -v ./...
+/usr/bin/taskset -c ${CORE} ${GOROOT}/bin/go install -v ./...
 
 # forge a time on the system to avoid fs dates are in the future
 info "Setting the chroot clock to now to avoid bugs with the date"
