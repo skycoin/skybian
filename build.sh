@@ -358,7 +358,7 @@ get_n_install_skywire() {
 
         # dev env no need to do the github job, get it locally
         echo "Info: DEV trick: sync of the local skywire copy"
-        `which rsync` -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
+        `which rsync` -av "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
     else
         # else where, download from github
         cd "${DOWNLOADS_DIR}/"
@@ -390,7 +390,7 @@ function enable_chroot() {
     AARM64=`which qemu-aarch64-static`
 
     # log
-    echo "Info: Setup of the chroot jail to be hable to exec command inside the roofs." 
+    echo "Info: Setup of the chroot jail to be able to exec command inside the roofs." 
 
     # copy the static bin
     sudo cp ${AARM64} ${FS_MNT_POINT}/usr/bin/
@@ -484,7 +484,7 @@ function main () {
     install_go
 
     # get skywire and move it inside the FS root
-    # get_n_install_skywire
+    get_n_install_skywire
 
     # setup chroot
     enable_chroot
