@@ -346,7 +346,7 @@ function install_go() {
 
 
 # get and install skywire inside the FS
-get_n_install_skywire() {
+function get_n_install_skywire() {
     # get it on downloads, and if all is good then move it to final dest inside the image
 
     # get it from github / local is you are the dev
@@ -456,6 +456,11 @@ function fix_armian_defaults() {
     sudo chmod +x ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
     do_in_chroot /tmp/chroot_extra_commands.sh
     sudo rm ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
+
+    # header update: present it as skybian.
+    sudo cp ${ROOT}/static/10-skybian-header ${FS_MNT_POINT}/etc/update-motd.d/
+    sudo chmod +x ${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header
+    sudo cp -f ${ROOT}/static/armbian-motd ${FS_MNT_POINT}/etc/default
 }
 
 
