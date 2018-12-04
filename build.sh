@@ -401,14 +401,14 @@ function get_n_install_skywire() {
 
         # dev env no need to do the github job, get it locally
         warn "DEV trick: sync of the local skywire copy"
-        rsync -av "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
+        rsync -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
     else
         # else where, download from github
         cd "${DOWNLOADS_DIR}/"
 
         # get it from github
         info "Cloning Skywire from the internet to the downloads dir"
-        git clone ${SKYWIRE_GIT_URL}
+        sudo git clone ${SKYWIRE_GIT_URL}
 
         # check for correct git clone command
         if [ $? -ne 0 ] ; then
