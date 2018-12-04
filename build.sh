@@ -431,7 +431,8 @@ function fix_armian_defaults() {
 
     # disable the forced root password change and user creation
     echo "Info: Disabling new user creation on Armbian"
-    sudo cp -f ${ROOT}/static/armbian-check-first-login.sh ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
+    sudo cp -f ${ROOT}/static/armbian-check-first-login.sh \
+        ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
 
     # change root password
     echo "Info: Setting default password"
@@ -441,8 +442,8 @@ function fix_armian_defaults() {
     sudo rm ${FS_MNT_POINT}/tmp/chroot_passwd.sh
 
     # copy default network interface device file
-    # echo "Info: Setting default network link"
-    # sudo cp ${ROOT}/static/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
+    echo "Info: Setting default network link"
+    sudo cp ${ROOT}/static/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
 
     # execute some extra commands inside the chroot
     echo "Info: Executing extra configs."
