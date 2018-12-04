@@ -437,6 +437,10 @@ function enable_chroot() {
 
     # copy the static bin
     sudo cp ${AARM64} ${FS_MNT_POINT}/usr/bin/
+
+    # touch /dev/null inside the chroot, some apps complains about it
+    sudo touch ${FS_MNT_POINT}/dev/null
+    sudo chmod 666 ${FS_MNT_POINT}/dev/null
 }
 
 
@@ -450,6 +454,9 @@ function disable_chroot() {
 
     # remove the static bin
     sudo rm ${FS_MNT_POINT}/usr/bin/${AARM64}
+
+    # remove /dev/null hack
+    sudo rm ${FS_MNT_POINT}/dev/null
 }
 
 
