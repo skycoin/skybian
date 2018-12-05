@@ -459,8 +459,8 @@ function disable_chroot() {
     # umount temp mounts
     sudo umount ${FS_MNT_POINT}/sys
     sudo umount ${FS_MNT_POINT}/proc
-    sudo umount ${FS_MNT_POINT}/dev
     sudo umount ${FS_MNT_POINT}/dev/pts
+    sudo umount ${FS_MNT_POINT}/dev
 }
 
 
@@ -604,11 +604,11 @@ function set_systemd_unit() {
 
     # activate it
     info "Activating Systemd unit services."
-    do_in_chroot systemctl enable skywire-${1}.service
+    do_in_chroot /bin/systemctl enable skywire-${1}.service
 
     # check it
     info "Checking the Systemd unit services."
-    do_in_chroot systemctl status skywire-${1}.service
+    do_in_chroot /bin/systemctl status skywire-${1}.service
 }
 
 
