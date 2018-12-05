@@ -604,11 +604,11 @@ function set_systemd_unit() {
 
     # activate it
     info "Activating Systemd unit services."
-    do_in_chroot qemu-aarch64-static /bin/systemctl enable skywire-${1}
+    do_in_chroot /usr/bin/qemu-aarch64-static /bin/systemctl enable skywire-${1}
 
     # disable the manager when in node mode
-    if [ "$1" == "node"] ; then
-        do_in_chroot qemu-aarch64-static /bin/systemctl disable skywire-manager
+    if [ "$1" == "node" ] ; then
+        do_in_chroot /usr/bin/qemu-aarch64-static /bin/systemctl disable skywire-manager
     fi
 }
 
