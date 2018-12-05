@@ -460,8 +460,8 @@ function disable_chroot() {
     # umount temp mounts
     sudo umount ${FS_MNT_POINT}/sys
     sudo umount ${FS_MNT_POINT}/proc
-    sudo umount ${FS_MNT_POINT}/dev
     sudo umount ${FS_MNT_POINT}/dev/pts
+    sudo umount ${FS_MNT_POINT}/dev
 }
 
 
