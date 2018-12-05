@@ -560,7 +560,7 @@ function build_nodes() {
         # disable chroot
         disable_chroot
 
-        # build manager image
+        # build image file (umounts & free the loop)
         build_disk "node_$n"
     done
 }
@@ -600,15 +600,16 @@ function set_systemd_unit() {
     local UNITSDIR=${FS_MNT_POINT}${SKYWIRE_DIR}/static/script/upgrade/data
 
     # copy the respective unit
-    sudo cp ${UNITSDIR}/skywire-${1}.service ${FS_MNT_POINT}/etc/systemd/system/
+    sudo cp "${UNITSDIR}/skywire-${1}.service" ${FS_MNT_POINT}/etc/systemd/system/
 
     # activate it
     info "Activating Systemd unit services."
-    do_in_chroot /bin/systemctl enable skywire-${1}.service
+    do_in_chroot qemu-aarch64-static /bin/systemctl enable skywire-${1}
 
-    # check it
-    info "Checking the Systemd unit services."
-    do_in_chroot /bin/systemctl status skywire-${1}.service
+    # disable the manager when in node mode
+    if [ "$1" == "node"] ; then
+        do_in_chroot qemu-aarch64-static /bin/systemctl disable skywire-manager
+    fi
 }
 
 
