@@ -441,9 +441,8 @@ function enable_chroot() {
     # some required mounts
     sudo mount -t sysfs none ${FS_MNT_POINT}/sys
     sudo mount -t proc none ${FS_MNT_POINT}/proc
-    sudo mount --bind /dev/ ${FS_MNT_POINT}/dev
+    sudo mount --bind /dev ${FS_MNT_POINT}/dev
     sudo mount --bind /dev/pts ${FS_MNT_POINT}/dev/pts
-    sudo mount -o bind /etc/resolv.conf ${FS_MNT_POINT}/resolv.conf
 }
 
 
@@ -463,7 +462,6 @@ function disable_chroot() {
     sudo umount ${FS_MNT_POINT}/proc
     sudo umount ${FS_MNT_POINT}/dev
     sudo umount ${FS_MNT_POINT}/dev/pts
-    sudo umount ${FS_MNT_POINT}/resolv.conf
 }
 
 
