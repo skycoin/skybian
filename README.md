@@ -14,7 +14,7 @@ Then why not to step up on the shoulders of this two to great projects to build 
 
 We follow a few simple guidelines to archive our goal:
 
-* Build on top of the last non-GUI version of armbian for our hardware, yes: on top of the image.
+* Build on top of the last non-GUI version of Armbian for our hardware, yes: on top of the image.
 * Prepare that image and install software and dependencies to run the code.
 * Build from one base root FS, all the images for manager and nodes.
 * The scripts & tests must be fully automatic to integrate with other tools, to ease the dev cycle (travis 'et al')
@@ -35,33 +35,3 @@ At the early stages we get to that point also, but working over the images has a
 ## This is yet a Work In Progress (WIP)
 
 Yes, this is just a work in progress, please contribute with test results, ideas, comments, etc.
-
-**From this point forward we are talking of features being worked out in the roadmap, beware of dragons!**
-
-## I have cloned your repo and created my own image, what's next?
-
-If all gone well you will have two .img file on the folder output/final, one will have the word "manager" and the other will have "node" on them.
-
-`Tip: To form a Skyminer you need a **Manager** and a few **Nodes**, see the [Skywire](https://github.com/skycoin/skywire) project page for more details.`
-
-So you have the basic setup of 8 'Orange Pi Prime' SBC and same count of good quality uSD cards of 8Gb or more, you need to start with the manager
-
-Flash your Manager img on a uSD card, [Etcher](https://etcher.io) is a good place to start, it works on Windows/Linux/Mac so it works on your favorite OS.
-
-If you are in linux 'dd' can help you if you like the CLI (and if you like the CLi you already knows how to use 'dd')
-
-And also the rest of the uSD cards with the Node image, yes, flash the rest of the uSD with the same node.img file, will work on them later.
-
-Insert the Master uSD card on you Orange Pi Prime and boot it up, connect a ethernet cable an set you Pc/Laptop IP to 192.168.0.254, then open a ssh connection to 192.168.0.2 (If you use windows you will need to use Putty) once you are prompted use the user 'root' and password 'skywire' 
-
-Once you are in you will find a screen like this:
-
-[img]
-
-If you point your browser to the Manager web GUI at http://192.168.0.2:8000/ you will find Skywire in there:
-
-[img]
-
-Now you need to proceed with the node.
-
-**TODO**
