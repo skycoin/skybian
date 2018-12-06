@@ -12,3 +12,14 @@ script:
 
 notifications:
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
+deploy:
+  provider: releases
+  api_key: ""
+  file_glob: true
+  file: output/final/*.img
+  skip_cleanup: true
+  overwrite: true
+  on:
+    branch: develop
+    tags: true
