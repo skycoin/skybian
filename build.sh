@@ -109,9 +109,6 @@ function get_armbian() {
     # user info
     info "Getting Armbian image, clearing dest dir first."
 
-    # clean extracted files
-    rm *img* *txt *sha &> /dev/null
-
     # test if we have a file in there
     ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
     if [ -z "${ARMBIAN_IMG_7z}" ] ; then
@@ -142,15 +139,22 @@ function get_armbian() {
     # extract and check it's integrity
     info "Armbian file to process is '${ARMBIAN_IMG_7z}'"
 
-    # extract armbian
-    info "Extracting image"
-    7z e "${ARMBIAN_IMG_7z}"
+    # check if extracted image is in there to save time
+    local LIMAGE=`ls | grep Orangepiprime | grep Armbian | grep -E ".*\.img$"`
+    if [ ! -z "$LIMAGE" ] ; then
+        # image already extracted nothing to do
+        warn "Armbian image already extracted"
+    else
+        # extract armbian
+        info "Extracting image"
+        7z e "${ARMBIAN_IMG_7z}"
 
-    # check for correct extraction
-    if [ $? -ne 0 ] ; then
-        error "Extracting failed, file is corrupt? Re-run the script to get it right."
-        rm "${ARMBIAN_IMG_7z}" &> /dev/null
-        exit 1
+        # check for correct extraction
+        if [ $? -ne 0 ] ; then
+            error "Extracting failed, file is corrupt? Re-run the script to get it right."
+            rm "${ARMBIAN_IMG_7z}" &> /dev/null
+            exit 1
+        fi
     fi
 
     # check integrity
@@ -160,7 +164,7 @@ function get_armbian() {
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         errorr "Integrity of the image is compromised, re-run the script to get it right."
-        rm *img* *txt *sha *7z &> /dev/null
+        rm *img *txt *sha *7z &> /dev/null
         exit 1
     fi
 
@@ -393,13 +397,13 @@ function get_n_install_skywire() {
     # get it from github / local is you are the dev
     local LH=`hostname`
     # TODO remove references to dev things from final code.
-    if [ "$LH" == "agatha-lt" ] ; then
+    if [ "$LH" == "${DEV_PC}" ] ; then
         #  creating the dest folder
-        info "Creating destination directory"
+        warn "DEV trick: Creating destination directory"
         mkdir -p "${DOWNLOADS_DIR}/skywire"
 
         # dev env no need to do the github job, get it locally
-        warn "DEV trick: sync of the local skywire copy"
+        warn "DEV trick: Sync of the local skywire copy"
         rsync -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
     else
         # else where, download from github
