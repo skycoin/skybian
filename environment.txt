@@ -1,6 +1,14 @@
-# This are the default vars to build the Skybian os
+# This are the default vars to build the Skybian OS
 
-## Runtime switchs
+# Version, this is by the semver.org schema
+# MAJOR.MINOR.PATCH
+#   MAJOR version when you make incompatible API changes,
+#   MINOR version when you add functionality in a backwards-compatible manner, and
+#   PATCH version when you make backwards-compatible bug fixes.
+VERSION=0.1.0
+# This must match the tags in the github repository
+
+# Runtime switches
 # will reuse downloads if they are correct [yes|no]
 SILENT_REUSE_DOWNLOADS="yes"
 
@@ -28,7 +36,6 @@ FINAL_IMG_DIR=${ROOT}/output/final
 DOWNLOADS_DIR=${ROOT}/output/downloads
 FS_MNT_POINT=${ROOT}/output/mnt
 TIMAGE_DIR=${ROOT}/output/timage
-TMP_DIR=${ROOT}/output/tmp
 
 # IMG related vars
 ARMBIAN_IMG_7z=""
