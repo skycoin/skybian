@@ -616,6 +616,31 @@ function set_systemd_unit() {
 }
 
 
+# calculate md5 & sha1 sum for the images
+function calc_sums() {
+    # use md5sum & sha1sum bin
+    cd ${FINAL_IMG_DIR}
+
+    # vars
+    local LIST=`ls *.img`
+
+    # info
+    info "Calculating the md5sum for the images, this will take a while"
+
+    # MD5
+    md5sum -b "$LIST" > md5sums
+
+    # info
+    info "Calculating the sha1sum for the images, this will take a while"
+
+    # SHA!
+    sha1sum -b "$LIST" > sha1sums
+
+    # done
+    info "Checksums done"
+}
+
+
 # main exec block
 function main () {
     # test for needed tools
@@ -660,6 +685,9 @@ function main () {
 
     # now we iterate over the node's IP to build them
     build_nodes
+
+    # calculate md5 & sha1 sum for the images
+    calc_sums
 
     # all good signal
     info "Done"
