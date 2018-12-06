@@ -68,7 +68,6 @@ function create_folders() {
     #   /downloaded [all thing we download from the internet]
     #   /mnt [to mount resources, like img fs, etc]
     #   /timage [all image processing goes here]
-    #   /tmp [tmp dir to copy, move, etc]
 
     # fun is here
     cd ${ROOT}
@@ -82,7 +81,6 @@ function create_folders() {
     mkdir -p ${FS_MNT_POINT}
     mkdir -p ${DOWNLOADS_DIR} ${DOWNLOADS_DIR}/armbian ${DOWNLOADS_DIR}/go
     mkdir -p ${TIMAGE_DIR}
-    mkdir -p ${TMP_DIR}
 
     # erase final images if there
     rm -f ${FINAL_IMG_DIR}/*img &> /dev/null
