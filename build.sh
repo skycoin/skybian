@@ -297,30 +297,27 @@ function increase_image_size() {
     # add free space to the part 1 (sfdisk way)
     echo ", +" | sfdisk -N1 "${BASE_IMG}"
 
-    # find a free loopdevice
-    IMG_LOOP=`find_free_loop`
-
-    # user info
-    info "Using ${IMG_LOOP} to mount the root fs."
-
-    # map p1 to a loop device to ease operation
-    local OFFSET=`echo $((${ARMBIAN_IMG_OFFSET} * 512))`
-    sudo losetup -o "${OFFSET}" "${IMG_LOOP}" "${BASE_IMG}"
+    #  setup loop device
+    setup_loop
 
     # resize to gain space
     info "Make rootfs bigger"
     sudo resize2fs "${IMG_LOOP}"
 
     # check fs
-    info "Check the FS after the expansion"
-    sudo e2fsck -fpvD "${IMG_LOOP}"
+    rootfs_check
 }
 
 
-# build disk
+# build disk, take the name of the particular node as an argument
 function build_disk() {
+    # just one argument: node particular name
+
     # move to correct dir
     cd ${TIMAGE_DIR}
+
+    # info
+    info "Building image for skybian_${1}"
 
     # TODO: disk size trim
 
@@ -333,8 +330,7 @@ function build_disk() {
     sudo umount "${FS_MNT_POINT}"
 
     # check integrity & fix minor errors
-    info "Checking the fs after umount"
-    sudo e2fsck -fyvD "${IMG_LOOP}"
+    rootfs_check
 
     # force a FS sync
     info "Forcing a fs rsync to umount the loop device"
@@ -346,7 +342,10 @@ function build_disk() {
 
     # copy the image to final dir.
     info "Copy the image to final dir"
-    cp "${BASE_IMG}" "${FINAL_IMG_DIR}/skybian_manager.img"
+    cp "${BASE_IMG}" "${FINAL_IMG_DIR}/skybian_${1}.img"
+
+    # info
+    info "Image for skybian_${1} ready"
 }
 
 
@@ -470,10 +469,9 @@ function do_in_chroot() {
     # enter chroot and execute what is passed as argument
     # WARNING  this must be run after enable_chroot
     # and NEVER BEFORE it
-    CMD="$@"
 
     # exec the commands
-	sudo chroot "${FS_MNT_POINT}" "${CMD}"
+	sudo chroot "${FS_MNT_POINT}" $@
 }
 
 
@@ -494,10 +492,6 @@ function fix_armian_defaults() {
     do_in_chroot /tmp/chroot_passwd.sh
     sudo rm ${FS_MNT_POINT}/tmp/chroot_passwd.sh
 
-    # copy default network interface device file
-    info "Setting default network link"
-    sudo cp ${ROOT}/static/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
-
     # execute some extra commands inside the chroot
     info "Executing extra configs."
     sudo cp ${ROOT}/static/chroot_extra_commands.sh ${FS_MNT_POINT}/tmp
@@ -510,6 +504,111 @@ function fix_armian_defaults() {
     sudo cp ${ROOT}/static/10-skybian-header ${FS_MNT_POINT}/etc/update-motd.d/
     sudo chmod +x ${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header
     sudo cp -f ${ROOT}/static/armbian-motd ${FS_MNT_POINT}/etc/default
+}
+
+
+# set node network configuration
+function set_node_net() {
+    # set a node IP config, takes to arguments
+    # $1 = Gateway
+    # $2 = IP
+    # see environment.txt file to change it if needed
+
+    # info
+    info "Setting node ${2} networking settings"
+
+    # set correct manager IP
+    # set default gateway on the network interfaces
+    cat ${ROOT}/static/eth0 | \
+        sed s/"DEFAULTIP"/"$2"/ | \
+        sed s/"DEFAULTGW"/"$1"/ > \
+        /tmp/eth0
+    sudo cp /tmp/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
+}
+
+
+# build node's images
+function build_nodes() {
+    # iterate over the list of nodes to build and config them
+    # then build the image
+
+    # main cycle
+    for nip in ${SKYMINER_NODES} ; do
+        # vars
+        local n=`echo $nip | awk -F '.' '{ n = $4-2 ; print n }'`
+
+        # info
+        info "Starting to build node_$n ($nip)"
+        
+        # setup loop device and root fscheck
+        setup_loop
+        rootfs_check
+
+        # mount the base image
+        img_mount
+
+        # setup chroot
+        enable_chroot
+
+        # set the node IP
+        set_node_net "${SKYMINER_GATEWAY}" "$nip"
+        
+        # install systemd unit files/service
+        set_systemd_unit "node"
+
+        # disable chroot
+        disable_chroot
+
+        # build image file (umounts & free the loop)
+        build_disk "node_$n"
+    done
+}
+
+
+# setup the rootfs to a loop device 
+function setup_loop() {
+    # find a free loopdevice and set it on the environment
+    IMG_LOOP=`find_free_loop`
+
+    # user info
+    info "Using ${IMG_LOOP} to mount the root fs."
+
+    # map p1 to a loop device to ease operation
+    local OFFSET=`echo $((${ARMBIAN_IMG_OFFSET} * 512))`
+    sudo losetup -o "${OFFSET}" "${IMG_LOOP}" "${BASE_IMG}"
+}
+
+
+# root fs check
+function rootfs_check() {
+    # info
+    info "Starting a FS check"
+    sudo e2fsck -fpvD "${IMG_LOOP}"
+}
+
+
+# systemd unit settings
+function set_systemd_unit() {
+    # only one parameter: unit file type (manager | node)
+    # it will use the "${SKYMINER_MANAGER}" env var
+
+    # info
+    info "Setting Systemd unit service"
+
+    # local var
+    local UNITSDIR=${FS_MNT_POINT}${SKYWIRE_DIR}/static/script/upgrade/data
+
+    # copy the respective unit
+    sudo cp "${UNITSDIR}/skywire-${1}.service" ${FS_MNT_POINT}/etc/systemd/system/
+
+    # activate it
+    info "Activating Systemd unit services."
+    do_in_chroot systemctl enable skywire-${1}.service
+
+    # disable the manager when in node mode
+    if [ "$1" == "node" ] ; then
+        do_in_chroot systemctl disable skywire-manager
+    fi
 }
 
 
@@ -543,20 +642,23 @@ function main () {
     # fixed for armbian defaults
     fix_armian_defaults
 
+    # set manager network configuration
+    set_node_net "${SKYMINER_GATEWAY}" "${SKYMINER_MANAGER}"
+
+    # setup the systemd unit to start the services
+    set_systemd_unit "manager"
+
     # disable chroot
     disable_chroot
 
-    # ROADMAP
-    # 1 - debug an fix base system
-    # 2 - FS optimize, partition trim, disk trim
-    # 3 - Iterate from 2 to 9 building images (build-disk modded) 
-    # 4 - way of publish the images.
+    # build manager image
+    build_disk "manager"
 
-    # build test disk
-    build_disk
+    # now we iterate over the node's IP to build them
+    build_nodes
 
     # all good signal
-    info "All good so far"
+    info "Done"
 }
 
 

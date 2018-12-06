@@ -57,6 +57,11 @@ SKYCOIN_DIR=${GOPATH}/src/github.com/skycoin
 SKYWIRE_DIR=${SKYCOIN_DIR}/skywire
 SKYWIRE_GIT_URL="https://github.com/skycoin/skywire.git"
 
+# Skywire IP settings
+SKYMINER_GATEWAY="192.168.0.1"
+SKYMINER_MANAGER="192.168.0.2"
+SKYMINER_NODES="192.168.0.3 192.168.0.4 192.168.0.5 192.168.0.6 192.168.0.7 192.168.0.8 192.168.0.9"
+
 # dev paths and things
 # TODO remove references to it from final code.
 DEV_LOCAL_SKYWIRE="/home/pavel/Documentos/Software/Simelo/Github/simelo-skywire"
