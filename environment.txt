@@ -42,7 +42,7 @@ ARMBIAN_IMG_OFFSET="8192"
 # BASE_IMG.ROOTFS is the root fs we work with (ext4)
 BASE_IMG=${TIMAGE_DIR}/base_image
 # how much will we increase the original image in MB
-BASE_IMG_ADDED_SPACE=1024
+BASE_IMG_ADDED_SPACE=420
 IMG_LOOP=""
 
 # Go vars
