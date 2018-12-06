@@ -23,6 +23,12 @@ function info() {
 }
 
 
+# function to log messages as notices
+function notice() {
+    printf '\033[0;34m[ Notice ]\033[0m %s\n' "${1}"
+}
+
+
 # function to log messages as warnings
 function warn() {
     printf '\033[0;33m[ Warning ]\033[0m %s\n' "${1}"
@@ -121,7 +127,7 @@ function get_armbian() {
         # we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
-            warn "Old copy detected but you stated not to reuse it"
+            notice "Old copy detected but you stated not to reuse it"
             rm -f "armbian.7z" &> /dev/null
             
             # get it
@@ -129,7 +135,7 @@ function get_armbian() {
             download_armbian
         else
             # use already downloaded image fi;e
-            warn "Reusing already downloaded file"
+            notice "Reusing already downloaded file"
         fi
     fi
 
@@ -143,7 +149,7 @@ function get_armbian() {
     local LIMAGE=`ls | grep Orangepiprime | grep Armbian | grep -E ".*\.img$"`
     if [ ! -z "$LIMAGE" ] ; then
         # image already extracted nothing to do
-        warn "Armbian image already extracted"
+        notice "Armbian image already extracted"
     else
         # extract armbian
         info "Extracting image"
@@ -173,15 +179,15 @@ function get_armbian() {
 
     # imge integrity
     info "Image integrity assured via sha256sum."
-    info "Final image file is ${ARMBIAN_IMG}"
+    notice "Final image file is ${ARMBIAN_IMG}"
 
     # get version & kernel version info
     ARMBIAN_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $2 }'`
     ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
     
     # info to the user
-    warn "    Armbian version: ${ARMBIAN_VERSION}"
-    warn "    Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
+    notice "    Armbian version: ${ARMBIAN_VERSION}"
+    notice "    Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 }
 
 
@@ -224,14 +230,14 @@ function get_go() {
         # sure we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
-            warn "Golang archive present but you opt for not to reuse it"
+            notice "Golang archive present but you opt for not to reuse it"
             rm -f "*gz *html" &> /dev/null
 
             # now we get it
             download_go
         else
             # reuse the already downloaded file
-            warn "Using the already downloaded file as you commanded"
+            notice "Using the already downloaded file as you commanded"
         fi
     fi
 
@@ -399,11 +405,11 @@ function get_n_install_skywire() {
     # TODO remove references to dev things from final code.
     if [ "$LH" == "${DEV_PC}" ] ; then
         #  creating the dest folder
-        warn "DEV trick: Creating destination directory"
+        notice "DEV trick: Creating destination directory"
         mkdir -p "${DOWNLOADS_DIR}/skywire"
 
         # dev env no need to do the github job, get it locally
-        warn "DEV trick: Sync of the local skywire copy"
+        notice "DEV trick: Sync of the local skywire copy"
         rsync -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
     else
         # else where, download from github
@@ -616,6 +622,31 @@ function set_systemd_unit() {
 }
 
 
+# calculate md5 & sha1 sum for the images
+function calc_sums() {
+    # use md5sum & sha1sum bin
+    cd ${FINAL_IMG_DIR}
+
+    # vars
+    local LIST=`ls *.img | xargs`
+
+    # info
+    info "Calculating the md5sum for the images, this will take a while"
+
+    # MD5
+    md5sum -b ${LIST} > md5sum.md5
+
+    # info
+    info "Calculating the sha1sum for the images, this will take a while"
+
+    # SHA1
+    sha1sum -b ${LIST} > sha1sum.sha1
+
+    # done
+    info "Checksums done"
+}
+
+
 # main exec block
 function main () {
     # test for needed tools
@@ -660,6 +691,9 @@ function main () {
 
     # now we iterate over the node's IP to build them
     build_nodes
+
+    # calculate md5 & sha1 sum for the images
+    calc_sums
 
     # all good signal
     info "Done"
