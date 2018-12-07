@@ -295,7 +295,7 @@ function increase_image_size() {
     # copy the image here
     info "Preparing the Armbian image."
     rm "${BASE_IMG}" &> /dev/null
-    cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
+    mv "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
     
     # create the added space file
     info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image."
