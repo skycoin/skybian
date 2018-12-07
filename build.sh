@@ -698,19 +698,31 @@ function main () {
     # disable chroot
     disable_chroot
 
-    # build manager image
-    build_disk "manager"
+    # only build the images and push them to
+    # github/elsewhere if we are deploying a release
+    if [ "${1}" == "deploy" ] ; then
+        #  full build
+        notice "Full image builds, this will take a while..."
 
-    # now we iterate over the node's IP to build them
-    build_nodes
+        # build manager image
+        build_disk "manager"
 
-    # calculate md5 & sha1 sum for the images and compress it
-    calc_sums_compress
+        # deploy, now we iterate over the node's IP to build them
+        build_nodes
+
+        # calculate md5 & sha1 sum for the images and compress it
+        calc_sums_compress
+    else
+        # info
+        notice "Regular dev build: just the manager to test the engine."
+
+        # build manager image
+        build_disk "manager"
+    fi
 
     # all good signal
     info "Done"
 }
-
 
 # doit
 main
