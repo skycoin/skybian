@@ -50,7 +50,8 @@ function tool_test() {
         local BIN=`which ${t}`
         if [ -z "${BIN}" ] ; then
             # not found
-            error "Need tool '${t}' and it's not found on the system. Please install it and run the build script again."
+            error "Need tool '${t}' and it's not found on the system."
+            error "Please install it and run the build script again."
             exit 1
         fi
     done
@@ -65,7 +66,7 @@ function tool_test() {
 function create_folders() {
     # output [main folder]
     #   /final [this will be the final images dir]
-    #   /downloaded [all thing we download from the internet]
+    #   /downloads [all thing we download from the internet]
     #   /mnt [to mount resources, like img fs, etc]
     #   /timage [all image processing goes here]
 
@@ -83,6 +84,7 @@ function create_folders() {
     mkdir -p ${TIMAGE_DIR}
 
     # erase final images if there
+    warn "Cleaning final images directory"
     rm -f ${FINAL_IMG_DIR}/* &> /dev/null
 }
 
@@ -91,7 +93,10 @@ function create_folders() {
 function download_armbian() {
     # change to dest dir
     cd ${DOWNLOADS_DIR}/armbian
-    info "Downloading armbian from: ${ARMBIAN_OPPRIME_DOWNLOAD_URL}"
+
+    # info
+    info "Downloading armbian from:"
+    info "${ARMBIAN_OPPRIME_DOWNLOAD_URL}"
 
     # get it
     wget -c ${ARMBIAN_OPPRIME_DOWNLOAD_URL} -O 'armbian.7z'
@@ -125,11 +130,11 @@ function get_armbian() {
         # we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
-            notice "Old copy detected but you stated not to reuse it"
+            warn "Old copy detected but you stated not to reuse it"
             rm -f "armbian.7z" &> /dev/null
             
             # get it
-            info "Downloading.."
+            info "Downloading..."
             download_armbian
         else
             # use already downloaded image fi;e
@@ -141,7 +146,8 @@ function get_armbian() {
     ARMBIAN_IMG_7z="armbian.7z"
     
     # extract and check it's integrity
-    info "Armbian file to process is '${ARMBIAN_IMG_7z}'"
+    info "Armbian file to process is:"
+    info "'${ARMBIAN_IMG_7z}'"
 
     # check if extracted image is in there to save time
     local LIMAGE=`ls | grep Orangepiprime | grep Armbian | grep -E ".*\.img$"`
@@ -184,8 +190,8 @@ function get_armbian() {
     ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
     
     # info to the user
-    notice "    Armbian version: ${ARMBIAN_VERSION}"
-    notice "    Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
+    notice "Armbian version: ${ARMBIAN_VERSION}"
+    notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 }
 
 
@@ -221,20 +227,23 @@ function get_go() {
     # test if we have a file in there
     GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1`
     if [ -z "${GO_FILE}" ] ; then
+        # warn
+        notice "There is no already downloaded file, downloading it"
+
         # download it
         download_go
     else
         # sure we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
-            notice "Golang archive present but you opt for not to reuse it"
+            warn "Golang archive present but you opt for not to reuse it"
             rm -f "*gz *html" &> /dev/null
 
             # now we get it
             download_go
         else
             # reuse the already downloaded file
-            notice "Using the already downloaded file as you commanded"
+            notice "Using the already downloaded file"
         fi
     fi
 
@@ -243,7 +252,7 @@ function get_go() {
 
     # testing go file integrity
     info "Test downloaded file for integrity"
-    `which gzip` -kqt ${GO_FILE}
+    gzip -kqt ${GO_FILE}
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
@@ -275,7 +284,7 @@ function find_free_loop() {
 # Increase the image size
 function increase_image_size() {
     # Armbian image is tight packed, and we need room for adding our
-    # bins, apps & configs, so will make it bigger
+    # bins, apps & configs, so we will make it bigger
 
     # move to correct dir
     cd ${TIMAGE_DIR}
@@ -289,17 +298,8 @@ function increase_image_size() {
     cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
     
     # create the added space file
-    info "Adding ${BASE_IMG_ADDED_SPACE}MB of a extra space to the image."
+    info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image."
     truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
-
-    # # add free space to the part 1 (parted way)
-    # local NSIZE=`env LANG=C parted "${BASE_IMG}" print all | grep Disk | grep MB | awk '{print $3}'`
-    # echo "p
-    # resizepart
-    # 1
-    # ${NSIZE}
-    # p
-    # q" | env LANG=C parted "${BASE_IMG}"
 
     # add free space to the part 1 (sfdisk way)
     echo ", +" | sfdisk -N1 "${BASE_IMG}"
@@ -329,8 +329,6 @@ function build_disk() {
     # info
     info "Building image for ${NAME}"
 
-    # TODO: disk size trim
-
     # force a FS sync
     info "Forcing a fs rsync to umount the real fs"
     sudo sync
@@ -341,6 +339,12 @@ function build_disk() {
 
     # check integrity & fix minor errors
     rootfs_check
+
+    # TODO [TEST]
+    # shrink the partition to a minimum size
+    # sudo resize2fs -M "${IMG_LOOP}"
+    # 
+    # shrink the partition
 
     # force a FS sync
     info "Forcing a fs rsync to umount the loop device"
@@ -448,6 +452,7 @@ function enable_chroot() {
     sudo cp ${AARM64} ${FS_MNT_POINT}/usr/bin/
 
     # some required mounts
+    info "Mapping special mounts inside the chroot" 
     sudo mount -t sysfs none ${FS_MNT_POINT}/sys
     sudo mount -t proc none ${FS_MNT_POINT}/proc
     sudo mount --bind /dev ${FS_MNT_POINT}/dev
@@ -593,7 +598,7 @@ function setup_loop() {
 function rootfs_check() {
     # info
     info "Starting a FS check"
-    sudo e2fsck -fpvD "${IMG_LOOP}"
+    sudo e2fsck -fpD "${IMG_LOOP}"
 }
 
 
@@ -608,17 +613,15 @@ function set_systemd_unit() {
     # local var
     local UNITSDIR=${FS_MNT_POINT}${SKYWIRE_DIR}/static/script/upgrade/data
 
-    # copy the respective unit
+    # silently remove all units
+    sudo rm ${FS_MNT_POINT}/etc/systemd/system/skywire*.service &>/dev/null
+
+    # copy only the respective unit
     sudo cp "${UNITSDIR}/skywire-${1}.service" ${FS_MNT_POINT}/etc/systemd/system/
 
     # activate it
     info "Activating Systemd unit services."
     do_in_chroot systemctl enable skywire-${1}.service
-
-    # disable the manager when in node mode
-    if [ "$1" == "node" ] ; then
-        do_in_chroot systemctl disable skywire-manager
-    fi
 }
 
 
