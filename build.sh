@@ -83,7 +83,7 @@ function create_folders() {
     mkdir -p ${TIMAGE_DIR}
 
     # erase final images if there
-    rm -f ${FINAL_IMG_DIR}/*img &> /dev/null
+    rm -f ${FINAL_IMG_DIR}/* &> /dev/null
 }
 
 
@@ -198,7 +198,6 @@ function download_go() {
     info "Getting golang from the internet"
     wget -c "${GO_ARM64_URL}"
 
-    # TODO trap this
     # check for correct download
     if [ $? -ne 0 ] ; then
         error "Can't get the file, re-run the script to get it right."
@@ -324,8 +323,11 @@ function build_disk() {
     # move to correct dir
     cd ${TIMAGE_DIR}
 
+    # final name
+    local NAME="Skybian-${VERSION}_${1}"
+
     # info
-    info "Building image for skybian_${1}"
+    info "Building image for ${NAME}"
 
     # TODO: disk size trim
 
@@ -350,10 +352,10 @@ function build_disk() {
 
     # copy the image to final dir.
     info "Copy the image to final dir"
-    cp "${BASE_IMG}" "${FINAL_IMG_DIR}/skybian_${1}.img"
+    cp "${BASE_IMG}" "${FINAL_IMG_DIR}/${NAME}.img"
 
     # info
-    info "Image for skybian_${1} ready"
+    info "Image for ${NAME} ready"
 }
 
 
@@ -546,7 +548,7 @@ function build_nodes() {
         local n=`echo $nip | awk -F '.' '{ n = $4-2 ; print n }'`
 
         # info
-        info "Starting to build node_$n ($nip)"
+        info "Starting to build node$n ($nip)"
         
         # setup loop device and root fscheck
         setup_loop
@@ -568,7 +570,7 @@ function build_nodes() {
         disable_chroot
 
         # build image file (umounts & free the loop)
-        build_disk "node_$n"
+        build_disk "node$n"
     done
 }
 
@@ -620,9 +622,9 @@ function set_systemd_unit() {
 }
 
 
-# calculate md5 & sha1 sum for the images
-function calc_sums() {
-    # use md5sum & sha1sum bin
+# calculate md5, sha1 and compress
+function calc_sums_compress() {
+    # change to final dest
     cd ${FINAL_IMG_DIR}
 
     # vars
@@ -631,17 +633,26 @@ function calc_sums() {
     # info
     info "Calculating the md5sum for the images, this will take a while"
 
-    # MD5
-    md5sum -b ${LIST} > md5sum.md5
+    # cycle for each one
+    for img in ${LIST} ; do
+        # MD5
+        info "MD5 Sum for image: $img"
+        md5sum -b ${img} > ${img}.md5
 
-    # info
-    info "Calculating the sha1sum for the images, this will take a while"
+        # sha1
+        info "SHA1 Sum for image: $img"
+        md5sum -b ${img} > ${img}.sha1
 
-    # SHA1
-    sha1sum -b ${LIST} > sha1sum.sha1
+        # compress
+        info "Compress it..."
+        local name=`echo ${img} | awk -F '_' '{ print $2 }' | awk -F '.' '{ print $1 }'`
+        tar -cvf ${name}.tar ${img}*
+        xz -vzT0 ${name}.tar
 
-    # done
-    info "Checksums done"
+        # remove files
+        warn "Removing old files"
+        rm ${img} ${img}.md5 ${img}.sha1
+    done
 }
 
 
@@ -690,8 +701,8 @@ function main () {
     # now we iterate over the node's IP to build them
     build_nodes
 
-    # calculate md5 & sha1 sum for the images
-    calc_sums
+    # calculate md5 & sha1 sum for the images and compress it
+    calc_sums_compress
 
     # all good signal
     info "Done"
