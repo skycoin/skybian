@@ -22,11 +22,6 @@ function info() {
 # inside the chroot, for example to install/remove additional pkgs
 # or execute some bash commands
 
-# switch to OpenDNS for DNS
-info "Setting OpenDNS DNS servers"
-echo "nameserver 1.0.0.1" > /etc/resolv.conf
-echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-
 # by default update the es_US locales
 info "Re-generating the locales info for en_US.UTF-8"
 locale-gen en_US.UTF-8

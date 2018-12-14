@@ -295,7 +295,7 @@ function increase_image_size() {
     # copy the image here
     info "Preparing the Armbian image."
     rm "${BASE_IMG}" &> /dev/null
-    mv "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
+    cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
     
     # create the added space file
     info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image."
@@ -316,15 +316,13 @@ function increase_image_size() {
 }
 
 
-# build disk, take the name of the particular node as an argument
+# build disk
 function build_disk() {
-    # just one argument: node particular name
-
     # move to correct dir
     cd ${TIMAGE_DIR}
 
     # final name
-    local NAME="Skybian-${VERSION}_${1}"
+    local NAME="Skybian-${VERSION}"
 
     # info
     info "Building image for ${NAME}"
@@ -519,64 +517,14 @@ function fix_armian_defaults() {
     sudo cp ${ROOT}/static/10-skybian-header ${FS_MNT_POINT}/etc/update-motd.d/
     sudo chmod +x ${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header
     sudo cp -f ${ROOT}/static/armbian-motd ${FS_MNT_POINT}/etc/default
-}
 
-
-# set node network configuration
-function set_node_net() {
-    # set a node IP config, takes to arguments
-    # $1 = Gateway
-    # $2 = IP
-    # see environment.txt file to change it if needed
-
-    # info
-    info "Setting node ${2} networking settings"
-
-    # set correct manager IP
-    # set default gateway on the network interfaces
-    cat ${ROOT}/static/eth0 | \
-        sed s/"DEFAULTIP"/"$2"/ | \
-        sed s/"DEFAULTGW"/"$1"/ > \
-        /tmp/eth0
-    sudo cp /tmp/eth0 ${FS_MNT_POINT}/etc/network/interfaces.d/
-}
-
-
-# build node's images
-function build_nodes() {
-    # iterate over the list of nodes to build and config them
-    # then build the image
-
-    # main cycle
-    for nip in ${SKYMINER_NODES} ; do
-        # vars
-        local n=`echo $nip | awk -F '.' '{ n = $4-2 ; print n }'`
-
-        # info
-        info "Starting to build node$n ($nip)"
-        
-        # setup loop device and root fscheck
-        setup_loop
-        rootfs_check
-
-        # mount the base image
-        img_mount
-
-        # setup chroot
-        enable_chroot
-
-        # set the node IP
-        set_node_net "${SKYMINER_GATEWAY}" "$nip"
-        
-        # install systemd unit files/service
-        set_systemd_unit "node"
-
-        # disable chroot
-        disable_chroot
-
-        # build image file (umounts & free the loop)
-        build_disk "node$n"
-    done
+    # copy config files
+    info "Copy and set of the default config files"
+    sudo cp ${ROOT}/static/skybian.conf ${FS_MNT_POINT}/etc/
+    sudo cp ${ROOT}/static/skybian-config ${FS_MNT_POINT}/usr/local/bin/
+    sudo chmod +x ${FS_MNT_POINT}/usr/local/bin/skybian-config
+    sudo cp ${ROOT}/static/skybian-config.service ${FS_MNT_POINT}/etc/systemd/system/
+    do_in_chroot systemctl enable skybian-config.service
 }
 
 
@@ -634,7 +582,7 @@ function calc_sums_compress() {
     local LIST=`ls *.img | xargs`
 
     # info
-    info "Calculating the md5sum for the images, this will take a while"
+    info "Calculating the md5sum for the image, this may take a while"
 
     # cycle for each one
     for img in ${LIST} ; do
@@ -689,36 +637,14 @@ function main () {
     # fixed for armbian defaults
     fix_armian_defaults
 
-    # set manager network configuration
-    set_node_net "${SKYMINER_GATEWAY}" "${SKYMINER_MANAGER}"
-
     # setup the systemd unit to start the services
     set_systemd_unit "manager"
 
     # disable chroot
     disable_chroot
 
-    # only build the images and push them to
-    # github/elsewhere if we are deploying a release
-    if [ "${1}" == "deploy" ] ; then
-        #  full build
-        notice "Full image builds, this will take a while..."
-
-        # build manager image
-        build_disk "manager"
-
-        # deploy, now we iterate over the node's IP to build them
-        build_nodes
-
-        # calculate md5 & sha1 sum for the images and compress it
-        calc_sums_compress
-    else
-        # info
-        notice "Regular dev build: just the manager to test the engine."
-
-        # build manager image
-        build_disk "manager"
-    fi
+    # build manager image
+    build_disk
 
     # all good signal
     info "Done"

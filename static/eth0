@@ -1,8 +1,0 @@
-# configuration file for the eth0 network device
-# default skyminer manager config here (and base for the miners)
-
-auto eth0
-iface eth0 inet static
-    address DEFAULTIP
-    netmask 255.255.255.0
-    gateway DEFAULTGW
