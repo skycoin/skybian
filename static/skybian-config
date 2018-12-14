@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# This script has the duty of configure the skybian OS with network 
+# parameters and skywire settings
+#
+# Crafted by skycoin/simelo team
+
+# check if the config file is in there
+if [ -f "/etc/skybian.conf" ] ; then
+	# load it
+	. /etc/skybian.conf
+else
+	# no configuration found
+	echo "No configuration found on fs, looking on uSD blank space"
+
+	# TODO, nothing by now, just exit
+	exit 0
+fi
+
+
+# function to check if the configured net is there and if the IP is set
+function check_net() {
+    # this return true if network is set adn same
+    # or false if net is not configured or with different ip
+    local SKYNET=`nmcli con show | grep skynet`
+    if [ -n "$SKYNET" ] ; then
+        # skynet is there, test the IP
+        local SKYIP=`nmcli con show skynet | grep IP4.ADDRESS | awk '{ print $2 }'`
+
+	    # test it
+        if [ "$SKYIP" == "$IP/24" ] ; then
+            # same ip
+            echo 1
+        else
+            # diff ip
+            echo 0
+        fi
+
+        # erase the default created connection in NM for the eth0 interface
+        nmcli con delete "Wired connection 1" &> /dev/null
+    else
+        # no skynet network
+        echo 0
+    fi
+}
+
+
+# checking if config is ok.
+NETOK=`check_net`
+if [ "$NETOK" == "1" ] ; then
+	# same net
+	echo "Net already configured, exiting..."
+	exit 0
+else
+	# not configured or different
+	echo "Not configured or different, fixing that"
+
+	# erasing it by force, with no complain
+	nmcli con delete skynet &> /dev/null
+
+	# setting it up
+	nmcli con add con-name skynet ifname eth0 type ethernet ip4 $IP/24 gw4 $GW
+	nmcli con mod skynet ipv4.dns "$DNS"
+fi
