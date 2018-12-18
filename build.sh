@@ -590,7 +590,7 @@ function calc_sums_compress() {
         md5sum -b ${img} > ${img}.sha1
 
         # compress
-        info "Compress it..."
+        info "Compressing, this will take a while..."
         local name=`echo ${img} | awk -F '_' '{ print $2 }' | awk -F '.' '{ print $1 }'`
         tar -cvf ${name}.tar ${img}*
         xz -vzT0 ${name}.tar
@@ -640,6 +640,9 @@ function main () {
 
     # build manager image
     build_disk
+
+    # sums and compress
+    calc_sums_compress 
 
     # all good signal
     info "Done"
