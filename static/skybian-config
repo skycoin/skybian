@@ -140,22 +140,22 @@ if [ "$MODE" == "manager" ] ; then
     # we are on a manager
 	echo "Starting Skywire as a manager"
 	# setup & start
-	systemctl enable skywire-manager.services
-	systemctl stop skywire-node.services
-	systemctl disable skywire-node.services
+	systemctl enable skywire-manager
+	systemctl stop skywire-node
+	systemctl disable skywire-node
 	# short pause
 	sleep 2
 	# start as needed
-	systemctl start skywire-manager.services
+	systemctl start skywire-manager
 else
     # we are on a node
 	echo "Starting Skywire as a node"
 	# setup & start
-	systemctl enable skywire-node.services
-	systemctl stop skywire-manager.services
-	systemctl disable skywire-manager.services
+	systemctl enable skywire-node
+	systemctl stop skywire-manager
+	systemctl disable skywire-manager
 	# short pause
 	sleep 2
 	# start as needed
-	systemctl start skywire-node.services
+	systemctl start skywire-node
 fi
