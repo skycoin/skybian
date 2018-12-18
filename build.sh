@@ -523,8 +523,9 @@ function fix_armian_defaults() {
     sudo cp ${ROOT}/static/skybian.conf ${FS_MNT_POINT}/etc/
     sudo cp ${ROOT}/static/skybian-config ${FS_MNT_POINT}/usr/local/bin/
     sudo chmod +x ${FS_MNT_POINT}/usr/local/bin/skybian-config
-    sudo cp ${ROOT}/static/skybian-config.service ${FS_MNT_POINT}/etc/systemd/system/
-    do_in_chroot systemctl enable skybian-config.service
+
+    # clean any old/temp skywire work dir
+    rm -rdf ${FS_MNT_POINT}/root/.skywire > /dev/null
 }
 
 
@@ -550,26 +551,23 @@ function rootfs_check() {
 }
 
 
-# systemd unit settings
-function set_systemd_unit() {
-    # only one parameter: unit file type (manager | node)
-    # it will use the "${SKYMINER_MANAGER}" env var
-
+# systemd units settings
+function set_systemd_units() {
     # info
-    info "Setting Systemd unit service"
+    info "Setting Systemd unit services"
 
     # local var
     local UNITSDIR=${FS_MNT_POINT}${SKYWIRE_DIR}/static/script/upgrade/data
-
-    # silently remove all units
-    sudo rm ${FS_MNT_POINT}/etc/systemd/system/skywire*.service &>/dev/null
+    local SYSTEMDDIR=${FS_MNT_POINT}/etc/systemd/system/
 
     # copy only the respective unit
-    sudo cp "${UNITSDIR}/skywire-${1}.service" ${FS_MNT_POINT}/etc/systemd/system/
+    sudo cp -f "${UNITSDIR}/skywire-manager.service" ${SYSTEMDDIR}
+    sudo cp -f "${UNITSDIR}/skywire-node.service" ${SYSTEMDDIR}
+    sudo cp -f ${ROOT}/static/skybian-config.service ${SYSTEMDDIR}
 
     # activate it
     info "Activating Systemd unit services."
-    do_in_chroot systemctl enable skywire-${1}.service
+    do_in_chroot systemctl enable skybian-config.service
 }
 
 
@@ -595,7 +593,7 @@ function calc_sums_compress() {
         md5sum -b ${img} > ${img}.sha1
 
         # compress
-        info "Compress it..."
+        info "Compressing, this will take a while..."
         local name=`echo ${img} | awk -F '_' '{ print $2 }' | awk -F '.' '{ print $1 }'`
         tar -cvf ${name}.tar ${img}*
         xz -vzT0 ${name}.tar
@@ -638,13 +636,16 @@ function main () {
     fix_armian_defaults
 
     # setup the systemd unit to start the services
-    set_systemd_unit "manager"
+    set_systemd_units
 
     # disable chroot
     disable_chroot
 
     # build manager image
     build_disk
+
+    # sums and compress
+    calc_sums_compress 
 
     # all good signal
     info "Done"
