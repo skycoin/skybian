@@ -523,6 +523,9 @@ function fix_armian_defaults() {
     sudo cp ${ROOT}/static/skybian.conf ${FS_MNT_POINT}/etc/
     sudo cp ${ROOT}/static/skybian-config ${FS_MNT_POINT}/usr/local/bin/
     sudo chmod +x ${FS_MNT_POINT}/usr/local/bin/skybian-config
+
+    # clean any old/temp skywire work dir
+    rm -rdf ${FS_MNT_POINT}/root/.skywire > /dev/null
 }
 
 
