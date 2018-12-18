@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script has the duty of configure the skybian OS with network 
-# parameters and skywire settings
+# parameters and skywire settings on boot time from uSD or config file
 #
 # Crafted by skycoin/simelo team
 
@@ -20,7 +20,7 @@ fi
 
 # function to check if the configured net is there and if the IP is set
 function check_net() {
-    # this return true if network is set adn same
+    # this return true if network is set and same
     # or false if net is not configured or with different ip
     local SKYNET=`nmcli con show | grep skynet`
     if [ -n "$SKYNET" ] ; then
@@ -36,6 +36,7 @@ function check_net() {
             echo 0
         fi
 
+        # no skynet connection, so need to clean the default one
         # erase the default created connection in NM for the eth0 interface
         nmcli con delete "Wired connection 1" &> /dev/null
     else
@@ -49,8 +50,7 @@ function check_net() {
 NETOK=`check_net`
 if [ "$NETOK" == "1" ] ; then
 	# same net
-	echo "Net already configured, exiting..."
-	exit 0
+	echo "Net already configured..."
 else
 	# not configured or different
 	echo "Not configured or different, fixing that"
@@ -62,3 +62,19 @@ else
 	nmcli con add con-name skynet ifname eth0 type ethernet ip4 $IP/24 gw4 $GW
 	nmcli con mod skynet ipv4.dns "$DNS"
 fi
+
+
+# goal is to remove actual unit instances of skywier
+function disable_skywire_unit() {
+    # just one argument: manager or node.
+    systemctl disable 
+}
+
+
+# check to see if we are a manager or a node.
+if [ "$MODE" == "manager" ] ; then
+    # we are on a manager, check the systemd unit for it
+else
+    # we are on a node
+
+fi 
