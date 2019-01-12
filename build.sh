@@ -590,17 +590,13 @@ function calc_sums_compress() {
 
         # sha1
         info "SHA1 Sum for image: $img"
-        md5sum -b ${img} > ${img}.sha1
+        sha1sum -b ${img} > ${img}.sha1
 
         # compress
         info "Compressing, this will take a while..."
-        local name=`echo ${img} | awk -F '_' '{ print $2 }' | awk -F '.' '{ print $1 }'`
+        local name=`echo ${img} | rev | cut -d '.' -f 2- | rev`
         tar -cvf ${name}.tar ${img}*
         xz -vzT0 ${name}.tar
-
-        # remove files
-        warn "Removing old files"
-        rm ${img} ${img}.md5 ${img}.sha1
     done
 }
 
