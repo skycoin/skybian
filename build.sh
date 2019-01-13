@@ -309,9 +309,16 @@ function increase_image_size() {
 
     # resize to gain space
     info "Make rootfs bigger"
-    sudo resize2fs "${IMG_LOOP}"
 
     # check fs
+    info "Routine fsck"
+    rootfs_check
+
+    # do the resize
+    info "Actual FS resize"
+    sudo resize2fs "${IMG_LOOP}"
+
+    # check fs, again
     rootfs_check
 }
 
