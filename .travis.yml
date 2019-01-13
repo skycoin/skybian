@@ -23,4 +23,5 @@ deploy:
   on:
     repo: simelo/skybian
     branch: develop
-    tags: true
+    # tags: true
+    draft: true
