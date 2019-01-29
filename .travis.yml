@@ -22,6 +22,6 @@ deploy:
   overwrite: true
   on:
     repo: simelo/skybian
-    branch: master
+    branch: release
     tags: true
     draft: true
