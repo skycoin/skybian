@@ -2,13 +2,13 @@
 
 # This is the main script to build the Skybian OS for Skycoin miners.
 #
-# Author: stdevPavelmc@github.com, @co7wt in telegram
-# Skycoin / Simelo teams
+# Author: stdevPavelmc@github.com, @pavelmc in telegram
+# Skycoin / Simelo team
 #
 
 # loading env variables, ROOT is the base path on top all is made
 ROOT=`pwd`
-. ${ROOT}/environment.txt
+. ${ROOT}/build.conf
 
 ##############################################################################
 # This bash file is structured as functions with specific tasks, to see the
