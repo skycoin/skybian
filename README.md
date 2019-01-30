@@ -20,6 +20,8 @@ We follow a few simple guidelines to archive our goal:
 * The scripts & tests must be fully automatic to integrate with other tools, to ease the dev cycle (travis 'et al')
 * All non-workspace related files and binaries (beside final images) is not covered on the repository (or it will grow 'ad infinitum' with useless data)
 
+You can take explained build process on [this article](Building_skybian.md).
+
 ## Where is the data
 
 When you run the build.sh script it will create a ```output``` directory with all the relevant data on it, we fetch all needed tools from the internet; that's it.
