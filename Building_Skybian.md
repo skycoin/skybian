@@ -18,7 +18,7 @@ On the first run of the script, it will create a folder called `output` with the
 The script will check for the existence in your system of all the needed tools, the tools are listed in the `build.conf` file in the `NEEDED_TOOLS` variable; if one of them is not installed the script will stop and complain, you can install them all in any debian like system with this command:
 
 ```sh
-sudo apt update && sudo apt install rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static
+sudo apt update && sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
 ```
 
 Then it will create the output folder and it's internal structure if not in place already
