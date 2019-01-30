@@ -20,7 +20,7 @@ We follow a few simple guidelines to archive our goal:
 * The scripts & tests must be fully automatic to integrate with other tools, to ease the dev cycle (travis 'et al')
 * All non-workspace related files and binaries (beside final images) is not covered on the repository (or it will grow 'ad infinitum' with useless data)
 
-You can take explained build process on [this article](Building_skybian.md).
+You can take explained build process on [this document](Building_Skybian.md).
 
 ## Where is the data
 
