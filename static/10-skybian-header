@@ -1,0 +1,24 @@
+#!/bin/bash
+#
+# Based on 10-armbian-header file
+#
+
+THIS_SCRIPT="header-skybian"
+MOTD_DISABLE=""
+
+[[ -f /etc/default/armbian-motd ]] && . /etc/default/armbian-motd
+
+for f in $MOTD_DISABLE; do
+	[[ $f == $THIS_SCRIPT ]] && exit 0
+done
+
+. /etc/os-release
+. /etc/armbian-release
+
+KERNELID=$(uname -r)
+
+# skybian skycoin main miner OS
+TERM=linux toilet -f standard -F metal "     >> Skybian <<"
+
+printf '\n\033[0;32mWelcome to Skybian, the Official miner OS for Skycoin on the %s\x1B[0m' "$BOARD_NAME"
+printf '\nBased on \e[0;91mARMBIAN\x1B[0m %s %s %s %s\n' "$VERSION $IMAGE_TYPE $PRETTY_NAME $KERNELID"
