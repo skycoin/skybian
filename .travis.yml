@@ -15,13 +15,14 @@ notifications:
 
 deploy:
   provider: releases
-  api_key:
-    secure: iqmt0/JGzw+QXQwth/gla1M6KA0aOgYuCQEBjaRMNmtLAJn96Nn6qWGvbubrrjlcEPGNC1S6r2fx1MkPz+MvoOpGWohQ3Jxr+5+kARmNa2GlxuaLJpH5VNqqpVswGWrqrwOYV5NzdrPxnq4dXX8rFaeHAL1XykFzIxLQqadzr1inBknuhSY6vaqCawXLC+2+H7J4wvGSyw6o3G0LGBEljAxYeBVRHuDXOnP3XfooRQLw/brqIm9d1ZGhaBqNN22qiBqCuvEjvFGQf27YCzIad6oyU0zdsvvauZRKzosCBqEW353Ww6HOIrAaZW98U6GdWkFAqzB4vDznrQUu9ybiDyQTIuK/yYrA7kGM5R2Vi7ZGoR6qatF005vZhqjXQP5GH7TcTCOiZeYyyR91cF66Bf7Olxjs0UloiBYZWNUZ7E99VkJ7S/8hiYr+epSjdHdF9KmLY7GTp7iBq0aV89MCgz6LNYBd3Yoh1Ll/72WYwomaeAAg32K6Z7yFPym+3lMQ4h7SY4QAmHrQKr/qD3gJZTlBWsl/i/R8+6lcRZ5napSJJiS3knToEJMs9Y3N+grk04C3Xtigy3to7XLXSIseVYa2aLf1DtPKi3Nti2IHjOvYhR9pU5hfo272zNb3bfpBLLoMR4FqFquphPYT/X0Saakv7zQ3/EoUEcdcUqOMIqg=
+  user: stdevPavelmc
+  password:
+    secure: kQ+WkYUjptHIulwBBuGX4DHctxVRiNQqQ/t6FHheN+q1iRnALJfltNF/eNQKQfOay9Mn3cfSrlnOVW70IxYptz4BtMrVxq610MUmjVO9/mTNlQv0ZU6fF1IFa+B3roL4qXS8Hnln+PUKFlAzPTuSUv5D2OKvI3fOFeRoW0TaaShJJit2c9Xg5cTD8NlKPtv1DKLgdA1bml3oHOR3ZXmzfuIiTfP+l1wDAb/e104V3B4WJkDi7aSiCwZqXRYby0KUpmr2VSvgr7t324c7UGyTlGiWxdkuvcagS200m6hkeMF/d1Hga30+tx6RStVfWWHA+0DSunA2ZAp4dWlnFrrYCvUGINDDG4WQ+S/rPSgCY8S06qtsXpNux1tIW+iHzDs8ht/SCO76YCduEpHFjOvqiXs3TJdgl9l8wDOatL5Cc34xaf8nQNlYLcgA7oBKAxArzoDFL8/bmLhTyTw651f9Ru3kDAgPOQeLjzuhJfUA9AacfeXVbbtcEns6C1wNPWs2g3+C+pzZuQbrTqKzlAQwgfqF5vqJrYDbVqiL0F0zFzjlr8Klik6y1gBpMHw4LGksX8QC61EFCFEdSjZ9o+lfdlpoUVw/NvF8Paha4gvd4APufK+OdFWaQdLeAdVkyefYuh6kqQpIJlYbw9W4jm7soiBqaBNuL7dQYyA7+C6gitI=
   file_glob: true
   file: output/final/*.xz
   skip_cleanup: true
   overwrite: true
   on:
     all_branches: true
-    condition: $TRAVIS_BRANCH =~ ^master|release$
+    condition: "$TRAVIS_BRANCH =~ ^master|release$"
     draft: true
