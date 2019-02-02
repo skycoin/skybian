@@ -18,10 +18,11 @@ Use this tags to keep track of the changes:
 Dates must be YEAR-MONTH-DAY
 -->
 
-## Unreleased (0.1.0-alpha) - 2019-01-30
+## Unreleased (0.0.3) - 2019-02-02
 
 ### Added
 
+- First working version of Skybian
 - Explanatory document about the build process: [Build_Skybian.md](Build_Skybian.md)
 - This CHANGELOG file
 
@@ -30,3 +31,4 @@ Dates must be YEAR-MONTH-DAY
 - Renamed the environment.txt file to build.conf to better represent that it is a configuration file.
 - Travis yml build and deploy instructions update to match git flow logic.
 - Updated README.md with a comment on the build process on the [Build_Skybian.md](Build_Skybian.md) file.
+- Versioning of skybian will match the skywire ones, starting with 0.0.3

@@ -55,10 +55,15 @@ To do a release you must follow these steps:
 0. Wait for travis to validate all the changes (can take more than 30 minutes)
 0. On success, tag the code at this point with `release-X.Y.Z-rc`, then wait for travis completion and check the draft release is published on the repository with the Skybian-X.Y.Z-rc.tar.xz file.
 0. Download the Skybian-X.Y.Z-rc.tar.xz file from Github and test manually that Skyflash can work with it and generate the images for the default values.
+0. If problems are found with skyflash raise issues where needed (skyflash/skybian) and fix them before continue with the next step
 0. Test the generated images in real hardware (a manager and two nodes at least) to detect any issues.
 0. Fix any issues if found (work in the release branch)
-0. After all this is solved and work as expected, raise a PR against master branch and merge it, then tag it as `Skybian-X.Y.Z` that will trigger travis.
+0. After all problems are solved and work as expected, raise a PR against master branch and merge it, then tag it as `Skybian-X.Y.Z` that will trigger travis.
 0. Wait for travis completion and check the Skybian-X.Y.Z.tar.xz file is published on the Github repository under releases.
-0. Comment the release with the changes in CHANGELOG.md that match this release.
+0. Edit & comment the release with the changes in CHANGELOG.md that match this release.
 0. Merge master into develop.
-0. Raise an issue on skycoin/skyflash about the new release, this is in order to update the download URL of the skyflash tool.
+0. Check if there is needed to raise issues & PR on the following repositories:
+
+    * [Skyflash](https://github.com/skycoin/skyflash): to update it's README.md and code for the final Skybian release URL.
+    * [Skycoin](https://github.com/skycoin/skycoin): mentions in it's README.md and elsewhere if applicable
+    * [Skywire](https://github.com/skycoin/skywire): to note the new release and the use of skybian/skyflash
