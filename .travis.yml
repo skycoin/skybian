@@ -22,5 +22,4 @@ deploy:
   draft: true
   skip_cleanup: true
   on:
-    all_branches: true
-    condition: "$TRAVIS_BRANCH =~ ^master|release$"
+    tags: true
