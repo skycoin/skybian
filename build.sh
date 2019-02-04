@@ -2,13 +2,13 @@
 
 # This is the main script to build the Skybian OS for Skycoin miners.
 #
-# Author: stdevPavelmc@github.com, @co7wt in telegram
-# Skycoin / Simelo teams
+# Author: stdevPavelmc@github.com, @pavelmc in telegram
+# Skycoin / Simelo team
 #
 
 # loading env variables, ROOT is the base path on top all is made
 ROOT=`pwd`
-. ${ROOT}/environment.txt
+. ${ROOT}/build.conf
 
 ##############################################################################
 # This bash file is structured as functions with specific tasks, to see the
@@ -16,6 +16,26 @@ ROOT=`pwd`
 # function to see how they integrate to do the  whole job.
 ##############################################################################
 
+# Capturing arguments to show help
+if [ "$1" == "-h" -o "$1" == "--help" ] ; then
+    # show help
+    cat << EOF
+
+$0, Skybian build script.
+
+This script builds the Skybian base OS to be used on the Skycoin
+official Skyminers, there is no parameters to the script.
+
+To know more about the script work, please refers to the file
+called Building_Skybian.md on this folder.
+
+Latest code can be found on https://github.com/skycoin/skybian
+
+EOF
+
+    # exit
+    exit 0
+fi
 
 # function to log messages as info
 function info() {
