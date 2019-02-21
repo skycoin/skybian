@@ -118,8 +118,8 @@ cat /etc/default/skywire | grep -v "MANAGER_IP" | \
 cp -f /tmp/skywire.default $SKYWIRE_UNIX_SCRIPTS/skywire.defaults
 
 ## Enable and start systemd services based on node type
-if [ "$MODE" == "master" ] ; then
-	echo "Starting as a Skywire-Master node"
+if [ "$MODE" == "manager" ] ; then
+	echo "Starting as a Skywire-Manager node"
 	systemctl enable skywire-manager
 	systemctl stop skywire-node
 	systemctl disable skywire-node
