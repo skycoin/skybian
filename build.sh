@@ -6,6 +6,9 @@
 # Skycoin / Simelo team
 #
 
+# Fail on any error
+set -eo pipefail
+
 # loading env variables, ROOT is the base path on top all is made
 ROOT=`pwd`
 . ${ROOT}/build.conf
