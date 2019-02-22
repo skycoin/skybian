@@ -16,12 +16,11 @@ notifications:
 deploy:
   provider: releases
   api_key:
-    secure: iqmt0/JGzw+QXQwth/gla1M6KA0aOgYuCQEBjaRMNmtLAJn96Nn6qWGvbubrrjlcEPGNC1S6r2fx1MkPz+MvoOpGWohQ3Jxr+5+kARmNa2GlxuaLJpH5VNqqpVswGWrqrwOYV5NzdrPxnq4dXX8rFaeHAL1XykFzIxLQqadzr1inBknuhSY6vaqCawXLC+2+H7J4wvGSyw6o3G0LGBEljAxYeBVRHuDXOnP3XfooRQLw/brqIm9d1ZGhaBqNN22qiBqCuvEjvFGQf27YCzIad6oyU0zdsvvauZRKzosCBqEW353Ww6HOIrAaZW98U6GdWkFAqzB4vDznrQUu9ybiDyQTIuK/yYrA7kGM5R2Vi7ZGoR6qatF005vZhqjXQP5GH7TcTCOiZeYyyR91cF66Bf7Olxjs0UloiBYZWNUZ7E99VkJ7S/8hiYr+epSjdHdF9KmLY7GTp7iBq0aV89MCgz6LNYBd3Yoh1Ll/72WYwomaeAAg32K6Z7yFPym+3lMQ4h7SY4QAmHrQKr/qD3gJZTlBWsl/i/R8+6lcRZ5napSJJiS3knToEJMs9Y3N+grk04C3Xtigy3to7XLXSIseVYa2aLf1DtPKi3Nti2IHjOvYhR9pU5hfo272zNb3bfpBLLoMR4FqFquphPYT/X0Saakv7zQ3/EoUEcdcUqOMIqg=
-  file: output/final/*.tar.xz
+    secure: mk0/aqvi4ky8RQ8h6vG+cw+wXHfLGyF8NmEigLuVtVbL5jz7zpvuO5i9HQkvsgNj7cXjUY2beepM17aF+LroLZUe21zpuhGib4k5rP9/Jxy8LBxIKMZZWg7HFqt5A29yAU4dYqPvV4Mig2nh0X1/HDcmnLLS8q1MFBPc655Sv//UERvlavvfXCL8rMjC+cX07eJoHpGJfyG+n6c6PiMKSnQ1sxjb1HADjP5HxdPHPl9BiKGkmKG2f92SKuR4FH5IfutcMWaCH+uSwzoE8RvqAEXspw0auLD1bLfbcatziR96DaK60DpSMUxrztImYnw+Yv/ratUHQjauk0qDOg+iPsem+OzoySutT3CLzENaeh54krKcZyc5rJFrhuF5mDbh2VnSZ1P/AszeYe/QUqCpbkzYIV8lWf7HMs+RfUec6qMpNTihIZjY5YyP6fff36N/jM50EZZNXdhifIpVdp3iOPeynktRvM2b/3elF6duerrPIUNlhmQHroQm3bU60Ksb+sceHHzuHIcKmPMTabg24Fvi36VCETn9rsyiilN2AIbjTGqR9TjOyg/Bp8QyCkvn1xNNtGqY2yI1AHn1LUMlkFwqsBc5jU+mJBOZYQcpmgQmJAt4Gnwi+1uOtR1tG+cF20YmRMhLqJQsKLQ/Jd0tyWlFhKmZHDc/jQ9VngZFXlI=
+  file_glob: true
+  file: "output/final/*.xz"
+  draft: true
   skip_cleanup: true
-  overwrite: true
   on:
-    repo: simelo/skybian
-    branch: release
-    tags: true
-    draft: true
+    all_branches: true
+    condition: "$TRAVIS_BRANCH =~ ^master|release$"

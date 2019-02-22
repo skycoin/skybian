@@ -2,13 +2,16 @@
 
 # This is the main script to build the Skybian OS for Skycoin miners.
 #
-# Author: stdevPavelmc@github.com, @co7wt in telegram
-# Skycoin / Simelo teams
+# Author: stdevPavelmc@github.com, @pavelmc in telegram
+# Skycoin / Simelo team
 #
+
+# Fail on any error
+set -eo pipefail
 
 # loading env variables, ROOT is the base path on top all is made
 ROOT=`pwd`
-. ${ROOT}/environment.txt
+. ${ROOT}/build.conf
 
 ##############################################################################
 # This bash file is structured as functions with specific tasks, to see the
@@ -16,6 +19,26 @@ ROOT=`pwd`
 # function to see how they integrate to do the  whole job.
 ##############################################################################
 
+# Capturing arguments to show help
+if [ "$1" == "-h" -o "$1" == "--help" ] ; then
+    # show help
+    cat << EOF
+
+$0, Skybian build script.
+
+This script builds the Skybian base OS to be used on the Skycoin
+official Skyminers, there is no parameters to the script.
+
+To know more about the script work, please refers to the file
+called Building_Skybian.md on this folder.
+
+Latest code can be found on https://github.com/skycoin/skybian
+
+EOF
+
+    # exit
+    exit 0
+fi
 
 # function to log messages as info
 function info() {
@@ -85,7 +108,7 @@ function create_folders() {
 
     # erase final images if there
     warn "Cleaning final images directory"
-    rm -f ${FINAL_IMG_DIR}/* &> /dev/null
+    rm -f ${FINAL_IMG_DIR}/* &> /dev/null || true
 }
 
 
@@ -104,7 +127,7 @@ function download_armbian() {
     # check for correct download
     if [ $? -ne 0 ] ; then
         error "Can't get the armbian image file, aborting... connection issue?."
-        rm "*7z *html *txt" &> /dev/null
+        rm "*7z *html *txt" &> /dev/null || true
         exit 1
     fi
 }
@@ -119,19 +142,13 @@ function get_armbian() {
     info "Getting Armbian image, clearing dest dir first."
 
     # test if we have a file in there
-    ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
-    if [ -z "${ARMBIAN_IMG_7z}" ] ; then
-        # no image in there, must download
-        info "No cached image, downloading.."
-
-        # download it
-        download_armbian
-    else
+    if [ -r armbian.7z ] ; then
+        ARMBIAN_IMG_7z="armbian.7z"
         # we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
             warn "Old copy detected but you stated not to reuse it"
-            rm -f "armbian.7z" &> /dev/null
+            rm -f "armbian.7z" &> /dev/null || true
             
             # get it
             info "Downloading..."
@@ -140,6 +157,12 @@ function get_armbian() {
             # use already downloaded image fi;e
             notice "Reusing already downloaded file"
         fi
+    else
+        # no image in there, must download
+        info "No cached image, downloading.."
+
+        # download it
+        download_armbian
     fi
 
     # if you get to this point then reset to the actual filename
@@ -150,7 +173,7 @@ function get_armbian() {
     info "'${ARMBIAN_IMG_7z}'"
 
     # check if extracted image is in there to save time
-    local LIMAGE=`ls | grep Orangepiprime | grep Armbian | grep -E ".*\.img$"`
+    local LIMAGE=`ls | grep Orangepiprime | grep Armbian | grep -E ".*\.img$" || true`
     if [ ! -z "$LIMAGE" ] ; then
         # image already extracted nothing to do
         notice "Armbian image already extracted"
@@ -162,7 +185,7 @@ function get_armbian() {
         # check for correct extraction
         if [ $? -ne 0 ] ; then
             error "Extracting failed, file is corrupt? Re-run the script to get it right."
-            rm "${ARMBIAN_IMG_7z}" &> /dev/null
+            rm "${ARMBIAN_IMG_7z}" &> /dev/null || true
             exit 1
         fi
     fi
@@ -174,12 +197,12 @@ function get_armbian() {
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         errorr "Integrity of the image is compromised, re-run the script to get it right."
-        rm *img *txt *sha *7z &> /dev/null
+        rm *img *txt *sha *7z &> /dev/null || true
         exit 1
     fi
 
     # get image filename
-    ARMBIAN_IMG=`ls | grep -E '.*\.img$'`
+    ARMBIAN_IMG=`ls | grep -E '.*\.img$' || true`
 
     # imge integrity
     info "Image integrity assured via sha256sum."
@@ -207,7 +230,7 @@ function download_go() {
     # check for correct download
     if [ $? -ne 0 ] ; then
         error "Can't get the file, re-run the script to get it right."
-        rm "*gz *html"  &> /dev/null
+        rm "*gz *html"  &> /dev/null || true
         exit 1
     fi
 
@@ -225,7 +248,7 @@ function get_go() {
     info "Getting go version ${GO_VERSION}"
 
     # test if we have a file in there
-    GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1`
+    GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1 || true`
     if [ -z "${GO_FILE}" ] ; then
         # warn
         notice "There is no already downloaded file, downloading it"
@@ -237,7 +260,7 @@ function get_go() {
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
             warn "Golang archive present but you opt for not to reuse it"
-            rm -f "*gz *html" &> /dev/null
+            rm -f "*gz *html" &> /dev/null || true
 
             # now we get it
             download_go
@@ -257,7 +280,7 @@ function get_go() {
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         error "Downloaded file is corrupt, try again."
-        rm "*.gz *html"  &> /dev/null
+        rm "*.gz *html"  &> /dev/null || true
         exit 1
     fi
 
@@ -273,7 +296,7 @@ function find_free_loop() {
     local DEV=""
     while [ ! -z "${OUT}" ] ; do
         DEV=`awk -v min=20 -v max=99 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
-        OUT=`losetup | grep /dev/loop$DEV`
+        OUT=`losetup | grep /dev/loop$DEV || true`
     done
     
     # output to other function
@@ -290,11 +313,11 @@ function increase_image_size() {
     cd ${TIMAGE_DIR}
 
     # clean the folder
-    rm -f "*img *bin" &> /dev/null
+    rm -f "*img *bin" &> /dev/null || true
 
     # copy the image here
     info "Preparing the Armbian image."
-    rm "${BASE_IMG}" &> /dev/null
+    rm "${BASE_IMG}" &> /dev/null || true
     cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
     
     # create the added space file
@@ -532,7 +555,7 @@ function fix_armian_defaults() {
     sudo chmod +x ${FS_MNT_POINT}/usr/local/bin/skybian-config
 
     # clean any old/temp skywire work dir
-    rm -rdf ${FS_MNT_POINT}/root/.skywire > /dev/null
+    sudo rm -rdf ${FS_MNT_POINT}/root/.skywire > /dev/null || true
 }
 
 
@@ -554,7 +577,14 @@ function setup_loop() {
 function rootfs_check() {
     # info
     info "Starting a FS check"
-    sudo e2fsck -fpD "${IMG_LOOP}"
+    # local var to trap exit status
+    out=0
+    sudo e2fsck -fpD "${IMG_LOOP}" || out=$? && true 
+    # testing exit status
+    if [ $out -gt 2 ] ; then
+        error "Uncorrected errors while checking the fs, build stoped"
+        exit 1
+    fi
 }
 
 

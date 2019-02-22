@@ -1,3 +1,5 @@
 output/*
 *img
 sky*fs
+.vscode/*
+*.code-workspace
