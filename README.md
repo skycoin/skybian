@@ -1,37 +1,35 @@
-# OS images for Skyminer powered by Armbian
+# What is Skybian?
 
 [![Build Status](https://travis-ci.org/skycoin/skybian.svg?branch=master)](https://travis-ci.org/skycoin/skybian)
 
-Workspace to generate the Skyminer OS images for Skycoin, based on [latest OS images](https://www.armbian.com/orange-pi-prime/) from [Armbian](https://www.armbian.com/), at this moment only for  [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/).
+Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin-Skywire software and it's dependencies.
 
-## Why
+Currently, only the [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/) is supported, this are the [Single Board Computers](https://en.wikipedia.org/wiki/Single-board_computer) (SBC) you found on the Skycoin Skyminers.
 
-[Debian](https://www.debian.org) is the one of the most stable Linux OS out there, also it's free as in freedom and has a strong & healthy community support; but on the ARM64 & [SBC world](https://en.wikipedia.org/wiki/Single-board_computer) it's [Armbian](https://www.armbian.com/) who has the lead, of curse built over Debian ground.
+## Why Debian, Armbian?
 
-Then why not to step up on the shoulders of this two to great projects to build our Skyminers OS images?
+[Debian](https://www.debian.org) is a stable and widely supported Linux OS. Unfortunately, there is no straightforward way to install it on a Single Board Computer.
 
-## Armbian: binary image vs. whole dev space
+Armbian simplifies the process by providing System Images that contain the components required to run Debian on ARM and ARM64 architectures.
 
-At the early stages we get to that point also, but working over the images has a few advantages:
+## Building over Armbian Binary Images vs Starting from Scratch
 
-* Simplify the work: by working with the image we avoid to duplicate efforts in fs, kernel, boot tricks and other simpler stuff that Armbian's team do very well, this allow us to concentrate on a simpler task: customize a SBC image tailored for our target hardware.
-* Armbian covers a lot of ground by supporting a big set of SBC out there, but we are focused now in just one: the Orange Pi Prime; thanks to the work done by the Armbian team, port this software in the future to other Armbian powered SBC will be relatively easy.
-* Working over a system image is easy (yes, a lot of people think the contrary!) the GNU/Linux tools to do the job are out there and forensic IT people know them well.
+Working over existing images has a few advantages:
 
-## Main guidelines
+* Simplified development: we avoid duplicating the work required to create/maintain filesystems, kernels, boot scripts and other standard system components. This allows us to concentrate on customizing SBC Images tailored for our target hardware.
+* Armbian supports a variety of SBC's.  Thanks to the work done by the Armbian team; porting the Skywire Software in the future for other Armbian-powered SBC's will be relatively easy.
+* Working over a system image is easier and GNU/Linux tools are familiar.
 
-We follow a few simple guidelines to archive our goal:
+## We follow a few simple guidelines to archive our goal:
 
-* Build on top of the last non-GUI version of Armbian for our hardware, yes: on top of the binary image.
-* Prepare that image and install software and dependencies to run the code.
-* Build from one base root FS, all the images for manager and nodes.
-* The scripts & tests must be fully automatic to integrate with other tools, to ease the dev cycle (travis 'et al')
-* All non-workspace related files and binaries (beside final images) is not covered on the repository (or it will grow 'ad infinitum' with useless data)
-* On the client's side, they will use the Skybian releases as a base image and will tune it to his particular environment with the [Skyflash](https://github.com/skycoin/skyflash) tool, follow the link to know more about this.
+* Build atop of the latest non-GUI version of Armbian.
+* Prepare image; install the required software and dependencies.
+* Build from one base root filesystem for both Manager and Minion nodes.
+* Scripts & tests must be fully automatic; integrate with other tools to ease the dev cycle (travis 'et al')
+* All non-workspace related files, binaries (beside final images) are excluded in the repository (or it will grow 'ad infinitum' with useless data)
+* Client's will use Skybian releases as a base-image and may tune it to their particular environment with the [Skyflash](https://github.com/skycoin/skyflash) tool
 
-If you want to know more about the build process keep reading.
-
-## Develop process
+## Development process
 
 If you plan to build the image yourself or to contribute with the project and test it, then you must take a peek on [this document](Building_Skybian.md) that describe the whole build process and some software dependencies you need to solve in order to successfully run the `build.sh` script.
 
@@ -42,7 +40,7 @@ This repository has two main branches:
 * `master` this is the latest stable and production safe branch, release files are the code & the result of run the master branch.
 * `develop` this is the latest code with new features and solution to known issues, and new features. It must not be used for production.
 
-## Releases
+### Releases
 
 To do a release you must follow these steps:
 
@@ -53,14 +51,14 @@ To do a release you must follow these steps:
 0. Update the `CHANGELOG.md` file with any needed info and move the `Unreleased` part to the new release version.
 0. Review & update the `README.md` file for any needed updates or changes that need attention in the front page.
 0. Wait for travis to validate all the changes (can take more than 30 minutes)
-0. On success, tag the code at this point with `release-X.Y.Z-rc`, then wait for travis completion and check the draft release is published on the repository with the Skybian-X.Y.Z-rc.tar.xz file.
-0. Download the Skybian-X.Y.Z-rc.tar.xz file from Github and test manually that Skyflash can work with it and generate the images for the default values.
-0. If problems are found with skyflash raise issues where needed (skyflash/skybian) and fix them before continue with the next step
+0. On success, check the draft release is published on the repository with the Skybian-X.Y.Z.tar.xz file.
+0. Download the Skybian-X.Y.Z.tar.xz file from Github draft and test manually that Skyflash can work with it and generate the images for the default values.
+0. If problems are found with skyflash raise issues where needed (skyflash/skybian) and fix them before continue with the next step.
 0. Test the generated images in real hardware (a manager and two nodes at least) to detect any issues.
 0. Fix any issues if found (work in the release branch)
-0. After all problems are solved and work as expected, raise a PR against master branch and merge it, then tag it as `Skybian-X.Y.Z` that will trigger travis.
+0. After all problems are solved and work as expected, tag it as `Skybian-X.Y.Z` & raise a PR against master branch, solve any issues and merge it.
 0. Wait for travis completion and check the Skybian-X.Y.Z.tar.xz file is published on the Github repository under releases.
-0. Edit & comment the release with the changes in CHANGELOG.md that match this release.
+0. Edit & comment the release with the changes in CHANGELOG.md that match this release, change status from Draft to Official release.
 0. Merge master into develop.
 0. Check if there is needed to raise issues & PR on the following repositories:
 
