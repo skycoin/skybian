@@ -108,7 +108,7 @@ function create_folders() {
 
     # erase final images if there
     warn "Cleaning final images directory"
-    rm -f ${FINAL_IMG_DIR}/* &> /dev/null
+    rm -f ${FINAL_IMG_DIR}/* &> /dev/null || true
 }
 
 
@@ -127,7 +127,7 @@ function download_armbian() {
     # check for correct download
     if [ $? -ne 0 ] ; then
         error "Can't get the armbian image file, aborting... connection issue?."
-        rm "*7z *html *txt" &> /dev/null
+        rm "*7z *html *txt" &> /dev/null || true
         exit 1
     fi
 }
@@ -148,7 +148,7 @@ function get_armbian() {
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
             warn "Old copy detected but you stated not to reuse it"
-            rm -f "armbian.7z" &> /dev/null
+            rm -f "armbian.7z" &> /dev/null || true
             
             # get it
             info "Downloading..."
@@ -185,7 +185,7 @@ function get_armbian() {
         # check for correct extraction
         if [ $? -ne 0 ] ; then
             error "Extracting failed, file is corrupt? Re-run the script to get it right."
-            rm "${ARMBIAN_IMG_7z}" &> /dev/null
+            rm "${ARMBIAN_IMG_7z}" &> /dev/null || true
             exit 1
         fi
     fi
@@ -197,7 +197,7 @@ function get_armbian() {
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         errorr "Integrity of the image is compromised, re-run the script to get it right."
-        rm *img *txt *sha *7z &> /dev/null
+        rm *img *txt *sha *7z &> /dev/null || true
         exit 1
     fi
 
@@ -230,7 +230,7 @@ function download_go() {
     # check for correct download
     if [ $? -ne 0 ] ; then
         error "Can't get the file, re-run the script to get it right."
-        rm "*gz *html"  &> /dev/null
+        rm "*gz *html"  &> /dev/null || true
         exit 1
     fi
 
@@ -260,7 +260,7 @@ function get_go() {
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
             warn "Golang archive present but you opt for not to reuse it"
-            rm -f "*gz *html" &> /dev/null
+            rm -f "*gz *html" &> /dev/null || true
 
             # now we get it
             download_go
@@ -280,7 +280,7 @@ function get_go() {
     # check for correct extraction
     if [ $? -ne 0 ] ; then
         error "Downloaded file is corrupt, try again."
-        rm "*.gz *html"  &> /dev/null
+        rm "*.gz *html"  &> /dev/null || true
         exit 1
     fi
 
@@ -313,11 +313,11 @@ function increase_image_size() {
     cd ${TIMAGE_DIR}
 
     # clean the folder
-    rm -f "*img *bin" &> /dev/null
+    rm -f "*img *bin" &> /dev/null || true
 
     # copy the image here
     info "Preparing the Armbian image."
-    rm "${BASE_IMG}" &> /dev/null
+    rm "${BASE_IMG}" &> /dev/null || true
     cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
     
     # create the added space file
@@ -555,7 +555,7 @@ function fix_armian_defaults() {
     sudo chmod +x ${FS_MNT_POINT}/usr/local/bin/skybian-config
 
     # clean any old/temp skywire work dir
-    sudo rm -rdf ${FS_MNT_POINT}/root/.skywire > /dev/null
+    sudo rm -rdf ${FS_MNT_POINT}/root/.skywire > /dev/null || true
 }
 
 
