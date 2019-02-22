@@ -577,7 +577,14 @@ function setup_loop() {
 function rootfs_check() {
     # info
     info "Starting a FS check"
-    sudo e2fsck -fpD "${IMG_LOOP}"
+    # local var to trap exit status
+    out=0
+    sudo e2fsck -fpD "${IMG_LOOP}" || out=$? && true 
+    # testing exit status
+    if [ $out -gt 2 ] ; then
+        error "Uncorrected errors while checking the fs, build stoped"
+        exit 1
+    fi
 }
 
 
