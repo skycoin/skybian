@@ -142,14 +142,8 @@ function get_armbian() {
     info "Getting Armbian image, clearing dest dir first."
 
     # test if we have a file in there
-    ARMBIAN_IMG_7z=`ls | grep 'armbian.7z'`
-    if [ -z "${ARMBIAN_IMG_7z}" ] ; then
-        # no image in there, must download
-        info "No cached image, downloading.."
-
-        # download it
-        download_armbian
-    else
+    if [ -r armbian.7z ] ; then
+        ARMBIAN_IMG_7z="armbian.7z"
         # we have the image in there; but, we must reuse it?
         if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
             # we can not reuse it, must download, so erase it
@@ -163,6 +157,12 @@ function get_armbian() {
             # use already downloaded image fi;e
             notice "Reusing already downloaded file"
         fi
+    else
+        # no image in there, must download
+        info "No cached image, downloading.."
+
+        # download it
+        download_armbian
     fi
 
     # if you get to this point then reset to the actual filename
@@ -173,7 +173,7 @@ function get_armbian() {
     info "'${ARMBIAN_IMG_7z}'"
 
     # check if extracted image is in there to save time
-    local LIMAGE=`ls | grep Orangepiprime | grep Armbian | grep -E ".*\.img$"`
+    local LIMAGE=`ls | grep Orangepiprime | grep Armbian | grep -E ".*\.img$" || true`
     if [ ! -z "$LIMAGE" ] ; then
         # image already extracted nothing to do
         notice "Armbian image already extracted"
@@ -202,7 +202,7 @@ function get_armbian() {
     fi
 
     # get image filename
-    ARMBIAN_IMG=`ls | grep -E '.*\.img$'`
+    ARMBIAN_IMG=`ls | grep -E '.*\.img$' || true`
 
     # imge integrity
     info "Image integrity assured via sha256sum."
@@ -248,7 +248,7 @@ function get_go() {
     info "Getting go version ${GO_VERSION}"
 
     # test if we have a file in there
-    GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1`
+    GO_FILE=`ls | grep '.tar.gz' | grep 'linux-arm64' | grep "${GO_VERSION}" | sort -hr | head -n1 || true`
     if [ -z "${GO_FILE}" ] ; then
         # warn
         notice "There is no already downloaded file, downloading it"
@@ -296,7 +296,7 @@ function find_free_loop() {
     local DEV=""
     while [ ! -z "${OUT}" ] ; do
         DEV=`awk -v min=20 -v max=99 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
-        OUT=`losetup | grep /dev/loop$DEV`
+        OUT=`losetup | grep /dev/loop$DEV || true`
     done
     
     # output to other function
