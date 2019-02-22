@@ -1,6 +1,6 @@
 # OS images for Skyminer powered by Armbian
 
-[![Build Status](https://travis-ci.org/simelo/skybian.svg?branch=develop)](https://travis-ci.org/simelo/skybian)
+[![Build Status](https://travis-ci.org/skycoin/skybian.svg?branch=master)](https://travis-ci.org/skycoin/skybian)
 
 Workspace to generate the Skyminer OS images for Skycoin, based on [latest OS images](https://www.armbian.com/orange-pi-prime/) from [Armbian](https://www.armbian.com/), at this moment only for  [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/).
 
