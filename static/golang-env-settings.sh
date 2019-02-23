@@ -12,3 +12,7 @@ else
     GOBIN=${GOROOT}/bin
     GOPATH=/usr/local/skywire/go
 fi
+
+export GOROOT
+export GOBIN
+export GOPATH

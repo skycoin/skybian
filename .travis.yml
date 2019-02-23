@@ -4,11 +4,23 @@ sudo: required
 language: bash
 
 before_script:
-  - sudo apt update
-  - sudo apt install -y p7zip-full
+- sudo apt update
+- sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
 
-script: 
-  - bash build.sh
+script:
+- bash build.sh
 
 notifications:
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
+
+deploy:
+  provider: releases
+  api_key:
+    secure: Wq+NwILjYpr+sIl8sCN+cTvHw7zSb+3IlzN1ahNo6eVFtr/MDS/wiyCXFe/C+gI9Odpj2ACBRzpP2cKXKYahndXWbePWj6BuRu8Oll5GKUdHeD9M+gGLy1K3uXlBjFv1yqTV4elESpQypsCvvHV2stL7w9WrrqiZGktKKg5ONI2uixuy8lvggrEXzCHMOOqoLB6I6RCN6BXyZHS2NSsPSy4QSblHSNZhdNz01DvcWJgWT+B99i7bNzeR2IqSYmGiHziUGPOIARfoOYG9PiYOqxN24Oq9F1qwzecD3HrqDJKdyTA1qMaBBUHFXW/kyxi5N3ylGy3In02QTRgVbpqbVI+a3oLdmhJP54dKeIUxIJ2u29Y97080ojt8Ht7Xm7XwsoKhiV43rX7hOHPYUSdtBaKJIq04VUcpZc0usVACEwWu7Rxuf8iFkPpmUARTpcLV/9celXmMow1eMGv55cqmbUqCz+d4KRqX2kadGTK3JZjZfAc5Zkmj7cwE+e/7f5abebfh/v7Yzzo+ZqZMd+FPhshXFM6VztU8+nr9WyqWdSxXDpi6C5EZ3GaLXgg7ROa6SKV9IbEWGSM01ZkKR4e/mLtshDZLpmblRc4/gWDvTlZ/7B31Kx9dyxsIz3yDkrEeP34XQUowtJiFzqIMMG1JMaywGE5JPRehNJFqT1j9RGU=
+  file_glob: true
+  file: "output/final/*.xz"
+  draft: true
+  skip_cleanup: true
+  on:
+    all_branches: true
+    condition: "$TRAVIS_BRANCH =~ ^master|release$"

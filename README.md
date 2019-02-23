@@ -1,65 +1,67 @@
-# OS images for Skyminer powered by Armbian
+# What is Skybian?
 
-Workspace to generate the Skyminer OS images for Skycoin, based on [latest OS images](https://www.armbian.com/orange-pi-prime/) from [Armbian](https://www.armbian.com/), at this moment only for  [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/).
+[![Build Status](https://travis-ci.org/skycoin/skybian.svg?branch=master)](https://travis-ci.org/skycoin/skybian)
 
-## Why
+Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin-Skywire software and it's dependencies.
 
-[Debian](https://www.debian.org) is the one of the most stable Linux OS out there, also it's free as in freedom and has a strong & healthy community support; but on the ARM64 & [SBC world](https://en.wikipedia.org/wiki/Single-board_computer) it's [Armbian](https://www.armbian.com/) who has the lead, of curse built over Debian ground.
+Currently, only the [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/) is supported, this are the [Single Board Computers](https://en.wikipedia.org/wiki/Single-board_computer) (SBC) you found on the Skycoin Skyminers.
 
-Then why not to step up on the shoulders of this two to great projects to build our Skyminers OS images?
+## Why Debian, Armbian?
 
-## Main guidelines
+[Debian](https://www.debian.org) is a stable and widely supported Linux OS. Unfortunately, there is no straightforward way to install it on a Single Board Computer.
 
-We follow a few simple guidelines to archive our goal:
+Armbian simplifies the process by providing System Images that contain the components required to run Debian on ARM and ARM64 architectures.
 
-* Build on top of the last non-GUI version of armbian for our hardware, yes: on top of the image.
-* Prepare that image and install software and dependencies to run the code.
-* Build from one base root FS, all the images for manager and nodes.
-* The scripts & tests must be fully automatic to integrate with other tools, to ease the dev cycle (travis 'et al')
-* All non-workspace related files and binaries (beside final images) is not covered on the repository (or it will grow 'ad infinitum' with useless data)
+## Building over Armbian Binary Images vs Starting from Scratch
 
-## Where is the data
+Working over existing images has a few advantages:
 
-When you run the build.sh script it will create a ```output``` directory with all the relevant data on it, we fetch all needed tools from the internet; that's it.
+* Simplified development: we avoid duplicating the work required to create/maintain filesystems, kernels, boot scripts and other standard system components. This allows us to concentrate on customizing SBC Images tailored for our target hardware.
+* Armbian supports a variety of SBC's.  Thanks to the work done by the Armbian team; porting the Skywire Software in the future for other Armbian-powered SBC's will be relatively easy.
+* Working over a system image is easier and GNU/Linux tools are familiar.
 
-## Armbian: Final image or Whole dev space.
+## We follow a few simple guidelines to archive our goal:
 
-At the early stages we get to that point also, but working over the images has a few advantages:
+* Build atop of the latest non-GUI version of Armbian.
+* Prepare image; install the required software and dependencies.
+* Build from one base root filesystem for both Manager and Minion nodes.
+* Scripts & tests must be fully automatic; integrate with other tools to ease the dev cycle (travis 'et al')
+* All non-workspace related files, binaries (beside final images) are excluded in the repository (or it will grow 'ad infinitum' with useless data)
+* Client's will use Skybian releases as a base-image and may tune it to their particular environment with the [Skyflash](https://github.com/skycoin/skyflash) tool
 
-* Simplify the work: by working with the image we avoid to duplicate efforts in fs, kernel, boot tricks and other simpler stuff that Armbian's team do very well, this allow us to concentrate on a simpler task: customize a SBC image tailored for out target hardware.
-* Armbian covers a lot of ground by supporting a big set of SBC out there, and we are focused on only one. If they do they job very well whey do we need to duplicate it?
-* Working over a system image is easy (yes, a lot of people think the contrary) the GNU/Linux tools are out there and forensic people know them well.
+## Development process
 
-## This is yet a Work In Progress (WIP)
+If you plan to build the image yourself or to contribute with the project and test it, then you must take a peek on [this document](Building_Skybian.md) that describe the whole build process and some software dependencies you need to solve in order to successfully run the `build.sh` script.
 
-Yes, this is just a work in progress, please contribute with test results, ideas, comments, etc.
+The dev process happens in a linux PC, Ubuntu 18.04 LTS is the system of choice, but any debian like version with the dependencies must work.
 
-**From this point forward we are talking of features being worked out in the roadmap, beware of dragons!**
+This repository has two main branches:
 
-## I have cloned your repo and created my own image, what's next?
+* `master` this is the latest stable and production safe branch, release files are the code & the result of run the master branch.
+* `develop` this is the latest code with new features and solution to known issues, and new features. It must not be used for production.
 
-If all gone well you will have two .img file on the folder output/final, one will have the word "manager" and the other will have "node" on them.
+### Releases
 
-`Tip: To form a Skyminer you need a **Manager** and a few **Nodes**, see the [Skywire](https://github.com/skycoin/skywire) project page for more details.`
+To do a release you must follow these steps:
 
-So you have the basic setup of 8 'Orange Pi Prime' SBC and same count of good quality uSD cards of 8Gb or more, you need to start with the manager
+0. Check if there are commits on the master branch that must be applied to develop (hot fixes or security ones), apply them and fix any merge issues.
+0. On develop branch, check any pending issues in order to close them if possible on this release and close them is possible.
+0. Merge the develop branch into the release one and fix any conflicts if any.
+0. Update the new version number in the `build.conf` file.
+0. Update the `CHANGELOG.md` file with any needed info and move the `Unreleased` part to the new release version.
+0. Review & update the `README.md` file for any needed updates or changes that need attention in the front page.
+0. Wait for travis to validate all the changes (can take more than 30 minutes)
+0. On success, check the draft release is published on the repository with the Skybian-X.Y.Z.tar.xz file.
+0. Download the Skybian-X.Y.Z.tar.xz file from Github draft and test manually that Skyflash can work with it and generate the images for the default values.
+0. If problems are found with skyflash raise issues where needed (skyflash/skybian) and fix them before continue with the next step.
+0. Test the generated images in real hardware (a manager and two nodes at least) to detect any issues.
+0. Fix any issues if found (work in the release branch)
+0. After all problems are solved and work as expected, tag it as `Skybian-X.Y.Z` & raise a PR against master branch, solve any issues and merge it.
+0. Wait for travis completion and check the Skybian-X.Y.Z.tar.xz file is published on the Github repository under releases.
+0. Edit & comment the release with the changes in CHANGELOG.md that match this release, change status from Draft to Official release.
+0. Merge master into develop.
+0. Check if there is needed to raise issues & PR on the following repositories:
 
-Flash your Manager img on a uSD card, [Etcher](https://etcher.io) is a good place to start, it works on Windows/Linux/Mac so it works on your favorite OS.
-
-If you are in linux 'dd' can help you if you like the CLI (and if you like the CLi you already knows how to use 'dd')
-
-And also the rest of the uSD cards with the Node image, yes, flash the rest of the uSD with the same node.img file, will work on them later.
-
-Insert the Master uSD card on you Orange Pi Prime and boot it up, connect a ethernet cable an set you Pc/Laptop IP to 192.168.0.254, then open a ssh connection to 192.168.0.2 (If you use windows you will need to use Putty) once you are prompted use the user 'root' and password 'skywire' 
-
-Once you are in you will find a screen like this:
-
-[img]
-
-If you point your browser to the Manager web GUI at http://192.168.0.2:8000/ you will find Skywire in there:
-
-[img]
-
-Now you need to proceed with the node.
-
-**TODO**
+    * [Skyflash](https://github.com/skycoin/skyflash): to update it's README.md and code for the final Skybian release URL.
+    * [Skycoin](https://github.com/skycoin/skycoin): mentions in it's README.md and elsewhere if applicable
+    * [Skywire](https://github.com/skycoin/skywire): to note the new release and the use of skybian/skyflash
