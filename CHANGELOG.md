@@ -18,7 +18,7 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
-## [0.0.3] - 2019-02-22
+## [0.0.3] - 2019-02-23
 
 ### Added
 
