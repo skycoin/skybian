@@ -448,13 +448,19 @@ function get_n_install_skywire() {
         # dev env no need to do the github job, get it locally
         notice "DEV trick: Sync of the local skywire copy"
         rsync -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
+        cd "${DOWNLOADS_DIR}/skywire"
+        sudo git checkout master
+        sudo git reset --hard
     else
         # else where, download from github
         cd "${DOWNLOADS_DIR}/"
 
         # get it from github
         info "Cloning Skywire from the internet to the downloads dir"
-        sudo git clone ${SKYWIRE_GIT_URL}
+        git clone ${SKYWIRE_GIT_URL}
+        git checkout master
+        git pull
+        git reset --hard
 
         # check for correct git clone command
         if [ $? -ne 0 ] ; then
