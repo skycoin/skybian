@@ -13,6 +13,9 @@ script:
 notifications:
   webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
 
+before_deploy:
+- bash build.sh -p
+
 deploy:
   provider: releases
   api_key:

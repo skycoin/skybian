@@ -27,7 +27,15 @@ if [ "$1" == "-h" -o "$1" == "--help" ] ; then
 $0, Skybian build script.
 
 This script builds the Skybian base OS to be used on the Skycoin
-official Skyminers, there is no parameters to the script.
+official Skyminers, there is just a few parameters:
+
+-h / --help     Show this help
+-p              Pack the image and checksums in a form ready to
+                deploy into a release. WARNING for this to work
+                you need to run the script with no parameters
+                first
+
+No parameters means image creation without checksum and packing
 
 To know more about the script work, please refers to the file
 called Building_Skybian.md on this folder.
@@ -39,6 +47,7 @@ EOF
     # exit
     exit 0
 fi
+
 
 # function to log messages as info
 function info() {
@@ -105,10 +114,6 @@ function create_folders() {
     mkdir -p ${FS_MNT_POINT}
     mkdir -p ${DOWNLOADS_DIR} ${DOWNLOADS_DIR}/armbian ${DOWNLOADS_DIR}/go
     mkdir -p ${TIMAGE_DIR}
-
-    # erase final images if there
-    warn "Cleaning final images directory"
-    rm -f ${FINAL_IMG_DIR}/* &> /dev/null || true
 }
 
 
@@ -646,6 +651,10 @@ function main () {
     # create output folder and it's structure
     create_folders
 
+    # erase final images if there
+    warn "Cleaning final images directory"
+    rm -f ${FINAL_IMG_DIR}/* &> /dev/null || true
+
     # download resources
     get_armbian
     get_go
@@ -677,12 +686,23 @@ function main () {
     # build manager image
     build_disk
 
-    # sums and compress
-    calc_sums_compress 
-
     # all good signal
-    info "Done"
+    info "Done with the image creation"
 }
 
-# doit
-main
+# executions depends on the parameters passed
+if [ "$1" == "-p" ] ; then
+    # ok, packing the image if there
+
+    # test for needed tools
+    tool_test
+
+    # create output folder and it's structure
+    create_folders
+
+    # just pack an already created image
+    calc_sums_compress
+else
+    # build the image
+    main
+fi
