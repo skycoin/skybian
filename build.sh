@@ -441,13 +441,10 @@ function get_n_install_skywire() {
     local LH=`hostname`
     # TODO remove references to dev things from final code.
     if [ "$LH" == "${DEV_PC}" ] ; then
-        #  creating the dest folder
-        notice "DEV trick: Creating destination directory"
-        mkdir -p "${DOWNLOADS_DIR}/skywire"
-
-        # dev env no need to do the github job, get it locally
+        # dev env no need to do the github clone, get it locally
         notice "DEV trick: Sync of the local skywire copy"
-        rsync -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
+        sudo rm -drf "${DOWNLOADS_DIR}/skywire" || true
+        rsync -a --delete-before "${DEV_LOCAL_SKYWIRE}" "${DOWNLOADS_DIR}"
         cd "${DOWNLOADS_DIR}/skywire"
         sudo git checkout master
         sudo git reset --hard
