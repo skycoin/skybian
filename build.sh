@@ -437,27 +437,27 @@ function get_n_install_skywire() {
     # get it on downloads, and if all is good then move it to final dest inside the image
     info "Getting last version of Skywire to install inside the chroot"
 
+    # erasing previous versions, just in case
+    rm -rdf "${DOWNLOADS_DIR}/skywire" || true
+
     # get it from github / local is you are the dev
     local LH=`hostname`
     # TODO remove references to dev things from final code.
     if [ "$LH" == "${DEV_PC}" ] ; then
         # dev env no need to do the github clone, get it locally
         notice "DEV trick: Sync of the local skywire copy"
-        sudo rm -drf "${DOWNLOADS_DIR}/skywire" || true
-        rsync -a --delete-before "${DEV_LOCAL_SKYWIRE}" "${DOWNLOADS_DIR}"
+        rsync -a "${DEV_LOCAL_SKYWIRE}" "${DOWNLOADS_DIR}"
         cd "${DOWNLOADS_DIR}/skywire"
-        sudo git checkout master
-        sudo git reset --hard
+        git checkout master
+        git reset --hard
     else
         # else where, download from github
         cd "${DOWNLOADS_DIR}/"
 
         # get it from github
         info "Cloning Skywire from the internet to the downloads dir"
+        # by default you get the master branch
         git clone ${SKYWIRE_GIT_URL}
-        git checkout master
-        git pull
-        git reset --hard
 
         # check for correct git clone command
         if [ $? -ne 0 ] ; then
