@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/skycoin/skybian.svg?branch=master)](https://travis-ci.org/skycoin/skybian)
 
-Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin-Skywire software and it's dependencies.
+Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin's Skywire testnet software and it's dependencies.
 
 Currently, only the [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/) is supported, this are the [Single Board Computers](https://en.wikipedia.org/wiki/Single-board_computer) (SBC) you found on the Skycoin Skyminers.
 
@@ -42,25 +42,29 @@ This repository has two main branches:
 
 ### Releases
 
+You need a own repository to work before making the final pull request, for that you need a github account with travis integration and permission to push & deploy to the skycoin/skybian repository.
+
 To do a release you must follow these steps:
 
-0. Check if there are commits on the master branch that must be applied to develop (hot fixes or security ones), apply them and fix any merge issues.
-0. On develop branch, check any pending issues in order to close them if possible on this release and close them is possible.
-0. Merge the develop branch into the release one and fix any conflicts if any.
-0. Update the new version number in the `build.conf` file.
-0. Update the `CHANGELOG.md` file with any needed info and move the `Unreleased` part to the new release version.
-0. Review & update the `README.md` file for any needed updates or changes that need attention in the front page.
-0. Wait for travis to validate all the changes (can take more than 30 minutes)
-0. On success, check the draft release is published on the repository with the Skybian-X.Y.Z.tar.xz file.
-0. Download the Skybian-X.Y.Z.tar.xz file from Github draft and test manually that Skyflash can work with it and generate the images for the default values.
-0. If problems are found with skyflash raise issues where needed (skyflash/skybian) and fix them before continue with the next step.
-0. Test the generated images in real hardware (a manager and two nodes at least) to detect any issues.
-0. Fix any issues if found (work in the release branch)
-0. After all problems are solved and work as expected, tag it as `Skybian-X.Y.Z` & raise a PR against master branch, solve any issues and merge it.
-0. Wait for travis completion and check the Skybian-X.Y.Z.tar.xz file is published on the Github repository under releases.
-0. Edit & comment the release with the changes in CHANGELOG.md that match this release, change status from Draft to Official release.
-0. Merge master into develop.
-0. Check if there is needed to raise issues & PR on the following repositories:
+1. Fork the develop branch in the official skycoin/skybian repository, then create locally a fork named release-vX.Y.Z, see the [CHANGELOG](CHANGELOG.md) file to see what's the next version number.
+2. Check if there are commits on the master/fix/security branches at skycoin/skybian repository that must be applied to release-vX.Y.Z, apply them and fix any merge issues.
+3. Check any pending issues in order to close them if possible on this release.
+4. Update the new version number in the `build.conf` file.
+5. Update the `CHANGELOG.md` file with any needed info and move the `Unreleased` part to the new release version.
+6. Review & update the `README.md` file for any needed updates or changes that need attention in the front page.
+7. Wait for travis to validate all the changes.
+8. On success, merge the release-vX.Y.Z branch into your local master branch, wait for travis validation and deploy.
+9. Check that a draft release is published on your repository with the Skybian-vX.Y.Z.tar.xz file on it.
+10. Download the Skybian-vX.Y.Z.tar.xz file from Github draft and test manually that Skyflash can work with it and generate the images for the default values.
+11. If problems are found with skyflash raise issues where needed (skyflash/skybian) and fix them before continue with the next step.
+12. Test the generated images in real hardware (a manager and two nodes at least) to detect any issues.
+13. Fix any issues if found.
+14. On a success build by travis go back to step 8.
+15. After all problems are solved and work as expected, tag it as `vX.Y.Z` & raise a PR against master branch in skycoin/skybian, solve any issues and merge it.
+16. Wait for travis completion and check the Skybian-vX.Y.Z.tar.xz file is published on the Github repository under releases.
+17. Edit & comment the release with the changes in CHANGELOG.md that match this release, change status from Draft to Official release.
+18. Merge master into develop.
+19. Check if there is needed to raise issues & PR on the following repositories:
 
     * [Skyflash](https://github.com/skycoin/skyflash): to update it's README.md and code for the final Skybian release URL.
     * [Skycoin](https://github.com/skycoin/skycoin): mentions in it's README.md and elsewhere if applicable
