@@ -19,7 +19,7 @@ Dates must be YEAR-MONTH-DAY
 -->
 
 
-## Unreleased (0.0.4) - 2019-04-18
+## [0.0.4] - 2019-04-18
 
 ### Added
 
