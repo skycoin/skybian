@@ -27,7 +27,15 @@ if [ "$1" == "-h" -o "$1" == "--help" ] ; then
 $0, Skybian build script.
 
 This script builds the Skybian base OS to be used on the Skycoin
-official Skyminers, there is no parameters to the script.
+official Skyminers, there is just a few parameters:
+
+-h / --help     Show this help
+-p              Pack the image and checksums in a form ready to
+                deploy into a release. WARNING for this to work
+                you need to run the script with no parameters
+                first
+
+No parameters means image creation without checksum and packing
 
 To know more about the script work, please refers to the file
 called Building_Skybian.md on this folder.
@@ -39,6 +47,7 @@ EOF
     # exit
     exit 0
 fi
+
 
 # function to log messages as info
 function info() {
@@ -105,10 +114,6 @@ function create_folders() {
     mkdir -p ${FS_MNT_POINT}
     mkdir -p ${DOWNLOADS_DIR} ${DOWNLOADS_DIR}/armbian ${DOWNLOADS_DIR}/go
     mkdir -p ${TIMAGE_DIR}
-
-    # erase final images if there
-    warn "Cleaning final images directory"
-    rm -f ${FINAL_IMG_DIR}/* &> /dev/null || true
 }
 
 
@@ -432,24 +437,27 @@ function get_n_install_skywire() {
     # get it on downloads, and if all is good then move it to final dest inside the image
     info "Getting last version of Skywire to install inside the chroot"
 
+    # erasing previous versions, just in case
+    rm -rdf "${DOWNLOADS_DIR}/skywire" || true
+
     # get it from github / local is you are the dev
     local LH=`hostname`
     # TODO remove references to dev things from final code.
     if [ "$LH" == "${DEV_PC}" ] ; then
-        #  creating the dest folder
-        notice "DEV trick: Creating destination directory"
-        mkdir -p "${DOWNLOADS_DIR}/skywire"
-
-        # dev env no need to do the github job, get it locally
+        # dev env no need to do the github clone, get it locally
         notice "DEV trick: Sync of the local skywire copy"
-        rsync -a "${DEV_LOCAL_SKYWIRE}/" "${DOWNLOADS_DIR}/skywire"
+        rsync -a "${DEV_LOCAL_SKYWIRE}" "${DOWNLOADS_DIR}"
+        cd "${DOWNLOADS_DIR}/skywire"
+        git checkout master
+        git reset --hard
     else
         # else where, download from github
         cd "${DOWNLOADS_DIR}/"
 
         # get it from github
         info "Cloning Skywire from the internet to the downloads dir"
-        sudo git clone ${SKYWIRE_GIT_URL}
+        # by default you get the master branch
+        git clone ${SKYWIRE_GIT_URL}
 
         # check for correct git clone command
         if [ $? -ne 0 ] ; then
@@ -646,6 +654,10 @@ function main () {
     # create output folder and it's structure
     create_folders
 
+    # erase final images if there
+    warn "Cleaning final images directory"
+    rm -f ${FINAL_IMG_DIR}/* &> /dev/null || true
+
     # download resources
     get_armbian
     get_go
@@ -677,12 +689,23 @@ function main () {
     # build manager image
     build_disk
 
-    # sums and compress
-    calc_sums_compress 
-
     # all good signal
-    info "Done"
+    info "Done with the image creation"
 }
 
-# doit
-main
+# executions depends on the parameters passed
+if [ "$1" == "-p" ] ; then
+    # ok, packing the image if there
+
+    # test for needed tools
+    tool_test
+
+    # create output folder and it's structure
+    create_folders
+
+    # just pack an already created image
+    calc_sums_compress
+else
+    # build the image
+    main
+fi

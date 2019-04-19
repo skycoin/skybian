@@ -18,6 +18,24 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
+
+## [0.0.4] - 2019-04-18
+
+### Added
+
+- Added latest Skywire testnet code
+
+### Changed
+
+- OS upgraded to Armbian 5.75 with kernel 4.19.20
+- Armbian changed the layout of the filesystem and the boot firmware, so we changed to adapt to that.
+- Config offset is now at block #32768 (of 512 bytes) higher than in previous versions
+
+## Deprecated
+
+- Skyflash at this point needs to be modified to work with this because of the change on the filesystem layout of armbian
+
+
 ## [0.0.3] - 2019-02-23
 
 ### Added

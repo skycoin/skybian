@@ -5,23 +5,25 @@
 #	time using data stored in the [free space of the] bootloader or from a
 #	default configuration file.
 
-## The first 4MB (address 0x0-0x400000) of the multimedia-card (MMC) is
-#	reserved for the bootloader; for 512 byte sectors; that's blocks 0 to 8192.
+## The first 16MB (address 0x0-0x1000000) of the multimedia-card (MMC) is
+#	reserved for the bootloader in 512 byte sectors that's blocks 0 to 32768.
 #
-#	Actual bootloader data occupies only around 600KB (0x0-0x93670) so Network
-#	Paramaters are stored on the 3.5MB mark and is forwarded to the OS.  The
-#	exact address is 0x380000 (_3670016_ bytes; or block 7168) with a maximum
-#	length of _256_ bytes.
+#	Actual bootloader data is split on some regions in that 16MB space, but
+#   there are withe spaces in there that we will use.
 #
-#	The following variables (in bytes) describe where to start looking for
-#	existing Network Parameters:
-DATASTART=3670016
+#   Network Paramaters are stored on the 12MB mark, exact address is 0xC00000
+#   aka byte 12582912, but we use 256 byte block to reach it so it's on the 
+#   block number 49152.
+#
+#	The following variables describe where to start looking for existing
+#   Network Parameters, again in 256 bytes blocks
+DATASTART=49152
 DATASIZE=256
 
 ## Extract config from MMC; forward-to /etc/skybian.conf; else use default
 function extract_config() {
-	# Read $DATASIZE at $DATASTART
-	dd if=/dev/mmcblk0 of=/tmp/extracted skip=$DATASTART bs=1 count=$DATASIZE
+	# Read one 256 byte block after skiping $DATASIZE blocks
+	dd if=/dev/mmcblk0 of=/tmp/extracted bs=$DATASIZE count=1 skip=$DATASTART
 
 	# Clean read data by printing strings of printable characters from output
 	strings /tmp/extracted > /tmp/clean
