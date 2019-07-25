@@ -1,6 +1,6 @@
 # What is Skybian?
 
-[![Build Status](https://travis-ci.org/skycoin/skybian.svg?branch=master)](https://travis-ci.org/skycoin/skybian)
+[![Build Status](https://travis-ci.com/skycoin/skybian.svg?branch=master)](https://travis-ci.com/skycoin/skybian)
 
 Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin's Skywire testnet software and it's dependencies.
 
