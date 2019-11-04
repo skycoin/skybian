@@ -1,6 +1,6 @@
 # What is Skybian?
 
-[![Build Status](https://travis-ci.com/skycoin/skybian.svg?branch=master)](https://travis-ci.com/skycoin/skybian)
+[![Build Status](https://travis-ci.com/SkycoinProject/skybian.svg?branch=master)](https://travis-ci.com/SkycoinProject/skybian)
 
 Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin's Skywire testnet software and it's dependencies.
 
@@ -27,7 +27,7 @@ Working over existing images has a few advantages:
 * Build from one base root filesystem for both Manager and Minion nodes.
 * Scripts & tests must be fully automatic; integrate with other tools to ease the dev cycle (travis 'et al')
 * All non-workspace related files, binaries (beside final images) are excluded in the repository (or it will grow 'ad infinitum' with useless data)
-* Client's will use Skybian releases as a base-image and may tune it to their particular environment with the [Skyflash](https://github.com/skycoin/skyflash) tool
+* Client's will use Skybian releases as a base-image and may tune it to their particular environment with the [Skyflash](https://github.com/SkycoinProject/skyflash) tool
 
 ## Development process
 
@@ -42,12 +42,12 @@ This repository has two main branches:
 
 ### Releases
 
-You need a own repository to work before making the final pull request, for that you need a github account with travis integration and permission to push & deploy to the skycoin/skybian repository.
+You need a own repository to work before making the final pull request, for that you need a github account with travis integration and permission to push & deploy to the SkycoinProject/skybian repository.
 
 To do a release you must follow these steps:
 
-0. Fork the develop branch in the official skycoin/skybian repository, then create locally a fork named release-vX.Y.Z, see the [CHANGELOG](CHANGELOG.md) file to see what's the next version number.
-0. Check if there are commits on the master/fix/security branches at skycoin/skybian repository that must be applied to release-vX.Y.Z, apply them and fix any merge issues.
+0. Fork the develop branch in the official SkycoinProject/skybian repository, then create locally a fork named release-vX.Y.Z, see the [CHANGELOG](CHANGELOG.md) file to see what's the next version number.
+0. Check if there are commits on the master/fix/security branches at SkycoinProject/skybian repository that must be applied to release-vX.Y.Z, apply them and fix any merge issues.
 0. Check any pending issues in order to close them if possible on this release.
 0. Update the new version number in the `build.conf` file.
 0. Update the `CHANGELOG.md` file with any needed info and move the `Unreleased` part to the new release version.
@@ -59,13 +59,13 @@ To do a release you must follow these steps:
 0. If problems are found with skyflash raise issues where needed (skyflash/skybian) and fix them before continue with the next step.
 0. Test the generated images in real hardware (a manager and two nodes at least) to detect any issues.
 0. Fix any issues if found.
-0. After all problems are solved and work as expected, tag it as `vX.Y.Z` & raise a PR against master branch in skycoin/skybian, solve any issues and merge it.
+0. After all problems are solved and work as expected, tag it as `vX.Y.Z` & raise a PR against master branch in SkycoinProject/skybian, solve any issues and merge it.
 0. Wait for travis completion and check the Skybian-vX.Y.Z.tar.xz file is published on the Github repository under releases.
 0. Edit & comment the release with the changes in CHANGELOG.md that match this release, change status from Draft to Official release.
 0. Update the version.txt file with the link to Skybian-vX.Y.Z.tar.xz in the matching case (testnet/mainner) and commit it directly to master, after finish discard the draft release in the releases page.
 0. Merge master into develop.
 0. Check if there is needed to raise issues & PR on the following repositories:
 
-    * [Skyflash](https://github.com/skycoin/skyflash): to update it's README.md and code for the final Skybian release URL.
-    * [Skycoin](https://github.com/skycoin/skycoin): mentions in it's README.md and elsewhere if applicable
-    * [Skywire](https://github.com/skycoin/skywire): to note the new release and the use of skybian/skyflash
+    * [Skyflash](https://github.com/SkycoinProject/skyflash): to update it's README.md and code for the final Skybian release URL.
+    * [Skycoin](https://github.com/SkycoinProject/skycoin): mentions in it's README.md and elsewhere if applicable
+    * [Skywire](https://github.com/SkycoinProject/skywire): to note the new release and the use of skybian/skyflash

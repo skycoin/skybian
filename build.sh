@@ -40,7 +40,7 @@ No parameters means image creation without checksum and packing
 To know more about the script work, please refers to the file
 called Building_Skybian.md on this folder.
 
-Latest code can be found on https://github.com/skycoin/skybian
+Latest code can be found on https://github.com/SkycoinProject/skybian
 
 EOF
 
