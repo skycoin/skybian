@@ -96,7 +96,7 @@ else
 fi
 
 ## Path to skywire config scripts
-SKYWIRE_UNIX_SCRIPTS=/usr/local/skywire/go/src/github.com/skycoin/`
+SKYWIRE_UNIX_SCRIPTS=/usr/local/skywire/go/src/github.com/SkycoinProject/`
 						`skywire/static/script
 
 ## Check for required environment variables
