@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Go vars: WARNING! this must match the ones defined in skywire
-# see http://github.com/skycoin/skywire
+# see http://github.com/SkycoinProject/skywire
 HOME=/root
 GOROOT=/usr/local/go
 GOPATH=/usr/local/skywire/go

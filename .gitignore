@@ -3,3 +3,4 @@ output/*
 sky*fs
 .vscode/*
 *.code-workspace
+.idea/*
