@@ -5,7 +5,7 @@
 HOME=/root
 GOROOT=/usr/local/go
 GOPATH=/usr/local/skywire/go
-SKYCOIN_DIR=${GOPATH}/src/github.com/skycoin
+SKYCOIN_DIR=${GOPATH}/src/github.com/SkycoinProject
 SKYWIRE_DIR=${SKYCOIN_DIR}/skywire
 export HOME
 export GOROOT
