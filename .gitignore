@@ -4,3 +4,4 @@ sky*fs
 .vscode/*
 *.code-workspace
 .idea/*
+.DS_Store
