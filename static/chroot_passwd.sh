@@ -2,4 +2,4 @@
 
 # change root password to the default of: skybian
 
-echo "root:skybian" | chpasswd
+printf "skybian\nskybian\n" | passwd root
