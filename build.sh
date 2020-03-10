@@ -78,7 +78,7 @@ function error() {
 function tool_test() {
     # info
     info "Testing the workspace for needed tools"
-    for t in ${NEEDED_TOOLS} ; do 
+    for t in ${NEEDED_TOOLS} ; do
         local BIN=`which ${t}`
         if [ -z "${BIN}" ] ; then
             # not found
@@ -93,8 +93,8 @@ function tool_test() {
 }
 
 
-# Build the output/work folder structure, this is excluded from the git 
-# tracking on purpose: this will generate GB of data on each push  
+# Build the output/work folder structure, this is excluded from the git
+# tracking on purpose: this will generate GB of data on each push
 function create_folders() {
     # output [main folder]
     #   /final [this will be the final images dir]
@@ -154,7 +154,7 @@ function get_armbian() {
             # we can not reuse it, must download, so erase it
             warn "Old copy detected but you stated not to reuse it"
             rm -f "armbian.7z" &> /dev/null || true
-            
+
             # get it
             info "Downloading..."
             download_armbian
@@ -172,7 +172,7 @@ function get_armbian() {
 
     # if you get to this point then reset to the actual filename
     ARMBIAN_IMG_7z="armbian.7z"
-    
+
     # extract and check it's integrity
     info "Armbian file to process is:"
     info "'${ARMBIAN_IMG_7z}'"
@@ -197,7 +197,7 @@ function get_armbian() {
 
     # check integrity
     info "Testing image integrity..."
-    `which sha256sum` -c --status sha256sum.sha
+    `which sha256sum` -c --status *.sha
 
     # check for correct extraction
     if [ $? -ne 0 ] ; then
@@ -216,7 +216,7 @@ function get_armbian() {
     # get version & kernel version info
     ARMBIAN_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $2 }'`
     ARMBIAN_KERNEL_VERSION=`echo ${ARMBIAN_IMG} | awk -F '_' '{ print $7 }' | rev | cut -d '.' -f2- | rev`
-    
+
     # info to the user
     notice "Armbian version: ${ARMBIAN_VERSION}"
     notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
@@ -303,7 +303,7 @@ function find_free_loop() {
         DEV=`awk -v min=20 -v max=99 'BEGIN{srand(); print int(min+rand()*(max-min+1))}'`
         OUT=`losetup | grep /dev/loop$DEV || true`
     done
-    
+
     # output to other function
     echo "/dev/loop$DEV"
 }
@@ -324,7 +324,7 @@ function increase_image_size() {
     info "Preparing the Armbian image."
     rm "${BASE_IMG}" &> /dev/null || true
     cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}"
-    
+
     # create the added space file
     info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image."
     truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
@@ -376,7 +376,7 @@ function build_disk() {
     # TODO [TEST]
     # shrink the partition to a minimum size
     # sudo resize2fs -M "${IMG_LOOP}"
-    # 
+    #
     # shrink the partition
 
     # force a FS sync
@@ -477,18 +477,18 @@ function get_n_install_skywire() {
 
 # enable chroot
 function enable_chroot() {
-    # copy the aarm64 static exec to be able to execute 
+    # copy the aarm64 static exec to be able to execute
     # things on the internal chroot
     AARM64=`which qemu-aarch64-static`
 
     # log
-    info "Setup of the chroot jail to be able to exec command inside the roofs." 
+    info "Setup of the chroot jail to be able to exec command inside the roofs."
 
     # copy the static bin
     sudo cp ${AARM64} ${FS_MNT_POINT}/usr/bin/
 
     # some required mounts
-    info "Mapping special mounts inside the chroot" 
+    info "Mapping special mounts inside the chroot"
     sudo mount -t sysfs none ${FS_MNT_POINT}/sys
     sudo mount -t proc none ${FS_MNT_POINT}/proc
     sudo mount --bind /dev ${FS_MNT_POINT}/dev
@@ -502,7 +502,7 @@ function disable_chroot() {
     AARM64="qemu-aarch64-static"
 
     # log
-    info "Disable the chroot jail." 
+    info "Disable the chroot jail."
 
     # remove the static bin
     sudo rm ${FS_MNT_POINT}/usr/bin/${AARM64}
@@ -567,7 +567,7 @@ function fix_armian_defaults() {
 }
 
 
-# setup the rootfs to a loop device 
+# setup the rootfs to a loop device
 function setup_loop() {
     # find a free loopdevice and set it on the environment
     IMG_LOOP=`find_free_loop`
@@ -587,7 +587,7 @@ function rootfs_check() {
     info "Starting a FS check"
     # local var to trap exit status
     out=0
-    sudo e2fsck -fpD "${IMG_LOOP}" || out=$? && true 
+    sudo e2fsck -fpD "${IMG_LOOP}" || out=$? && true
     # testing exit status
     if [ $out -gt 2 ] ; then
         error "Uncorrected errors while checking the fs, build stoped"
