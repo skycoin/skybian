@@ -1,0 +1,96 @@
+#!/bin/bash
+# Crafted by Skycoin/Simelo team
+# Modified by @evanlinjin
+
+## This script configures the Network Parameters for Skybian OS during boot
+#	time using data stored in the [free space of the] bootloader or from a
+#	default configuration file.
+
+## The first 16MB (address 0x0-0x1000000) of the multimedia-card (MMC) is
+#	reserved for the bootloader in 512 byte sectors that's blocks 0 to 32768.
+#
+#	Actual bootloader data is split on some regions in that 16MB space, but
+#   there are white spaces in there that we will use.
+#
+#   Network Paramaters are stored on the 12MB mark, exact address is 0xC00000
+#   aka byte 12582912, but we use 256 byte block to reach it so it's on the 
+#   block number 49152.
+#
+#	The following variables describe where to start looking for existing
+#   Network Parameters, again in 256 bytes blocks
+DATASTART=49152
+DATASIZE=256
+
+## Extract config from MMC; forward-to /etc/skybian.conf; else use default
+function extract_config() {
+	# Read one 256 byte block after skiping $DATASIZE blocks
+	dd if=/dev/mmcblk0 of=/tmp/extracted bs=$DATASIZE count=1 skip=$DATASTART
+
+	# Clean read data by printing strings of printable characters from output
+	strings /tmp/extracted > /tmp/clean
+
+	# If /tmp/clean contains strings: test fields in $section
+	if [ -s /tmp/clean ] ; then
+		local data=$(cat /tmp/clean)
+		local flag=""		# $flag is set if a field in $section is missing;
+							#	set by the following loop:
+
+		for section in IP GW DNS MODE MIP ; do
+			local test=$(cat "${data}" | grep $section)
+
+			# If a field in $section is missing a string...
+			if [-z "$test" ] ; then
+				flag="true"	# set the flag
+				return
+			fi
+		done
+
+		# If $flag is blank: data is good; copy/overwrite-system-default
+		if [ -z "$flag" ] ; then
+			cp -f /tmp/clean /etc/skybian.conf
+		fi
+	fi
+}
+extract_config
+
+# Prepare env.
+function prepare_env() {
+    echo "Preparing tools to mod config..."
+    if ! TEMP_FILE=$(mktemp) ; then
+        echo "Failed to create temp dir."
+        exit 1
+    fi
+    if ! JQ=$(command -v jq) ; then
+        echo "Cannot find 'jq', aborting."
+        exit 1
+    fi
+    echo "TEMP_FILE=${TEMP_FILE}"
+    echo "JQ=${JQ}"
+}
+prepare_env
+
+# For modifying config file.
+function jq_cfg() {
+    echo "jq_cfg() $*"
+    $JQ $* "${CFG_FILE}" > "${TEMP_FILE}" && mv "${TEMP_FILE}" "${CFG_FILE}"
+}
+
+# Config file loc.
+CFG_FILE=/root/skywire-config.json
+
+if [[ ! -f "${CFG_FILE}" ]] ; then {
+    echo "Skywire config file does not yet exist in ${CFG_FILE}."
+
+    echo "Generating base config in '${CFG_FILE}'..."
+    /usr/local/bin/skywire-cli visor gen-config --output="${CFG_FILE}" --type="LOCAL" || exit 1
+}
+
+# TODO(evanlinjin): These values need some discussion.
+HV_PKS=("035c2f1b0e913fdad334d4ba96ecd5578e18e8e03353bf2cc2fb6e0fd35cae82b5")
+jq_cfg '.transport.log_store.location="/root/skywire/transport/logs"'
+jq_cfg '.dmsg_pty.authorization_file="/root/skywire/dsmgpty/whitelist.json"'
+jq_cfg '.apps_path="/root/skywire/apps"'
+jq_cfg '.local_path="/root/skywire/local"'
+for PK in "${HV_PKS[@]}" ; do
+	jq_cfg --arg pk "${PK}" '.hypervisors+=[$pk]'
+done

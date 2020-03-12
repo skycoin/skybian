@@ -51,25 +51,25 @@ fi
 
 # function to log messages as info
 function info() {
-    printf '\033[0;32m[ Info ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
+    printf '\033[0;32m[ INFO ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
 
 # function to log messages as notices
 function notice() {
-    printf '\033[0;34m[ Notice ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
+    printf '\033[0;34m[ NOTI ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
 
 # function to log messages as warnings
 function warn() {
-    printf '\033[0;33m[ Warning ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
+    printf '\033[0;33m[ WARN ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
 
 # function to log messages as info
 function error() {
-    printf '\033[0;31m[ Error ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
+    printf '\033[0;31m[ ERRO ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
 
@@ -109,14 +109,23 @@ function create_folders() {
     # sub-dir envs
     DOWNLOADS_ARMBIAN_DIR=${DOWNLOADS_DIR}/armbian
     DOWNLOADS_SKYWIRE_DIR=${DOWNLOADS_DIR}/skywire
+    DOWNLOADS_JQ_DIR=${DOWNLOADS_DIR}/jq
 
     # create them
     mkdir -p "${FINAL_IMG_DIR}"
     mkdir -p "${FS_MNT_POINT}"
-    mkdir -p "${DOWNLOADS_DIR}" "${DOWNLOADS_ARMBIAN_DIR}" "${DOWNLOADS_SKYWIRE_DIR}"
+    mkdir -p "${DOWNLOADS_DIR}" "${DOWNLOADS_ARMBIAN_DIR}" "${DOWNLOADS_SKYWIRE_DIR}" "${DOWNLOADS_JQ_DIR}"
     mkdir -p "${TIMAGE_DIR}"
 
     info "Done!"
+}
+
+
+# Downloads jq .pkg packages.
+function get_jq() {
+  info "Downloading .deb packages for jq..."
+  wget "${JQ_DOWNLOAD_URLS[@]}" -P "${DOWNLOADS_JQ_DIR}" || return 1
+  info "Done!"
 }
 
 
@@ -149,7 +158,7 @@ function get_skywire() {
   cd "${ROOT}" || return 1
 
   info "Cleaning..."
-  rm "${_DST}" || return 1
+  rm "${_DST}" "*.md" || return 1
 
   info "Done!"
 }
@@ -245,6 +254,7 @@ function get_armbian() {
 
 function get_all() {
   get_armbian || return 1
+  get_jq || return 1
   get_skywire || return 1
 }
 
@@ -317,6 +327,19 @@ function prepare_base_image() {
     sudo mount -t auto "${IMG_LOOP}" "${FS_MNT_POINT}" -o loop,rw
 
     info "Done!"
+}
+
+
+function clean_image() {
+    disable_chroot
+
+    sudo sync
+    sudo umount "${FS_MNT_POINT}"
+
+    rootfs_check
+
+    sudo sync
+    sudo losetup -d "${IMG_LOOP}"
 }
 
 
@@ -412,58 +435,69 @@ function do_in_chroot() {
 }
 
 
+function copy_to_img() {
+    # Copy jq packages (they will we installed by ./static/chroot_extra_commands.sh)
+
+    info "Copying jq packages..."
+    sudo cp -r "${DOWNLOADS_JQ_DIR}" "${FS_MNT_POINT}/tmp" || return 1
+
+    # Copy skywire bins
+
+    info "Copying skywire bins..."
+    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-visor" "${FS_MNT_POINT}/usr/local/bin/" || return 1
+    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-cli" "${FS_MNT_POINT}/usr/local/bin/" || return 1
+
+    info "Copying skywire apps..."
+    sudo mkdir -p "${FS_MNT_POINT}/root/skywire" || return 1
+    sudo cp -r "${DOWNLOADS_SKYWIRE_DIR}/bin/apps" "${FS_MNT_POINT}/root/skywire/" || return 1
+
+    # Copy systemd units
+    
+    local _SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system
+
+    info "Copying systemd units..."
+    sudo cp -f "${ROOT}/static/skywire-visor.service" "${_SYSTEMD_DIR}/"
+
+    # Copy permanent scripts
+
+    info "Copying disable user creation script..."
+    sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
+
+    info "Copying headers (so OS presents itself as Skybian)..."
+    sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
+    sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
+
+    # Copy temporary scripts
+
+    info "Copying chroot script..."
+    sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp"
+    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh"
+
+    info "Done!"
+}
+
+
 # fix some defaults on armian to skywire defaults
 function fix_armian_defaults() {
     # armbian has some tricks in there to ease the operation.
     # some of them are not needed on skywire, so we disable them
 
-    # disable the forced root password change and user creation
-    info "Disabling new user creation on Armbian"
-    sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" \
-        ${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh
-
-    # change root password
-    info "Setting default password"
-    sudo cp ${ROOT}/static/chroot_passwd.sh ${FS_MNT_POINT}/tmp
-    sudo chmod +x ${FS_MNT_POINT}/tmp/chroot_passwd.sh
-    do_in_chroot /tmp/chroot_passwd.sh
-    sudo rm ${FS_MNT_POINT}/tmp/chroot_passwd.sh
-
-    # execute some extra commands inside the chroot
-    info "Executing extra configs."
-    sudo cp ${ROOT}/static/chroot_extra_commands.sh ${FS_MNT_POINT}/tmp
-    sudo chmod +x ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
+    # Executing chroot script...
     do_in_chroot /tmp/chroot_extra_commands.sh
-    sudo rm ${FS_MNT_POINT}/tmp/chroot_extra_commands.sh
-
-    # header update: present it as skybian.
-    info "Headers update, now it presents itself as Skybian"
-    sudo cp ${ROOT}/static/10-skybian-header ${FS_MNT_POINT}/etc/update-motd.d/
-    sudo chmod +x ${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header
-    sudo cp -f ${ROOT}/static/armbian-motd ${FS_MNT_POINT}/etc/default
 
     # copy config files
     info "Copy and set of the default config files"
-    sudo cp ${ROOT}/static/skybian.conf ${FS_MNT_POINT}/etc/
-    sudo cp ${ROOT}/static/skybian-config ${FS_MNT_POINT}/usr/local/bin/
-    sudo chmod +x ${FS_MNT_POINT}/usr/local/bin/skybian-config
+    sudo cp "${ROOT}/static/skybian.conf" "${FS_MNT_POINT}/etc/"
+    sudo cp "${ROOT}/static/skybian-config" "${FS_MNT_POINT}/usr/local/bin/"
+    sudo chmod +x "${FS_MNT_POINT}/usr/local/bin/skybian-config"
+
+    # clean /tmp in root fs
+    sudo rm -rf "${FS_MNT_POINT}/tmp/*" > /dev/null || true
 
     # clean any old/temp skywire work dir
-    sudo rm -rdf ${FS_MNT_POINT}/root/.skywire > /dev/null || true
-}
-
-# Install skywire.
-function install_skywire() {
-  info "Copying skywire bins to root fs..."
-  sudo cp -r "${DOWNLOADS_SKYWIRE_DIR}" "${FS_MNT_POINT}/opt" || return 1
-#  sudo chmod +x "${FS_MNT_POINT}/opt/skywire/skywire-visor" || return 1
-#  sudo chmod +x "${FS_MNT_POINT}/opt/skywire/skywire-cli" || return 1
-
-  info "Creating symbolic links to /usr/bin in root fs..."
-  sudo ln -s "${FS_MNT_POINT}/opt/skywire/bin/skywire-visor" "${FS_MNT_POINT}/usr/local/bin/skywire-visor" || return 1
-  sudo ln -s "${FS_MNT_POINT}/opt/skywire/bin/skywire-cli" "${FS_MNT_POINT}/usr/local/bin/skywire-cli" || return 1
-
-  info "Done!"
+    sudo rm -rdf "${FS_MNT_POINT}/root/.skywire" > /dev/null || true
 }
 
 
@@ -520,42 +554,45 @@ function calc_sums_compress() {
 
  # main exec block
  function main () {
-     # test for needed tools
-     tool_test
+    # test for needed tools
+    tool_test
 
-     # create output folder and it's structure
-     create_folders
+    # create output folder and it's structure
+    create_folders
 
-     # erase final images if there
-     warn "Cleaning final images directory"
-     rm -f "${FINAL_IMG_DIR}/*" &> /dev/null || true
+    # erase final images if there
+    warn "Cleaning final images directory"
+    rm -f "${FINAL_IMG_DIR}/*" &> /dev/null || true
 
-     # download resources
-     get_all
+    # download resources
+    get_all
 
-     # prepares and mounts base image
-     prepare_base_image
+    # prepares and mounts base image
+    prepare_base_image
 
-     # install skywire in base image
-     install_skywire
+    # copy downloads/bins to root fs
+    copy_to_img
 
-     # setup chroot
-     enable_chroot
+    # setup chroot
+    enable_chroot
 
-     # fixed for armbian defaults
-     fix_armian_defaults
+    # fixed for armbian defaults
+    fix_armian_defaults
 
-     # setup the systemd unit to start the services
-     set_systemd_units
+    # setup the systemd unit to start the services
+    set_systemd_units
 
-     # disable chroot
-     disable_chroot
+    # disable chroot
+    #disable_chroot
 
-     # build manager image
-     build_disk
+    # clean
+    #clean_image
 
-     # all good signal
-     info "Done with the image creation"
+    # build manager image
+    #build_disk
+
+    # all good signal
+    info "Done with the image creation"
  }
 
 # # executions depends on the parameters passed

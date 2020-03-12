@@ -1,0 +1,14 @@
+[Unit]
+Description=Skywire Visor
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=1
+User=root
+ExecStart=/usr/local/bin/skywire-visor /root/skywire-config.json
+
+[Install]
+WantedBy=multi-user.target

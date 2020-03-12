@@ -1,0 +1,12 @@
+[Unit]
+Description=Configures skywire on first run
+After=network.target
+After=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/skywire-cfg
+
+[Install]
+WantedBy=multi-user.target
