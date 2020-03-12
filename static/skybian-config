@@ -30,12 +30,12 @@ function extract_config() {
 
 	# If /tmp/clean contains strings: test fields in $section
 	if [ -s /tmp/clean ] ; then
-		local data=`cat /tmp/clean`
+		local data=$(cat /tmp/clean)
 		local flag=""		# $flag is set if a field in $section is missing;
 							#	set by the following loop:
 
 		for section in IP GW DNS MODE MIP ; do
-			local test=`cat $data | grep $section`
+			local test=$(cat "${data}" | grep $section)
 
 			# If a field in $section is missing a string...
 			if [-z "$test" ] ; then
