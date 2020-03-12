@@ -104,7 +104,7 @@ function create_folders() {
     # fun is here
     cd "${ROOT}" || (error "Failed to cd." && return 1)
 
-    info "Creating output folder structure"
+    info "Creating output folder structure..."
 
     # sub-dir envs
     DOWNLOADS_ARMBIAN_DIR=${DOWNLOADS_DIR}/armbian
@@ -115,49 +115,43 @@ function create_folders() {
     mkdir -p "${FS_MNT_POINT}"
     mkdir -p "${DOWNLOADS_DIR}" "${DOWNLOADS_ARMBIAN_DIR}" "${DOWNLOADS_SKYWIRE_DIR}"
     mkdir -p "${TIMAGE_DIR}"
+
+    info "Done!"
 }
 
 
 # Downloads and extracts skywire.
 function get_skywire() {
-    local _DST=${DOWNLOADS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
+  local _DST=${DOWNLOADS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
-    # Erase previous versions (if any).
-    rm -rdf "${DOWNLOADS_SKYWIRE_DIR:?}/*" || true
+  # Erase previous versions (if any).
+  rm -rdf "${DOWNLOADS_SKYWIRE_DIR:?}/*" || true
 
-    if [ ! -f "${_DST}" ] ; then
-        notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
-        wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" ||
-          (error "Download failed." && return 1)
-    else
-        info "Reusing package in ${_DST}"
-    fi
+  if [ ! -f "${_DST}" ] ; then
+      notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" || return 1
+  else
+      info "Reusing package in ${_DST}"
+  fi
 
-    info "Extracting package..."
-    tar xvzf "${_DST}" -C "${DOWNLOADS_SKYWIRE_DIR}" ||
-      (error "Extract package failed." && return 1)
+  info "Extracting package..."
+  tar xvzf "${_DST}" -C "${DOWNLOADS_SKYWIRE_DIR}" || return 1
 
-    info "Moving binaries to structured folders..."
-    mkdir -p "${DOWNLOADS_SKYWIRE_DIR}/bin/apps" ||
-      (error "mkdir failed." && return 1)
+  info "Moving binaries to structured folders..."
+  mkdir -p "${DOWNLOADS_SKYWIRE_DIR}/bin/apps" || return 1
 
-    cd "${DOWNLOADS_SKYWIRE_DIR}" ||
-      (error "Failed to cd into ${DOWNLOADS_SKYWIRE_DIR}" && return 1)
+  cd "${DOWNLOADS_SKYWIRE_DIR}" || return 1
 
-    mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/" skywire-visor skywire-cli ||
-      (error "Failed to mv bins." && return 1)
+  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/" skywire-visor skywire-cli || return 1
 
-    mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/apps/" skychat skysocks skysocks-client ||
-      (error "Failed to mv app bins." && return 1)
+  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/apps/" skychat skysocks skysocks-client || return 1
 
-    cd "${ROOT}" ||
-      (error "Failed to cd." && return 1)
+  cd "${ROOT}" || return 1
 
-    info "Cleaning..."
-    rm "${_DST}" ||
-      (error "Failed to clean." && return 1)
+  info "Cleaning..."
+  rm "${_DST}" || return 1
 
-    info "Done!"
+  info "Done!"
 }
 
 
@@ -249,19 +243,10 @@ function get_armbian() {
 }
 
 
-## find a free loop device to use
-#function find_free_loop() {
-#    # loop until we find a free loop device
-#    local _OUT="used"
-#    local _DEV=""
-#    while [ -n "${_OUT}" ] ; do
-#        _DEV=$(awk -v min=20 -v max=99 'BEGIN{srand(); print int(min+rand()*(max-min+1))}')
-#        _OUT=$(losetup | grep "/dev/loop${_DEV}" || true)
-#    done
-#
-#    # output to other function
-#    echo "/dev/loop$_DEV"
-#}
+function get_all() {
+  get_armbian || return 1
+  get_skywire || return 1
+}
 
 
 # setup the rootfs to a loop device
@@ -382,21 +367,37 @@ function build_disk() {
 
 # enable chroot
 function enable_chroot() {
-    info "Seting up chroot jail for root FS: mapping special mounts..."
-    sudo mount -t sysfs none "${FS_MNT_POINT}/sys"
-    sudo mount -t proc none "${FS_MNT_POINT}/proc"
-    sudo mount --bind /dev "${FS_MNT_POINT}/dev"
-    sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
+  info "Seting up chroot jail for root FS..."
+
+  info "Setting up qemu..."
+  QEMU_BIN=$(command -v qemu-aarch64-static)
+
+  sudo cp "${QEMU_BIN}" "${FS_MNT_POINT}/usr/bin/"
+
+  # find a way to set:
+  # PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/bin
+  # update-command-not-found
+
+  info "Setting up special mount points..."
+  sudo mount -t sysfs none "${FS_MNT_POINT}/sys"
+  sudo mount -t proc none "${FS_MNT_POINT}/proc"
+  sudo mount --bind /dev "${FS_MNT_POINT}/dev"
+  sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
 }
 
 
 # disable chroot
 function disable_chroot() {
-    info "Disabling the chroot jail: unmounting..."
-    sudo umount "${FS_MNT_POINT}/sys"
-    sudo umount "${FS_MNT_POINT}/proc"
-    sudo umount "${FS_MNT_POINT}/dev/pts"
-    sudo umount "${FS_MNT_POINT}/dev"
+  info "Disabling the chroot jail..."
+
+  info "Removing qemu..."
+  sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
+
+  info "Unmounting..."
+  sudo umount "${FS_MNT_POINT}/sys"
+  sudo umount "${FS_MNT_POINT}/proc"
+  sudo umount "${FS_MNT_POINT}/dev/pts"
+  sudo umount "${FS_MNT_POINT}/dev"
 }
 
 
@@ -454,7 +455,15 @@ function fix_armian_defaults() {
 # Install skywire.
 function install_skywire() {
   info "Copying skywire bins to root fs..."
-  sudo cp -r "${DOWNLOADS_SKYWIRE_DIR}" "${FS_MNT_POINT}/opt"
+  sudo cp -r "${DOWNLOADS_SKYWIRE_DIR}" "${FS_MNT_POINT}/opt" || return 1
+#  sudo chmod +x "${FS_MNT_POINT}/opt/skywire/skywire-visor" || return 1
+#  sudo chmod +x "${FS_MNT_POINT}/opt/skywire/skywire-cli" || return 1
+
+  info "Creating symbolic links to /usr/bin in root fs..."
+  sudo ln -s "${FS_MNT_POINT}/opt/skywire/bin/skywire-visor" "${FS_MNT_POINT}/usr/local/bin/skywire-visor" || return 1
+  sudo ln -s "${FS_MNT_POINT}/opt/skywire/bin/skywire-cli" "${FS_MNT_POINT}/usr/local/bin/skywire-cli" || return 1
+
+  info "Done!"
 }
 
 
@@ -522,8 +531,7 @@ function calc_sums_compress() {
      rm -f "${FINAL_IMG_DIR}/*" &> /dev/null || true
 
      # download resources
-     get_armbian
-     get_skywire
+     get_all
 
      # prepares and mounts base image
      prepare_base_image
