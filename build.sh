@@ -362,8 +362,8 @@ function copy_to_img() {
 
     info "Copying config files..."
     sudo cp "${ROOT}/static/skybian.conf" "${FS_MNT_POINT}/etc/" || return 1
-    sudo cp "${ROOT}/static/skybian-config" "${FS_MNT_POINT}/usr/local/bin/" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/usr/local/bin/skybian-config" || return 1
+    sudo cp "${ROOT}/static/skybian-conf" "${FS_MNT_POINT}/usr/local/bin/" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/usr/local/bin/skybian-conf" || return 1
 
     info "Done!"
 }
