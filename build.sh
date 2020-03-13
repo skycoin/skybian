@@ -355,15 +355,15 @@ function copy_to_img() {
 
     info "Copying systemd unit services..."
     local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-    sudo cp -f "${ROOT}/static/skywire-visor.service" ${SYSTEMD_DIR}
-    sudo cp -f "${ROOT}/static/skybian-config.service" ${SYSTEMD_DIR}
+    sudo cp -f "${ROOT}/static/skywire-visor.service" ${SYSTEMD_DIR} || return 1
+    sudo cp -f "${ROOT}/static/skybian-conf.service" ${SYSTEMD_DIR} || return 1
 
     # Copy config files
 
     info "Copying config files..."
-    sudo cp "${ROOT}/static/skybian.conf" "${FS_MNT_POINT}/etc/"
-    sudo cp "${ROOT}/static/skybian-config" "${FS_MNT_POINT}/usr/local/bin/"
-    sudo chmod +x "${FS_MNT_POINT}/usr/local/bin/skybian-config"
+    sudo cp "${ROOT}/static/skybian.conf" "${FS_MNT_POINT}/etc/" || return 1
+    sudo cp "${ROOT}/static/skybian-config" "${FS_MNT_POINT}/usr/local/bin/" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/usr/local/bin/skybian-config" || return 1
 
     info "Done!"
 }
@@ -374,8 +374,8 @@ function chroot_actions() {
 
     # copy chroot scripts to root fs
     info "Copying chroot script..."
-    sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp"
-    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh"
+    sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
 
     # enable chroot
     info "Seting up chroot jail..."

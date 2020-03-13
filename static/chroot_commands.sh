@@ -43,7 +43,7 @@ info "Setting the chroot clock to now to avoid bugs with the date..."
 
 # Enable systemd units.
 info "Enabling systemd units..."
-systemctl enable skybian-config.service
-systemctl enable skywire-visor.service
+systemctl enable skybian-conf.service || return 1
+systemctl enable skywire-visor.service || return 1
 
 # your custom commands here
