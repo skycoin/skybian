@@ -1,5 +1,6 @@
 #!/bin/bash
 # Crafted by Skycoin/Simelo team
+# Modified by @evanlinjin
 
 ## This script configures the Network Parameters for Skybian OS during boot
 #	time using data stored in the [free space of the] bootloader or from a
@@ -9,7 +10,7 @@
 #	reserved for the bootloader in 512 byte sectors that's blocks 0 to 32768.
 #
 #	Actual bootloader data is split on some regions in that 16MB space, but
-#   there are withe spaces in there that we will use.
+#   there are white spaces in there that we will use.
 #
 #   Network Paramaters are stored on the 12MB mark, exact address is 0xC00000
 #   aka byte 12582912, but we use 256 byte block to reach it so it's on the 
@@ -34,7 +35,7 @@ function extract_config() {
 		local flag=""		# $flag is set if a field in $section is missing;
 							#	set by the following loop:
 
-		for section in IP GW DNS MODE MIP ; do
+		for section in IP GW DNS HV_PKS ; do
 			local test=$(cat "${data}" | grep $section)
 
 			# If a field in $section is missing a string...
@@ -81,8 +82,7 @@ function check_net() {
 }
 
 ## Check if network configuration is ok:
-NETOK=`check_net`
-if [ "$NETOK" == "1" ] ; then
+if [ "$(check_net)" == "1" ] ; then
 	echo "Network configuration ok."
 else
 	echo "Not configured or different; fixing..."
@@ -95,47 +95,58 @@ else
 	nmcli con mod skynet ipv4.dns "$DNS"
 fi
 
-## Path to skywire config scripts
-SKYWIRE_UNIX_SCRIPTS=/usr/local/skywire/go/src/github.com/SkycoinProject/`
-						`skywire/static/script
+# Config file loc.
+CFG_FILE=/root/skywire-config.json
 
-## Check for required environment variables
-# If /etc/default/skywire doesn't exist: 
-if [ ! -f /etc/default/skywire ] ; then
-	# link it
-	ln -s ${SKYWIRE_UNIX_SCRIPTS}/skywire.defaults /etc/default/skywire
-else
-	# If not a link: remove and create link
-	if [ ! -h /etc/default/skywire ] ; then
-		rm /etc/default/skywire
-		ln -s ${SKYWIRE_UNIX_SCRIPTS}/skywire.defaults /etc/default/skywire
+# Prepare env.
+function prepare_env() {
+    echo "Preparing tools to mod config..."
+    if ! TEMP_FILE=$(mktemp) ; then
+        echo "Failed to create temp dir."
+        exit 1
+    fi
+    if ! JQ=$(command -v jq) ; then
+        echo "Cannot find 'jq', aborting."
+        exit 1
+    fi
+    echo "TEMP_FILE=${TEMP_FILE}"
+    echo "JQ=${JQ}"
+}
+prepare_env
+
+# For modifying config file.
+function jq_cfg() {
+    echo "jq_cfg() $*"
+    $JQ $* "${CFG_FILE}" > "${TEMP_FILE}" && mv "${TEMP_FILE}" "${CFG_FILE}"
+}
+
+# Set trusted Hypervisor PKs if set in 'skybian.conf'.
+function set_hypervisors() {
+	if [ -n ${HV_PKS} ] then
+		for PK in "${HV_PKS[@]}" ; do jq_cfg --arg pk "${PK}" '.hypervisors+=[$pk]' ; done
+		jq_cfg '.hypervisors|=unique' # ensure PKs are all unique
 	fi
+}
+
+# Only generate config if not exist.
+if [[ ! -f "${CFG_FILE}" ]] ; then 
+    echo "Skywire config file does not yet exist in ${CFG_FILE}."
+
+    echo "Generating base config in '${CFG_FILE}'..."
+    /usr/local/bin/skywire-cli visor gen-config --output="${CFG_FILE}" --type="LOCAL" || exit 1
+
+	# TODO(evanlinjin): These values need some discussion.
+	jq_cfg '.transport.log_store.location="/root/skywire/transport/logs"'
+	jq_cfg '.dmsg_pty.authorization_file="/root/skywire/dsmgpty/whitelist.json"'
+	jq_cfg '.apps_path="/root/skywire/apps"'
+	jq_cfg '.local_path="/root/skywire/local"'
 fi
 
-## Modify skywire config to point to a skywire-manager
-echo "Setting the manager IP"
-cat /etc/default/skywire | grep -v "MANAGER_IP" | \
-	sed s/"it system wide."/'it system wide.\n'"MANAGER_IP=$MIP"/ \
-	> /tmp/skywire.default
-cp -f /tmp/skywire.default $SKYWIRE_UNIX_SCRIPTS/skywire.defaults
+# Anyways ensure hypervisors are set.
+set_hypervisors
 
-## Enable and start systemd services based on node type
-if [ "$MODE" == "manager" ] ; then
-	echo "Starting as a Skywire-Manager node"
-	systemctl enable skywire-manager
-	systemctl stop skywire-node
-	systemctl disable skywire-node
-	# short pause
-	sleep 2
-	# start
-	systemctl start skywire-manager
-else
-	echo "Starting as a Skywire-Minion node"
-	systemctl enable skywire-node
-	systemctl stop skywire-manager
-	systemctl disable skywire-manager
-	# short pause
-	sleep 2
-	# start
-	systemctl start skywire-node
-fi
+# Clean.
+echo "Cleaning up..."
+rm -rf "${TEMP_FILE}"
+
+echo "Done!"

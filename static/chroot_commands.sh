@@ -41,4 +41,9 @@ dpkg -i /tmp/jq/*.deb
 info "Setting the chroot clock to now to avoid bugs with the date..."
 /sbin/fake-hwclock save force
 
+# Enable systemd units.
+info "Enabling systemd units..."
+systemctl enable skybian-config.service
+systemctl enable skywire-visor.service
+
 # your custom commands here

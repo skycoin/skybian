@@ -1,11 +1,12 @@
 [Unit]
-Description=Skybian auto-configuration service
+Description=Configures skybian on first run
 After=network.target
 After=systemd-user-sessions.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/skybian-config
+User=root
+ExecStart=/usr/local/bin/skybian-conf
 
 [Install]
 WantedBy=multi-user.target
