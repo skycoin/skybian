@@ -152,7 +152,7 @@ function get_skywire() {
   cd "${ROOT}" || return 1
 
   info "Cleaning..."
-  rm "${_DST}" "${DOWNLOADS_SKYWIRE_DIR}/*.md"  || return 1
+  rm -rf "${_DST}" "${DOWNLOADS_SKYWIRE_DIR}/*.md"  || return 1
 
   info "Done!"
 }
