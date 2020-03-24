@@ -1,0 +1,12 @@
+[Unit]
+Description=Configures skywire on first run
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/skywire/skywire-setup
+
+[Install]
+WantedBy=multi-user.target

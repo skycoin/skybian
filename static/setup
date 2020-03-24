@@ -21,7 +21,10 @@
 DATASTART=49152
 DATASIZE=256
 
-## Extract config from MMC; forward-to /etc/skybian.conf; else use default
+SETUP_CONF="/etc/skywire/setup.conf"    # Location for startup conf.
+VISOR_CONF="/etc/skywire/visor-config.json" # Location for skywire visor conf.
+
+## Extract config from MMC; forward-to $SETUP_CONF; else use default
 function extract_config() {
 	# Read one 256 byte block after skiping $DATASIZE blocks
 	dd if=/dev/mmcblk0 of=/tmp/extracted bs=$DATASIZE count=1 skip=$DATASTART
@@ -31,15 +34,18 @@ function extract_config() {
 
 	# If /tmp/clean contains strings: test fields in $section
 	if [ -s /tmp/clean ] ; then
-		local data=$(cat /tmp/clean)
+		data=$(cat /tmp/clean)
+		local data
+
 		local flag=""		# $flag is set if a field in $section is missing;
 							#	set by the following loop:
 
 		for section in IP GW DNS HV_PKS ; do
-			local test=$(cat "${data}" | grep $section)
+			test=$(cat "${data}" | grep $section)
+			local test
 
 			# If a field in $section is missing a string...
-			if [-z "$test" ] ; then
+			if [ -z "$test" ] ; then
 				flag="true"	# set the flag
 				return
 			fi
@@ -47,20 +53,22 @@ function extract_config() {
 
 		# If $flag is blank: data is good; copy/overwrite-system-default
 		if [ -z "$flag" ] ; then
-			cp -f /tmp/clean /etc/skybian.conf
+			cp -f /tmp/clean "$SETUP_CONF"
 		fi
 	fi
 }
 extract_config
 
 ## If Network Parameters are not found in bootloader: load default config from:
-. /etc/skybian.conf
+# shellcheck source=./setup.conf
+. "$SETUP_CONF"
 
 ## Check if Network Parameters match existing configuration.
 #	If detected parameters match configured: true
 #	If network is not configured (or has different IP): false
 function check_net() {
-    local skynet=`nmcli con show | grep skynet`
+    skynet=$(nmcli con show | grep skynet)
+    local skynet
 
 	# If connection "skynet" exists:
     if [ -n "$skynet" ] ; then				# assign it's IP to:
@@ -95,9 +103,6 @@ else
 	nmcli con mod skynet ipv4.dns "$DNS"
 fi
 
-# Config file loc.
-CFG_FILE=/root/skywire-config.json
-
 # Prepare env.
 function prepare_env() {
     echo "Preparing tools to mod config..."
@@ -117,29 +122,32 @@ prepare_env
 # For modifying config file.
 function jq_cfg() {
     echo "jq_cfg() $*"
-    $JQ $* "${CFG_FILE}" > "${TEMP_FILE}" && mv "${TEMP_FILE}" "${CFG_FILE}"
+    # shellcheck disable=SC2086
+    $JQ $* "${VISOR_CONF}" > "${TEMP_FILE}" && mv "${TEMP_FILE}" "${VISOR_CONF}"
 }
 
-# Set trusted Hypervisor PKs if set in 'skybian.conf'.
+# Set trusted Hypervisor PKs if set in 'setup.conf'.
 function set_hypervisors() {
-	if [ -n ${HV_PKS} ] then
+	if [[ -n ${HV_PKS} ]] ; then
+		# shellcheck disable=SC2016
 		for PK in "${HV_PKS[@]}" ; do jq_cfg --arg pk "${PK}" '.hypervisors+=[$pk]' ; done
 		jq_cfg '.hypervisors|=unique' # ensure PKs are all unique
 	fi
 }
 
 # Only generate config if not exist.
-if [[ ! -f "${CFG_FILE}" ]] ; then 
-    echo "Skywire config file does not yet exist in ${CFG_FILE}."
+if [[ ! -f "${VISOR_CONF}" ]] ; then
+    echo "Skywire config file does not yet exist in ${VISOR_CONF}."
 
-    echo "Generating base config in '${CFG_FILE}'..."
-    /usr/local/bin/skywire-cli visor gen-config --output="${CFG_FILE}" --type="LOCAL" || exit 1
+    echo "Generating base config in '${VISOR_CONF}'..."
+    /usr/bin/skywire-cli visor gen-config --output="${VISOR_CONF}" --type="LOCAL" || exit 1
 
-	# TODO(evanlinjin): These values need some discussion.
-	jq_cfg '.transport.log_store.location="/root/skywire/transport/logs"'
-	jq_cfg '.dmsg_pty.authorization_file="/root/skywire/dsmgpty/whitelist.json"'
-	jq_cfg '.apps_path="/root/skywire/apps"'
-	jq_cfg '.local_path="/root/skywire/local"'
+	jq_cfg '.transport.log_store.location="/var/log/skywire/transport"'
+	jq_cfg '.dmsg_pty.authorization_file="/var/skywire/dsmgpty/whitelist.json"'
+	jq_cfg '.dmsg_pty.cli_address="/run/skywire/dmsgpty.sock"'
+	jq_cfg '.app_server_sock_file="/run/skywire/appsrv.sock"'
+	jq_cfg '.local_path="/var/skywire/local"'
+	jq_cfg '.apps_path="/usr/bin/skywire/apps"'
 fi
 
 # Anyways ensure hypervisors are set.

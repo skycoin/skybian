@@ -1,14 +1,17 @@
 [Unit]
 Description=Skywire Visor
-After=skybian-conf.service
-StartLimitIntervalSec=0
+After=skywire-setup.service
 
 [Service]
 Type=simple
-Restart=on-failure
-RestartSec=2
 User=root
-ExecStart=/usr/local/bin/skywire-visor /root/skywire-config.json
+Group=root
+Environment=SW_CONFIG=/etc/skywire/visor-config.json
+WorkingDirectory=/var/skywire
+ExecStart=/usr/bin/skywire-visor
+TimeoutSec=30s
+Restart=always
+RestartSec=15s
 
 [Install]
 WantedBy=multi-user.target

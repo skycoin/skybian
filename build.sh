@@ -10,6 +10,7 @@
 #set -eo pipefail
 
 # load env variables.
+# shellcheck source=./build.conf
 source "$(pwd)/build.conf"
 
 ##############################################################################
@@ -77,7 +78,7 @@ function tool_test() {
             # not found
             error "Need tool '${t}' and it's not found on the system."
             error "Please install it and run the build script again."
-            exit 1
+            return 1
         fi
     done
 
@@ -117,7 +118,7 @@ function create_folders() {
 
 # Downloads jq .pkg packages.
 function get_jq() {
-  info "Downloading .deb packages for jq..."
+  rm -rf "${DOWNLOADS_JQ_DIR:?}"/* &> /dev/null || true
   wget "${JQ_DOWNLOAD_URLS[@]}" -P "${DOWNLOADS_JQ_DIR}" || return 1
   info "Done!"
 }
@@ -128,7 +129,7 @@ function get_skywire() {
   local _DST=${DOWNLOADS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
   # Erase previous versions (if any).
-  rm -rdf "${DOWNLOADS_SKYWIRE_DIR:?}/*" || true
+  #rm -rdf "${DOWNLOADS_SKYWIRE_DIR:?}/*" || true
 
   if [ ! -f "${_DST}" ] ; then
       notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
@@ -138,21 +139,22 @@ function get_skywire() {
   fi
 
   info "Extracting package..."
-  tar xvzf "${_DST}" -C "${DOWNLOADS_SKYWIRE_DIR}" || return 1
+  mkdir "${DOWNLOADS_SKYWIRE_DIR}/bin"
+  tar xvzf "${_DST}" -C "${DOWNLOADS_SKYWIRE_DIR}/bin" || return 1
 
-  info "Moving binaries to structured folders..."
-  mkdir -p "${DOWNLOADS_SKYWIRE_DIR}/bin/apps" || return 1
+#  info "Moving binaries to structured folders..."
+#  mkdir -p "${DOWNLOADS_SKYWIRE_DIR}/bin/apps" || return 1
 
-  cd "${DOWNLOADS_SKYWIRE_DIR}" || return 1
-
-  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/" skywire-visor skywire-cli || return 1
-
-  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/apps/" skychat skysocks skysocks-client || return 1
-
-  cd "${ROOT}" || return 1
+#  cd "${DOWNLOADS_SKYWIRE_DIR}" || return 1
+#
+#  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/" skywire-visor skywire-cli || return 1
+#
+#  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/apps/" skychat skysocks skysocks-client || return 1
+#
+#  cd "${ROOT}" || return 1
 
   info "Cleaning..."
-  rm -rf "${_DST}" "${DOWNLOADS_SKYWIRE_DIR}/*.md"  || return 1
+  rm -rf "${DOWNLOADS_SKYWIRE_DIR}/bin/README.md" "${DOWNLOADS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
   info "Done!"
 }
@@ -170,6 +172,8 @@ function download_armbian() {
 
 # Get the latest ARMBIAN image for Orange Pi Prime
 function get_armbian() {
+  local ARMBIAN_IMG_7z="armbian.7z"
+
     # change to dest dir
     cd "${DOWNLOADS_DIR}/armbian" ||
       (error "Failed to cd." && return 1)
@@ -179,20 +183,9 @@ function get_armbian() {
 
     # test if we have a file in there
     if [ -r armbian.7z ] ; then
-        ARMBIAN_IMG_7z="armbian.7z"
-        # we have the image in there; but, we must reuse it?
-        if [ "${SILENT_REUSE_DOWNLOADS}" == "no" ] ; then
-            # we can not reuse it, must download, so erase it
-            warn "Old copy detected but you stated not to reuse it"
-            rm -f "armbian.7z" &> /dev/null || true
 
-            # get it
-            info "Downloading..."
-            download_armbian
-        else
-            # use already downloaded image file
-            notice "Reusing already downloaded file"
-        fi
+        # use already downloaded image file
+        notice "Reusing already downloaded file"
     else
         # no image in there, must download
         info "No cached image, downloading.."
@@ -200,9 +193,6 @@ function get_armbian() {
         # download it
         download_armbian
     fi
-
-    # if you get to this point then reset to the actual filename
-    ARMBIAN_IMG_7z="armbian.7z"
 
     # extract and check it's integrity
     info "Armbian file to process is '${ARMBIAN_IMG_7z}'."
@@ -332,13 +322,14 @@ function copy_to_img() {
 
     # Copy skywire bins
 
-    info "Copying skywire bins..."
-    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-visor" "${FS_MNT_POINT}/usr/local/bin/" || return 1
-    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-cli" "${FS_MNT_POINT}/usr/local/bin/" || return 1
+    sudo mkdir -p "${FS_MNT_POINT}/usr/bin/skywire/apps"
 
-    info "Copying skywire apps..."
-    sudo mkdir -p "${FS_MNT_POINT}/root/skywire" || return 1
-    sudo cp -r "${DOWNLOADS_SKYWIRE_DIR}/bin/apps" "${FS_MNT_POINT}/root/skywire/" || return 1
+#    info "Copying skywire bins..."
+#    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-visor" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
+#    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-cli" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
+
+    info "Copying skywire bins..."
+    sudo cp -rf "${DOWNLOADS_SKYWIRE_DIR}/bin/" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
 
     # Copy scripts
 
@@ -355,15 +346,17 @@ function copy_to_img() {
 
     info "Copying systemd unit services..."
     local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-    sudo cp -f "${ROOT}/static/skywire-visor.service" ${SYSTEMD_DIR} || return 1
-    sudo cp -f "${ROOT}/static/skybian-conf.service" ${SYSTEMD_DIR} || return 1
+    sudo cp -f "${ROOT}/static/skywire-visor.service" "${SYSTEMD_DIR}" || return 1
+    sudo cp -f "${ROOT}/static/skywire-setup.service" "${SYSTEMD_DIR}" || return 1
 
     # Copy config files
 
+    sudo mkdir -p "${FS_MNT_POINT}/etc/skywire"
+
     info "Copying config files..."
-    sudo cp "${ROOT}/static/skybian.conf" "${FS_MNT_POINT}/etc/" || return 1
-    sudo cp "${ROOT}/static/skybian-conf" "${FS_MNT_POINT}/usr/local/bin/" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/usr/local/bin/skybian-conf" || return 1
+    sudo cp "${ROOT}/static/setup.conf" "${FS_MNT_POINT}/etc/skywire/" || return 1
+    sudo cp "${ROOT}/static/setup" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/usr/bin/skywire/setup" || return 1
 
     info "Done!"
 }
@@ -412,7 +405,8 @@ function calc_sums_compress() {
       (error "Failed to cd." && return 1)
 
     # vars
-    local LIST=`ls *.img | xargs`
+    LIST=$(ls -- *.img | xargs)
+    local LIST
 
     # info
     info "Calculating the md5sum for the image, this may take a while"
@@ -421,17 +415,17 @@ function calc_sums_compress() {
     for img in ${LIST} ; do
         # MD5
         info "MD5 Sum for image: $img"
-        md5sum -b ${img} > ${img}.md5
+        md5sum -b "${img}" > "${img}.md5"
 
         # sha1
         info "SHA1 Sum for image: $img"
-        sha1sum -b ${img} > ${img}.sha1
+        sha1sum -b "${img}" > "${img}.sha1"
 
         # compress
         info "Compressing, this will take a while..."
-        local name=`echo ${img} | rev | cut -d '.' -f 2- | rev`
-        tar -cvf ${name}.tar ${img}*
-        xz -vzT0 ${name}.tar
+        local name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
+        tar -cvf "${name}.tar" "${img}*"
+        xz -vzT0 "${name}.tar"
     done
 }
 
@@ -448,6 +442,12 @@ function clean_image() {
     sudo sync
     # only do so if IMG_LOOP is set
     [[ -n "${IMG_LOOP}" ]] && sudo losetup -d "${IMG_LOOP}"
+}
+
+
+function clean_output_dir() {
+  rm -v !("$DOWNLOADS_ARMBIAN_DIR"/*.7z)
+  rm -rfv !("$DOWNLOADS_SKYWIRE_DIR"/*.tar.gz)
 }
 
 
@@ -497,7 +497,7 @@ function build_disk() {
 
 
 # main exec block
-function main () {
+function main() {
     # test for needed tools
     tool_test || return 1
 
@@ -535,17 +535,18 @@ function main_package() {
     info "Success!"
 }
 
-case "$1" in
-"-p")
-    # Package image.
-    main_package || (error "Failed." && exit 1)
-    ;;
-"-c")
-    # Clean in case of failures.
-    clean_image || (error "Failed." && exit 1)
-    rm -rf "${DOWNLOADS_DIR}" "${FS_MNT_POINT}" "${TIMAGE_DIR}" || exit 1
-    ;;
-*)
-    main || (error "Failed." && exit 1)
-    ;;
- esac
+#case "$1" in
+#"-p")
+#    # Package image.
+#    main_package || (error "Failed." && exit 1)
+#    ;;
+#"-c")
+#    clean_output_dir
+#    # Clean in case of failures.
+#    clean_image || (error "Failed." && exit 1)
+#    rm -rf "${DOWNLOADS_DIR}" "${FS_MNT_POINT}" "${TIMAGE_DIR}" || exit 1
+#    ;;
+#*)
+#    main || (error "Failed." && exit 1)
+#    ;;
+# esac
