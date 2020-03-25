@@ -450,6 +450,7 @@ function clean_output_dir() {
   # Clean downloads.
   cd "${DOWNLOADS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
   cd "${DOWNLOADS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.xz' -delete
 
   # Rm base image.
   rm -v "${TIMAGE_DIR}/base_image"
@@ -537,7 +538,7 @@ function main() {
 
 function main_clean() {
   clean_output_dir
-  clean_image || return 1
+  clean_image || return 0
 }
 
 # clean exec block
