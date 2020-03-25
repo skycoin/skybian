@@ -13,6 +13,36 @@
 # shellcheck source=./build.conf
 source "$(pwd)/build.conf"
 
+## Variables.
+
+# Needed tools to run this script, space separated
+# On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
+NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static"
+
+# Output directory.
+FINAL_IMG_DIR=${ROOT}/output/final
+DOWNLOADS_DIR=${ROOT}/output/downloads
+FS_MNT_POINT=${ROOT}/output/mnt
+TIMAGE_DIR=${ROOT}/output/timage
+
+# Base image location: we will work with partitions.
+BASE_IMG=${TIMAGE_DIR}/base_image
+
+# Download directories.
+DOWNLOADS_ARMBIAN_DIR=${DOWNLOADS_DIR}/armbian
+DOWNLOADS_SKYWIRE_DIR=${DOWNLOADS_DIR}/skywire
+DOWNLOADS_JQ_DIR=${DOWNLOADS_DIR}/jq
+
+# Image related variables.
+ARMBIAN_IMG_7z=""
+ARMBIAN_IMG=""
+ARMBIAN_VERSION=""
+ARMBIAN_KERNEL_VERSION=""
+
+# Loop device.
+IMG_LOOP="" # free loop device to be used.
+
+
 ##############################################################################
 # This bash file is structured as functions with specific tasks, to see the
 # tasks flow and comments go to bottom of the file and look for the 'main'
@@ -100,13 +130,6 @@ function create_folders() {
     cd "${ROOT}" || (error "Failed to cd." && return 1)
 
     info "Creating output folder structure..."
-
-    # sub-dir envs
-    DOWNLOADS_ARMBIAN_DIR=${DOWNLOADS_DIR}/armbian
-    DOWNLOADS_SKYWIRE_DIR=${DOWNLOADS_DIR}/skywire
-    DOWNLOADS_JQ_DIR=${DOWNLOADS_DIR}/jq
-
-    # create them
     mkdir -p "${FINAL_IMG_DIR}"
     mkdir -p "${FS_MNT_POINT}"
     mkdir -p "${DOWNLOADS_DIR}" "${DOWNLOADS_ARMBIAN_DIR}" "${DOWNLOADS_SKYWIRE_DIR}" "${DOWNLOADS_JQ_DIR}"
@@ -128,9 +151,6 @@ function get_jq() {
 function get_skywire() {
   local _DST=${DOWNLOADS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
-  # Erase previous versions (if any).
-  #rm -rdf "${DOWNLOADS_SKYWIRE_DIR:?}/*" || true
-
   if [ ! -f "${_DST}" ] ; then
       notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" || return 1
@@ -141,17 +161,6 @@ function get_skywire() {
   info "Extracting package..."
   mkdir "${DOWNLOADS_SKYWIRE_DIR}/bin"
   tar xvzf "${_DST}" -C "${DOWNLOADS_SKYWIRE_DIR}/bin" || return 1
-
-#  info "Moving binaries to structured folders..."
-#  mkdir -p "${DOWNLOADS_SKYWIRE_DIR}/bin/apps" || return 1
-
-#  cd "${DOWNLOADS_SKYWIRE_DIR}" || return 1
-#
-#  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/" skywire-visor skywire-cli || return 1
-#
-#  mv -t "${DOWNLOADS_SKYWIRE_DIR}/bin/apps/" skychat skysocks skysocks-client || return 1
-#
-#  cd "${ROOT}" || return 1
 
   info "Cleaning..."
   rm -rf "${DOWNLOADS_SKYWIRE_DIR}/bin/README.md" "${DOWNLOADS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
@@ -175,7 +184,7 @@ function get_armbian() {
   local ARMBIAN_IMG_7z="armbian.7z"
 
     # change to dest dir
-    cd "${DOWNLOADS_DIR}/armbian" ||
+    cd "${DOWNLOADS_ARMBIAN_DIR}" ||
       (error "Failed to cd." && return 1)
 
     # user info
@@ -315,86 +324,79 @@ function prepare_base_image() {
 
 
 function copy_to_img() {
-    # Copy jq packages (they will we installed by ./static/chroot_extra_commands.sh)
+  # Copy jq packages (they will we installed by ./static/chroot_extra_commands.sh)
 
-    info "Copying jq packages..."
-    sudo cp -r "${DOWNLOADS_JQ_DIR}" "${FS_MNT_POINT}/tmp" || return 1
+  info "Copying jq packages..."
+  sudo cp -r "${DOWNLOADS_JQ_DIR}" "${FS_MNT_POINT}/tmp" || return 1
 
-    # Copy skywire bins
+  # Copy skywire bins
 
-    sudo mkdir -p "${FS_MNT_POINT}/usr/bin/skywire/apps"
+  info "Copying skywire bins..."
+  sudo mkdir "$FS_MNT_POINT"/usr/bin/skywire
+  sudo cp -rf "$DOWNLOADS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/skywire/ || return 1
 
-#    info "Copying skywire bins..."
-#    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-visor" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
-#    sudo cp "${DOWNLOADS_SKYWIRE_DIR}/bin/skywire-cli" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
+  # Copy scripts
 
-    info "Copying skywire bins..."
-    sudo cp -rf "${DOWNLOADS_SKYWIRE_DIR}/bin/" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
+  info "Copying disable user creation script..."
+  sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
+  sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
 
-    # Copy scripts
+  info "Copying headers (so OS presents itself as Skybian)..."
+  sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
+  sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
+  sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
 
-    info "Copying disable user creation script..."
-    sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
+  # Copy systemd units
 
-    info "Copying headers (so OS presents itself as Skybian)..."
-    sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
-    sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
+  info "Copying systemd unit services..."
+  local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
+  sudo cp -f "${ROOT}/static/skywire-visor.service" "${SYSTEMD_DIR}" || return 1
+  sudo cp -f "${ROOT}/static/skywire-setup.service" "${SYSTEMD_DIR}" || return 1
 
-    # Copy systemd units
+  # Copy config files
 
-    info "Copying systemd unit services..."
-    local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-    sudo cp -f "${ROOT}/static/skywire-visor.service" "${SYSTEMD_DIR}" || return 1
-    sudo cp -f "${ROOT}/static/skywire-setup.service" "${SYSTEMD_DIR}" || return 1
+  info "Copying config files..."
+  sudo mkdir -p "${FS_MNT_POINT}/etc/skywire"
+  sudo cp "${ROOT}/static/setup.conf" "${FS_MNT_POINT}/etc/skywire/" || return 1
+  sudo cp "${ROOT}/static/setup" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
+  sudo chmod +x "${FS_MNT_POINT}/usr/bin/skywire/setup" || return 1
 
-    # Copy config files
-
-    sudo mkdir -p "${FS_MNT_POINT}/etc/skywire"
-
-    info "Copying config files..."
-    sudo cp "${ROOT}/static/setup.conf" "${FS_MNT_POINT}/etc/skywire/" || return 1
-    sudo cp "${ROOT}/static/setup" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/usr/bin/skywire/setup" || return 1
-
-    info "Done!"
+  info "Done!"
 }
 
 
 # fix some defaults on armian to skywire defaults
 function chroot_actions() {
+  # copy chroot scripts to root fs
+  info "Copying chroot script..."
+  sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
+  sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
 
-    # copy chroot scripts to root fs
-    info "Copying chroot script..."
-    sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
+  # enable chroot
+  info "Seting up chroot jail..."
+  sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
+  sudo mount -t sysfs none "${FS_MNT_POINT}/sys"
+  sudo mount -t proc none "${FS_MNT_POINT}/proc"
+  sudo mount --bind /dev "${FS_MNT_POINT}/dev"
+  sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
 
-    # enable chroot
-    info "Seting up chroot jail..."
-    sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
-    sudo mount -t sysfs none "${FS_MNT_POINT}/sys"
-    sudo mount -t proc none "${FS_MNT_POINT}/proc"
-    sudo mount --bind /dev "${FS_MNT_POINT}/dev"
-    sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
+  # Executing chroot script
+  info "Executing chroot script..."
+  sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
 
-    # Executing chroot script
-    info "Executing chroot script..."
-    sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
+  # disable chroot
+  info "Disabling the chroot jail..."
+  sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
+  sudo umount "${FS_MNT_POINT}/sys"
+  sudo umount "${FS_MNT_POINT}/proc"
+  sudo umount "${FS_MNT_POINT}/dev/pts"
+  sudo umount "${FS_MNT_POINT}/dev"
 
-    # disable chroot
-    info "Disabling the chroot jail..."
-    sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
-    sudo umount "${FS_MNT_POINT}/sys"
-    sudo umount "${FS_MNT_POINT}/proc"
-    sudo umount "${FS_MNT_POINT}/dev/pts"
-    sudo umount "${FS_MNT_POINT}/dev"
+  # clean /tmp in root fs
+  info "Cleaning..."
+  sudo rm -rf "$FS_MNT_POINT"/tmp/* > /dev/null || true
 
-    # clean /tmp in root fs
-    info "Cleaning..."
-    sudo rm -rf "${FS_MNT_POINT}/tmp/*" > /dev/null || true
-
-    info "Done!"
+  info "Done!"
 }
 
 
@@ -404,15 +406,11 @@ function calc_sums_compress() {
     cd "${FINAL_IMG_DIR}" ||
       (error "Failed to cd." && return 1)
 
-    # vars
-    LIST=$(ls -- *.img | xargs)
-    local LIST
-
     # info
     info "Calculating the md5sum for the image, this may take a while"
 
     # cycle for each one
-    for img in ${LIST} ; do
+    for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
         # MD5
         info "MD5 Sum for image: $img"
         md5sum -b "${img}" > "${img}.md5"
@@ -423,10 +421,13 @@ function calc_sums_compress() {
 
         # compress
         info "Compressing, this will take a while..."
-        local name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
-        tar -cvf "${name}.tar" "${img}*"
+        name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
+        tar -cvf "${name}.tar" "${img}"*
         xz -vzT0 "${name}.tar"
     done
+
+    cd "${ROOT}" || return 1
+    info "Done!"
 }
 
 
@@ -446,8 +447,15 @@ function clean_image() {
 
 
 function clean_output_dir() {
-  rm -v !("$DOWNLOADS_ARMBIAN_DIR"/*.7z)
-  rm -rfv !("$DOWNLOADS_SKYWIRE_DIR"/*.tar.gz)
+  # Clean downloads.
+  cd "${DOWNLOADS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
+  cd "${DOWNLOADS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+
+  # Rm base image.
+  rm -v "${TIMAGE_DIR}/base_image"
+
+  # cd to root.
+  cd "${ROOT}" || return 1
 }
 
 
@@ -506,7 +514,7 @@ function main() {
 
     # erase final images if there
     warn "Cleaning final images directory"
-    rm -f "${FINAL_IMG_DIR}/*" &> /dev/null || true
+    rm -f "$FINAL_IMG_DIR"/* &> /dev/null || true
 
     # download resources
     get_all || return 1
@@ -530,7 +538,7 @@ function main() {
 # clean exec block
 function main_package() {
     tool_test || return 1
-    create_folders || return 1
+    #create_folders || return 1
     calc_sums_compress || return 1
     info "Success!"
 }
