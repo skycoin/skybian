@@ -535,6 +535,11 @@ function main() {
     info "Success!"
 }
 
+function main_clean() {
+  clean_output_dir
+  clean_image || return 1
+}
+
 # clean exec block
 function main_package() {
     tool_test || return 1
@@ -543,18 +548,16 @@ function main_package() {
     info "Success!"
 }
 
-#case "$1" in
-#"-p")
-#    # Package image.
-#    main_package || (error "Failed." && exit 1)
-#    ;;
-#"-c")
-#    clean_output_dir
-#    # Clean in case of failures.
-#    clean_image || (error "Failed." && exit 1)
-#    rm -rf "${DOWNLOADS_DIR}" "${FS_MNT_POINT}" "${TIMAGE_DIR}" || exit 1
-#    ;;
-#*)
-#    main || (error "Failed." && exit 1)
-#    ;;
-# esac
+case "$1" in
+"-p")
+    # Package image.
+    main_package || (error "Failed." && exit 1)
+    ;;
+"-c")
+    # Clean in case of failures.
+    main_clean || (error "Failed." && exit 1)
+    ;;
+*)
+    main || (error "Failed." && exit 1)
+    ;;
+ esac
