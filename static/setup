@@ -41,7 +41,7 @@ function extract_config() {
 							#	set by the following loop:
 
 		for section in IP GW DNS HV_PKS ; do
-			test=$(cat "${data}" | grep $section)
+			test=$(cat "$data" | grep $section)
 			local test
 
 			# If a field in $section is missing a string...

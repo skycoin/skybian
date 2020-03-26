@@ -1,5 +1,6 @@
 [Unit]
 Description=Skywire Visor
+Requires=skywire-setup.service
 After=skywire-setup.service
 
 [Service]
