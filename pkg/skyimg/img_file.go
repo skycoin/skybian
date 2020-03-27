@@ -38,10 +38,10 @@ func (img *ImgFile) Writer() io.Writer {
 
 func (img *ImgFile) Verify() error {
 	if !bytes.Equal(img.ExpectedMD5[:], img.MD5.Sum(nil)) {
-		return errors.New("MD5 hashes do not match")
+		return errors.New("MD5 hash does not match expected")
 	}
 	if !bytes.Equal(img.ExpectedSHA1[:], img.SHA1.Sum(nil)) {
-		return errors.New("SHA1 hashes do not match")
+		return errors.New("SHA1 hash does not match expected")
 	}
 	return nil
 }

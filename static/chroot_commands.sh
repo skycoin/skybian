@@ -42,6 +42,10 @@ update-command-not-found
 info "Setting the chroot clock to now to avoid bugs with the date..."
 /sbin/fake-hwclock save force
 
+# Create symbolic links for skywire bins.
+ln -s /usr/bin/skywire/skywire-visor /usr/bin/skywire-visor
+ln -s /usr/bin/skywire/skywire-cli /usr/bin/skywire-cli
+
 # Enable systemd units.
 info "Enabling systemd units..."
 systemctl enable skywire-setup.service || exit 1

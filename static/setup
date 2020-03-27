@@ -3,13 +3,13 @@
 # Modified by @evanlinjin
 
 ## This script configures the Network Parameters for Skybian OS during boot
-#	time using data stored in the [free space of the] bootloader or from a
+#	time using _data stored in the [free space of the] bootloader or from a
 #	default configuration file.
 
 ## The first 16MB (address 0x0-0x1000000) of the multimedia-card (MMC) is
 #	reserved for the bootloader in 512 byte sectors that's blocks 0 to 32768.
 #
-#	Actual bootloader data is split on some regions in that 16MB space, but
+#	Actual bootloader _data is split on some regions in that 16MB space, but
 #   there are white spaces in there that we will use.
 #
 #   Network Paramaters are stored on the 12MB mark, exact address is 0xC00000
@@ -34,25 +34,22 @@ function extract_config() {
 
 	# If /tmp/clean contains strings: test fields in $section
 	if [ -s /tmp/clean ] ; then
-		data=$(cat /tmp/clean)
-		local data
+		_data=$(cat /tmp/clean)
+		_flag="" # _flag is set if a field in $section is missing;
 
-		local flag=""		# $flag is set if a field in $section is missing;
-							#	set by the following loop:
-
-		for section in IP GW DNS HV_PKS ; do
-			test=$(cat "$data" | grep $section)
+		for section in IP GW SK HVS ; do
+			test=$(cat "$_data" | grep $section)
 			local test
 
 			# If a field in $section is missing a string...
 			if [ -z "$test" ] ; then
-				flag="true"	# set the flag
+				_flag="true"	# set the _flag
 				return
 			fi
 		done
 
-		# If $flag is blank: data is good; copy/overwrite-system-default
-		if [ -z "$flag" ] ; then
+		# If $_flag is blank: _data is good; copy/overwrite-system-default
+		if [ -z "$_flag" ] ; then
 			cp -f /tmp/clean "$SETUP_CONF"
 		fi
 	fi
@@ -67,30 +64,29 @@ extract_config
 #	If detected parameters match configured: true
 #	If network is not configured (or has different IP): false
 function check_net() {
-    skynet=$(nmcli con show | grep skynet)
-    local skynet
+  skynet=$(nmcli con show | grep skynet)
 
-	# If connection "skynet" exists:
-    if [ -n "$skynet" ] ; then				# assign it's IP to:
-        local skyip=$(nmcli con show skynet | grep IP4.ADDRESS | `
-			`awk '{ print $2 }')
+  # If connection "skynet" exists:
+  if [ -n "$skynet" ] ; then
+    # assign it's IP to:
+    skyip=$(nmcli con show skynet | grep IP4.ADDRESS | `
+    `awk '{ print $2 }')
 
-	    # Test if it matches $IP from extract_config()
-        if [ "$skyip" == "$IP/24" ] ; then
-            echo 1	# true
-        else
-            echo 0	# false
-        fi
-    else	# No "Skynet" connection
-        echo 0		# false
-
-        # Erase existing configuration in Network Manager for eth0 interface
-        nmcli con delete "Wired connection 1" &> /dev/null
+    # Test if it matches $IP from extract_config()
+    if [ "$skyip" != "$IP/24" ] ; then
+        return 1
     fi
+    return 0
+  fi
+
+  # No "Skynet" connection
+  # Erase existing configuration in Network Manager for eth0 interface
+  nmcli con delete "Wired connection 1" &> /dev/null
+  return 1
 }
 
 ## Check if network configuration is ok:
-if [ "$(check_net)" == "1" ] ; then
+if check_net ; then
 	echo "Network configuration ok."
 else
 	echo "Not configured or different; fixing..."
@@ -100,7 +96,7 @@ else
 
 	# Setting up using parameters from extract_config()
 	nmcli con add con-name skynet ifname eth0 type ethernet ip4 $IP/24 gw4 $GW
-	nmcli con mod skynet ipv4.dns "$DNS"
+	nmcli con mod skynet ipv4.dns "1.0.0.1, 1.1.1.1"
 fi
 
 # Prepare env.
@@ -128,20 +124,21 @@ function jq_cfg() {
 
 # Set trusted Hypervisor PKs if set in 'setup.conf'.
 function set_hypervisors() {
-	if [[ -n ${HV_PKS} ]] ; then
+	if [[ -n ${HVS} ]] ; then
 		# shellcheck disable=SC2016
-		for PK in "${HV_PKS[@]}" ; do jq_cfg --arg pk "${PK}" '.hypervisors+=[$pk]' ; done
+		for PK in "${HVS[@]}" ; do jq_cfg --arg pk "${PK}" '.hypervisors+=[$pk]' ; done
 		jq_cfg '.hypervisors|=unique' # ensure PKs are all unique
 	fi
 }
 
 # Only generate config if not exist.
 if [[ ! -f "${VISOR_CONF}" ]] ; then
-    echo "Skywire config file does not yet exist in ${VISOR_CONF}."
+  echo "Skywire config file does not yet exist in ${VISOR_CONF}."
 
-    echo "Generating base config in '${VISOR_CONF}'..."
-    /usr/bin/skywire-cli visor gen-config --output="${VISOR_CONF}" --type="LOCAL" || exit 1
+  echo "Generating base config in '${VISOR_CONF}'..."
+  /usr/bin/skywire-cli visor gen-config --output="${VISOR_CONF}" --type="LOCAL" --secret-key="$SK" || exit 1
 
+  echo "Modifying config..."
 	jq_cfg '.transport.log_store.location="/var/log/skywire/transport"'
 	jq_cfg '.dmsg_pty.authorization_file="/var/skywire/dsmgpty/whitelist.json"'
 	jq_cfg '.dmsg_pty.cli_address="/run/skywire/dmsgpty.sock"'
@@ -151,6 +148,7 @@ if [[ ! -f "${VISOR_CONF}" ]] ; then
 fi
 
 # Anyways ensure hypervisors are set.
+# Otherwise, we will lose control over out visor.
 set_hypervisors
 
 # Clean.
