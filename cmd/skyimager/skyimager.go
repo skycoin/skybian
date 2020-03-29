@@ -8,9 +8,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/SkycoinProject/skybian/pkg/bootparams"
 	"github.com/SkycoinProject/skybian/pkg/imager"
-	"github.com/sirupsen/logrus"
 )
 
 // TODO

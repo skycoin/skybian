@@ -11,9 +11,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/SkycoinProject/skybian/pkg/bootparams"
 	"github.com/mholt/archiver"
 	"github.com/sirupsen/logrus"
+
+	"github.com/SkycoinProject/skybian/pkg/bootparams"
 )
 
 // File extensions which we expect to see in the archive.
@@ -43,10 +44,10 @@ type Builder struct {
 
 func NewBuilder(log logrus.FieldLogger, baseDir, finalDir string) *Builder {
 	return &Builder{
-		log: log,
-		baseDir: baseDir,
+		log:      log,
+		baseDir:  baseDir,
 		finalDir: finalDir,
-		bImgs: make(map[string]BaseImage),
+		bImgs:    make(map[string]BaseImage),
 	}
 }
 
