@@ -3,6 +3,10 @@ dist: xenial
 sudo: required
 language: bash
 
+go:
+  # - "1.13.x" At minimum the code should run make check on the latest two go versions in the default linux environment provided by Travis.
+  - "1.13.x"
+
 before_script:
 - sudo apt update
 - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
