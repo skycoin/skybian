@@ -15,6 +15,8 @@ endif
 TEST_OPTS_NOCI:=-$(TEST_OPTS_BASE) -v
 TEST_OPTS:=$(TEST_OPTS_BASE) -tags no_ci
 
+IMG_BOOT_PARAMS:='[{"local_ip":"192.168.0.2","gateway_ip":"192.168.0.1","local_sk":"34992ada3a6daa4fbb5ad8b5b958d993ad4e5ed0f51b5ba822c8370212030826","hypervisor_pks":["027c823e9e183f3a89c5c200705f2017c0df253a66bdfae5aa0755d191713b7520"]}]'
+
 check: lint test ## Run linters and tests
 
 install-linters: ## Install linters
@@ -37,6 +39,9 @@ format: ## Formats the code. Must have goimports installed (use make install-lin
 test: ## Run tests
 	-go clean -testcache &>/dev/null
 	${OPTS} go test ${TEST_OPTS} ./pkg/...
+
+image: ## Run skyimager
+	echo ${IMG_BOOT_PARAMS} | go run ./cmd/skyimager/skyimager.go
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

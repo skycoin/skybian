@@ -42,13 +42,19 @@ type Builder struct {
 	bImgs map[string]BaseImage
 }
 
-func NewBuilder(log logrus.FieldLogger, baseDir, finalDir string) *Builder {
+func NewBuilder(log logrus.FieldLogger, baseDir, finalDir string) (*Builder, error) {
+	if err := os.MkdirAll(baseDir, 0700); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(finalDir, 0700); err != nil {
+		return nil, err
+	}
 	return &Builder{
 		log:      log,
 		baseDir:  baseDir,
 		finalDir: finalDir,
 		bImgs:    make(map[string]BaseImage),
-	}
+	}, nil
 }
 
 func (b *Builder) DownloadPath() string {
@@ -187,8 +193,8 @@ func (b *Builder) MakeFinalImages(imgName string, bpsSlice []bootparams.BootPara
 	}
 
 	var (
-		fImgs   = make([]FinalImage, 0, len(bpsSlice))
-		writers = make([]io.Writer, 0, len(bpsSlice))
+		fImgs   = make([]FinalImage, len(bpsSlice))
+		writers = make([]io.Writer, len(bpsSlice))
 	)
 	for i, bp := range bpsSlice {
 		name := filepath.Join(b.finalDir, fmt.Sprintf("image-%d.img", i))
@@ -222,7 +228,7 @@ func (b *Builder) Images() []string {
 	b.mx.Lock()
 	defer b.mx.Unlock()
 
-	out := make([]string, len(b.bImgs))
+	out := make([]string, 0, len(b.bImgs))
 	for name := range b.bImgs {
 		out = append(out, name)
 	}

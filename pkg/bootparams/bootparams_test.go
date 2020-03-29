@@ -94,14 +94,14 @@ func generatePKs(n int) cipher.PubKeys {
 
 func TestBootParams(t *testing.T) {
 	imgName := prepareMockImg(t)
-	fmt.Println(imgName)
-	//defer func() { require.NoError(t, os.Remove(imgName)) }()
+	defer func() { require.NoError(t, os.Remove(imgName)) }()
 
 	_, err := Read(imgName)
 	require.EqualError(t, err, ErrCannotReadParams.Error())
 
 	pk, sk := cipher.GenerateKeyPair()
-	fmt.Println("pk =", pk)
+	fmt.Println("pk =", pk) // pk = 027c823e9e183f3a89c5c200705f2017c0df253a66bdfae5aa0755d191713b7520
+	fmt.Println("sk =", sk) // sk = 34992ada3a6daa4fbb5ad8b5b958d993ad4e5ed0f51b5ba822c8370212030826
 
 	params := BootParams{
 		LocalIP:       net.ParseIP("192.168.0.2"),
@@ -112,7 +112,7 @@ func TestBootParams(t *testing.T) {
 
 	raw, err := params.Encode()
 	require.NoError(t, err)
-	require.Len(t, raw, 198)
+	require.Len(t, raw, size)
 
 	require.NoError(t, Write(imgName, params))
 
