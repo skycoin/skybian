@@ -3,10 +3,8 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/SkycoinProject/skycoin/src/util/logging"
 
@@ -44,58 +42,10 @@ func main() {
 		log.WithError(err).Fatal("Failed to read boot params from STDIN.")
 	}
 
-	log.Info("Initializing builder...")
-
-	var (
-		baseDir  = filepath.Join(root, "base")
-		finalDir = filepath.Join(root, "final")
-	)
-
-	builder, err := imager.NewBuilder(log, baseDir, finalDir)
-	if err != nil {
-		log.WithError(err).Fatal("Failed to init builder.")
+	if err := imager.Build(log, root, dlURL, bpsSlice); err != nil {
+		log.WithError(err).Fatal("Build failed.")
 	}
 
-	dlDone := make(chan struct{})
-	ticker := time.NewTicker(time.Second)
-	go func() {
-		for {
-			select {
-			case <-dlDone:
-				ticker.Stop()
-				return
-			case <-ticker.C:
-			}
-			total := builder.DownloadTotal()
-			current := builder.DownloadCurrent()
-			if total > 0 || current > 0 {
-				fmt.Printf("Downloading... %d%% (%d bytes)\r", current*100/total, current)
-			}
-		}
-	}()
-
-	log.WithField("url", dlURL).Info("Downloading base image archive...")
-	if err := builder.Download(dlURL); err != nil {
-		log.WithError(err).Fatal("Download failed.")
-	}
-	close(dlDone)
-
-	if err := builder.ExtractArchive(); err != nil {
-		log.WithError(err).Fatal("Failed to extract archive.")
-	}
-
-	imgs := builder.Images()
-	log.WithField("n", len(imgs)).
-		WithField("imgs", imgs).
-		Info("Obtained base images.")
-
-	if len(imgs) == 0 {
-		log.Fatal("No valid images in archive.")
-	}
-
-	if err := builder.MakeFinalImages(imgs[0], bpsSlice); err != nil {
-		log.WithError(err).Fatal("Failed to make final images.")
-	}
-
-	log.WithField("final_dir", finalDir).Info("Final images are created!")
+	log.Info("You can now flash your images using a tools such as balenaEtcher: https://www.balena.io/etcher/")
+	log.Info("Bye bye!")
 }
