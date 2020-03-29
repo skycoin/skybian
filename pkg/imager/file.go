@@ -1,4 +1,4 @@
-package skyimg
+package imager
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-type ImgFile struct {
+type File struct {
 	File         *os.File
 	MD5          hash.Hash
 	SHA1         hash.Hash
@@ -19,28 +19,28 @@ type ImgFile struct {
 	ExpectedSHA1 [sha1.Size]byte
 }
 
-func (img *ImgFile) Init(filename string) error {
-	if img.File == nil {
-		f, err := os.Create(filename)
+func (f *File) Init(filename string) error {
+	if f.File == nil {
+		osF, err := os.Create(filename)
 		if err != nil {
 			return fmt.Errorf("failed to create img file: %v", err)
 		}
-		img.File = f
-		img.MD5 = md5.New()
-		img.SHA1 = sha1.New()
+		f.File = osF
+		f.MD5 = md5.New()
+		f.SHA1 = sha1.New()
 	}
 	return nil
 }
 
-func (img *ImgFile) Writer() io.Writer {
-	return io.MultiWriter(img.File, img.MD5, img.SHA1)
+func (f *File) Writer() io.Writer {
+	return io.MultiWriter(f.File, f.MD5, f.SHA1)
 }
 
-func (img *ImgFile) Verify() error {
-	if !bytes.Equal(img.ExpectedMD5[:], img.MD5.Sum(nil)) {
+func (f *File) Verify() error {
+	if !bytes.Equal(f.ExpectedMD5[:], f.MD5.Sum(nil)) {
 		return errors.New("MD5 hash does not match expected")
 	}
-	if !bytes.Equal(img.ExpectedSHA1[:], img.SHA1.Sum(nil)) {
+	if !bytes.Equal(f.ExpectedSHA1[:], f.SHA1.Sum(nil)) {
 		return errors.New("SHA1 hash does not match expected")
 	}
 	return nil

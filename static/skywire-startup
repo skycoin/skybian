@@ -1,0 +1,120 @@
+#!/bin/bash
+# Crafted by Skycoin/Simelo team
+# Modified by @evanlinjin
+
+# TODO(evanlinjin): Write documentation for the following:
+# - Where we are placing the boot params.
+# - Values of the boot params.
+
+DEV_FILE=/dev/mmcblk0
+VISOR_CONF=/etc/skywire/visor-config.json # Location for skywire visor conf.
+NET_NAME="skynet"
+
+
+# 'extract_boot_params' extracts boot parameters.
+# These parameters are stored in the MBR (Master Boot Record) Bootstrap code
+# area of the boot device. This starts at position +0E0(hex) and has 216 bytes.
+function extract_boot_params() {
+  if ! readonly BOOT_PARAMS=$(./read-boot-params -if=$DEV_FILE); then
+    echo "Failed to read boot params."
+    return 1
+  fi
+  eval "$BOOT_PARAMS"
+  readonly IP GW SK HVS
+}
+
+
+# 'setup_network' sets up networking for Skybian.
+# It uses the IP (local IP address) and GW (Gateway IP address) of the boot
+# params. If these are not defined, or the network is already set up, nothing
+# will be done.
+function setup_network() {
+  # If IP or GW is empty, do nothing.
+  [[ -z "$IP" || -z "$GW" ]] && return 0
+
+  # If network is already setup, do nothing.
+  [[ "$(nmcli -g IP4.ADDRESS c show "$NET_NAME")" == "$IP/24" ]] && return 0
+
+  # Delete all nm connections.
+  TEMP_FILE=$(mktemp)
+  nmcli -c=no -f=NAME -t c show > "$TEMP_FILE"
+  while read -r line; do nmcli c delete "$line"; done < "$TEMP_FILE"
+  rm "$TEMP_FILE"
+
+  # Recreate connections.
+  nmcli con add con-name "$NET_NAME" ifname eth0 type ethernet ip4 "$IP"/24 gw4 "$GW"
+  nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+}
+
+
+# 'prepare_mod_settings' prepares the environment for skywire config
+# modification using jq.
+function prepare_mod_settings() {
+  echo "Preparing tools to mod config..."
+  if ! TEMP_FILE=$(mktemp) ; then
+    echo "Failed to create temp dir."
+    exit 1
+  fi
+  if ! JQ=$(command -v jq) ; then
+    echo "Cannot find 'jq', aborting."
+    exit 1
+  fi
+  echo "TEMP_FILE=${TEMP_FILE}"
+  echo "JQ=${JQ}"
+}
+
+
+# 'jq_cfg' is a convenience function for modifying the config file with jq.
+function jq_cfg() {
+    echo "jq_cfg() $*"
+    # shellcheck disable=SC2048 disable=SC2086
+    $JQ $* "${VISOR_CONF}" > "${TEMP_FILE}" && mv "${TEMP_FILE}" "${VISOR_CONF}"
+}
+
+
+# 'set_hypervisors' sets the trusted hypervisor public keys in config.
+# These values are extracted from the HVS boot parameter.
+function set_hypervisors() {
+	if [[ -n ${HVS} ]] ; then
+		# shellcheck disable=SC2016
+		for PK in "${HVS[@]}" ; do jq_cfg --arg pk "${PK}" '.hypervisors+=[$pk]' ; done
+		jq_cfg '.hypervisors|=unique' # ensure PKs are all unique
+	fi
+}
+
+# This is where the magic happens.
+
+# We can only setup the network if we can obtain boot parameters.
+extract_boot_params && setup_network
+
+# If this fails, exit.
+if ! prepare_mod_settings; then
+  echo "Failed to prepare config-mod settings."
+  exit 1
+fi
+
+# Only generate config if not exist.
+if [[ ! -f "${VISOR_CONF}" ]] ; then
+  echo "Skywire config file does not yet exist in ${VISOR_CONF}."
+
+  echo "Generating base config in '${VISOR_CONF}'..."
+  /usr/bin/skywire-cli visor gen-config --output="${VISOR_CONF}" --type="LOCAL" --secret-key="$SK" || exit 1
+
+  echo "Modifying config..."
+	jq_cfg '.transport.log_store.location="/var/log/skywire/transport"'
+	jq_cfg '.dmsg_pty.authorization_file="/var/skywire/dsmgpty/whitelist.json"'
+	jq_cfg '.dmsg_pty.cli_address="/run/skywire/dmsgpty.sock"'
+	jq_cfg '.app_server_sock_file="/run/skywire/appsrv.sock"'
+	jq_cfg '.local_path="/var/skywire/local"'
+	jq_cfg '.apps_path="/usr/bin/skywire/apps"'
+fi
+
+# Anyways ensure hypervisors are set.
+# Otherwise, we will lose control over our visor.
+set_hypervisors
+
+# Clean up.
+rm -rf "${TEMP_FILE}"
+
+echo "Starting skywire..."
+/etc/skywire/visor-config.json "$VISOR_CONF" &

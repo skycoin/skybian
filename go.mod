@@ -3,6 +3,7 @@ module github.com/SkycoinProject/skybian
 go 1.14
 
 require (
+	github.com/SkycoinProject/dmsg v0.1.0
 	github.com/SkycoinProject/skycoin v0.27.0 // indirect
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect

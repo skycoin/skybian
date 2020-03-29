@@ -1,9 +1,5 @@
 #!/bin/bash
 
-HOME=/root
-SKYWIRE_DIR=${HOME}/skywire
-export HOME
-export SKYWIRE_DIR
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # function to log messages as info
@@ -48,5 +44,4 @@ ln -s /usr/bin/skywire/skywire-cli /usr/bin/skywire-cli
 
 # Enable systemd units.
 info "Enabling systemd units..."
-systemctl enable skywire-setup.service || exit 1
-systemctl enable skywire-visor.service || exit 1
+systemctl enable skywire-startup.service

@@ -17,21 +17,22 @@ source "$(pwd)/build.conf"
 
 # Needed tools to run this script, space separated
 # On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
-NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static"
+NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go"
 
 # Output directory.
 FINAL_IMG_DIR=${ROOT}/output/final
-DOWNLOADS_DIR=${ROOT}/output/downloads
+PARTS_DIR=${ROOT}/output/parts
 FS_MNT_POINT=${ROOT}/output/mnt
-TIMAGE_DIR=${ROOT}/output/timage
+IMAGE_DIR=${ROOT}/output/image
 
 # Base image location: we will work with partitions.
-BASE_IMG=${TIMAGE_DIR}/base_image
+BASE_IMG=${IMAGE_DIR}/base_image
 
 # Download directories.
-DOWNLOADS_ARMBIAN_DIR=${DOWNLOADS_DIR}/armbian
-DOWNLOADS_SKYWIRE_DIR=${DOWNLOADS_DIR}/skywire
-DOWNLOADS_JQ_DIR=${DOWNLOADS_DIR}/jq
+PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
+PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
+PARTS_JQ_DIR=${PARTS_DIR}/jq
+PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
 # Image related variables.
 ARMBIAN_IMG_7z=""
@@ -122,34 +123,44 @@ function tool_test() {
 function create_folders() {
     # output [main folder]
     #   /final [this will be the final images dir]
-    #   /downloads [all thing we download from the internet]
+    #   /parts [all thing we download from the internet]
     #   /mnt [to mount resources, like img fs, etc]
-    #   /timage [all image processing goes here]
-
-    # fun is here
-    cd "${ROOT}" || (error "Failed to cd." && return 1)
+    #   /image [all image processing goes here]
 
     info "Creating output folder structure..."
-    mkdir -p "${FINAL_IMG_DIR}"
-    mkdir -p "${FS_MNT_POINT}"
-    mkdir -p "${DOWNLOADS_DIR}" "${DOWNLOADS_ARMBIAN_DIR}" "${DOWNLOADS_SKYWIRE_DIR}" "${DOWNLOADS_JQ_DIR}"
-    mkdir -p "${TIMAGE_DIR}"
+    mkdir -p "$FINAL_IMG_DIR"
+    mkdir -p "$FS_MNT_POINT"
+    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_JQ_DIR" "$PARTS_TOOLS_DIR"
+    mkdir -p "$IMAGE_DIR"
 
     info "Done!"
 }
 
 
+function get_tools() {
+  local _src="$ROOT/cmd/read-boot-params/read-boot-params.go"
+  local _out="$PARTS_TOOLS_DIR/read-boot-params"
+
+  info "Building read-boot-params..."
+  info "_src=$_src"
+  info "_out=$_out"
+  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
+
+  info "Done!"
+}
+
+
 # Downloads jq .pkg packages.
 function get_jq() {
-  rm -rf "${DOWNLOADS_JQ_DIR:?}"/* &> /dev/null || true
-  wget "${JQ_DOWNLOAD_URLS[@]}" -P "${DOWNLOADS_JQ_DIR}" || return 1
+  rm -rf "${PARTS_JQ_DIR:?}"/* &> /dev/null || true
+  wget "${JQ_DOWNLOAD_URLS[@]}" -P "${PARTS_JQ_DIR}" || return 1
   info "Done!"
 }
 
 
 # Downloads and extracts skywire.
 function get_skywire() {
-  local _DST=${DOWNLOADS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
+  local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
   if [ ! -f "${_DST}" ] ; then
       notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
@@ -159,11 +170,11 @@ function get_skywire() {
   fi
 
   info "Extracting package..."
-  mkdir "${DOWNLOADS_SKYWIRE_DIR}/bin"
-  tar xvzf "${_DST}" -C "${DOWNLOADS_SKYWIRE_DIR}/bin" || return 1
+  mkdir "${PARTS_SKYWIRE_DIR}/bin"
+  tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
 
   info "Cleaning..."
-  rm -rf "${DOWNLOADS_SKYWIRE_DIR}/bin/README.md" "${DOWNLOADS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
+  rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
   info "Done!"
 }
@@ -171,7 +182,7 @@ function get_skywire() {
 
 # download armbian
 function download_armbian() {
-  local _DST=${DOWNLOADS_ARMBIAN_DIR}/armbian.7z # Download destination file name.
+  local _DST=${PARTS_ARMBIAN_DIR}/armbian.7z # Download destination file name.
 
   info "Downloading image from ${ARMBIAN_DOWNLOAD_URL} to ${_DST} ..."
   wget -c "${ARMBIAN_DOWNLOAD_URL}" -O "${_DST}" ||
@@ -184,7 +195,7 @@ function get_armbian() {
   local ARMBIAN_IMG_7z="armbian.7z"
 
     # change to dest dir
-    cd "${DOWNLOADS_ARMBIAN_DIR}" ||
+    cd "${PARTS_ARMBIAN_DIR}" ||
       (error "Failed to cd." && return 1)
 
     # user info
@@ -249,6 +260,7 @@ function get_all() {
   get_armbian || return 1
   get_jq || return 1
   get_skywire || return 1
+  get_tools || return 1
 }
 
 
@@ -297,11 +309,11 @@ function prepare_base_image() {
 
     # clean
     info "Cleaning..."
-    rm -rf "${TIMAGE_DIR:?}/*" &> /dev/null || true
+    rm -rf "${IMAGE_DIR:?}/*" &> /dev/null || true
 
     # copy armbian image to base image location
     info "Copying base image..."
-    cp "${DOWNLOADS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}" || return 1
+    cp "${PARTS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}" || return 1
 
     # Add space to base image
     info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
@@ -327,13 +339,21 @@ function copy_to_img() {
   # Copy jq packages (they will we installed by ./static/chroot_extra_commands.sh)
 
   info "Copying jq packages..."
-  sudo cp -r "${DOWNLOADS_JQ_DIR}" "${FS_MNT_POINT}/tmp" || return 1
+  sudo cp -r "${PARTS_JQ_DIR}" "${FS_MNT_POINT}/tmp" || return 1
 
   # Copy skywire bins
 
   info "Copying skywire bins..."
   sudo mkdir "$FS_MNT_POINT"/usr/bin/skywire
-  sudo cp -rf "$DOWNLOADS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/skywire/ || return 1
+  sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/skywire/ || return 1
+
+  sudo cp "$ROOT/static/skywire-startup" "$FS_MNT_POINT/usr/bin/skywire/" || return 1
+  sudo chmod +x "$FS_MNT_POINT/usr/bin/skywire/skywire-startup" || return 1
+
+  # Copy skywire tools
+
+  info "Copying skywire tools..."
+  sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/skywire/ || return 1
 
   # Copy scripts
 
@@ -350,16 +370,7 @@ function copy_to_img() {
 
   info "Copying systemd unit services..."
   local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-  sudo cp -f "${ROOT}/static/skywire-visor.service" "${SYSTEMD_DIR}" || return 1
-  sudo cp -f "${ROOT}/static/skywire-setup.service" "${SYSTEMD_DIR}" || return 1
-
-  # Copy config files
-
-  info "Copying config files..."
-  sudo mkdir -p "${FS_MNT_POINT}/etc/skywire"
-  sudo cp "${ROOT}/static/setup.conf" "${FS_MNT_POINT}/etc/skywire/" || return 1
-  sudo cp "${ROOT}/static/setup" "${FS_MNT_POINT}/usr/bin/skywire/" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/usr/bin/skywire/setup" || return 1
+  sudo cp -f "${ROOT}/static/skywire-startup.service" "${SYSTEMD_DIR}" || return 1
 
   info "Done!"
 }
@@ -447,13 +458,13 @@ function clean_image() {
 
 
 function clean_output_dir() {
-  # Clean downloads.
-  cd "${DOWNLOADS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
-  cd "${DOWNLOADS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  # Clean parts.
+  cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
+  cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.xz' -delete
 
   # Rm base image.
-  rm -v "${TIMAGE_DIR}/base_image"
+  rm -v "${IMAGE_DIR}/base_image"
 
   # cd to root.
   cd "${ROOT}" || return 1
@@ -463,7 +474,7 @@ function clean_output_dir() {
 # build disk
 function build_disk() {
     # move to correct dir
-    cd "${TIMAGE_DIR}" || return 1
+    cd "${IMAGE_DIR}" || return 1
 
     # final name
     local NAME="Skybian-${VERSION}"
@@ -523,7 +534,7 @@ function main() {
     # prepares and mounts base image
     prepare_base_image || return 1
 
-    # copy downloads/bins to root fs
+    # copy parts to root fs
     copy_to_img || return 1
 
     # setup chroot

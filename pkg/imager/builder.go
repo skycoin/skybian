@@ -1,4 +1,4 @@
-package skyimg
+package imager
 
 import (
 	"encoding/hex"
@@ -34,7 +34,7 @@ type Builder struct {
 	dlCurrent int64
 
 	// Meta data of extracted image(s).
-	images map[string]ImgFile
+	images map[string]File
 }
 
 func (b *Builder) DownloadPath() string {
@@ -133,7 +133,7 @@ func hasExtension(filename, ext string) (name string, ok bool) {
 	return
 }
 
-func extractImgFile(dstImg *ImgFile, srcF archiver.File, workDir string) (n int64, err error) {
+func extractImgFile(dstImg *File, srcF archiver.File, workDir string) (n int64, err error) {
 	if err = dstImg.Init(filepath.Join(workDir, srcF.Name())); err != nil {
 		return 0, err
 	}
@@ -143,7 +143,7 @@ func extractImgFile(dstImg *ImgFile, srcF archiver.File, workDir string) (n int6
 	return n, err
 }
 
-func verifyOrDelete(log logrus.FieldLogger, images map[string]ImgFile) {
+func verifyOrDelete(log logrus.FieldLogger, images map[string]File) {
 	for name, img := range images {
 		log := log.WithField("img_file", name+ExtImg)
 

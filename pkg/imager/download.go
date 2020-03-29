@@ -1,4 +1,4 @@
-package skyimg
+package imager
 
 import (
 	"io"
