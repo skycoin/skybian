@@ -33,7 +33,6 @@ lint: ## Run linters. Use make install-linters first
 format: ## Formats the code. Must have goimports installed (use make install-linters).
 	${OPTS} goimports -w -local ${PROJECT_BASE} ./pkg
 	${OPTS} goimports -w -local ${PROJECT_BASE} ./cmd
-	${OPTS} goimports -w -local ${PROJECT_BASE} ./internal
 
 test: ## Run tests
 	-go clean -testcache &>/dev/null

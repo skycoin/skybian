@@ -104,9 +104,9 @@ func TestBootParams(t *testing.T) {
 	fmt.Println("pk =", pk)
 
 	params := BootParams{
-		LocalIP: net.ParseIP("192.168.0.2"),
-		GatewayIP: net.ParseIP("192.168.0.1"),
-		LocalSK: sk,
+		LocalIP:       net.ParseIP("192.168.0.2"),
+		GatewayIP:     net.ParseIP("192.168.0.1"),
+		LocalSK:       sk,
 		HypervisorPKs: generatePKs(4),
 	}
 

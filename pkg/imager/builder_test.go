@@ -23,7 +23,7 @@ func TestBuilder_FinalizeImage(t *testing.T) {
 	const (
 		inF    = "/dev/sdb"
 		outFdd = "/tmp/dd1234567890"
-		dStart = 0 //49152
+		dStart = 0   //49152
 		dSize  = 512 //256
 	)
 
@@ -43,7 +43,7 @@ func TestBuilder_FinalizeImage(t *testing.T) {
 	require.NoError(t, err)
 
 	inB := make([]byte, dSize)
-	n, err := in.ReadAt(inB, dStart * dSize)
+	n, err := in.ReadAt(inB, dStart*dSize)
 	require.NoError(t, err)
 	require.Equal(t, dSize, n)
 
@@ -54,10 +54,9 @@ func TestBuilder_FinalizeImage(t *testing.T) {
 	require.NoError(t, err)
 
 	imgB := make([]byte, dSize)
-	n, err = img.ReadAt(imgB, dStart * dSize)
+	n, err = img.ReadAt(imgB, dStart*dSize)
 	require.NoError(t, err)
 	require.Equal(t, dSize, n)
-
 
 	fmt.Println(hex.EncodeToString(inB))
 	fmt.Println(hex.EncodeToString(outB))

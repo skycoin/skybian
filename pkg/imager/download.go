@@ -14,7 +14,7 @@ func Download(log logrus.FieldLogger, url, dst string, total, current *int64) er
 	log = log.WithField("func", "Download")
 
 	// Prepare temp destination file.
-	f, err := os.Create(dst+ExtTmp)
+	f, err := os.Create(dst + ExtTmp)
 	if err != nil {
 		return err
 	}

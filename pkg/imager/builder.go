@@ -17,9 +17,9 @@ import (
 const (
 	ExtTmp   = ".tmp"
 	ExtTarXz = ".tar.xz"
-	ExtImg  = ".img"
-	ExtMD5  = ".img.md5"
-	ExtSHA1 = ".img.sha1"
+	ExtImg   = ".img"
+	ExtMD5   = ".img.md5"
+	ExtSHA1  = ".img.sha1"
 )
 
 type Builder struct {
