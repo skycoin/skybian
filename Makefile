@@ -36,7 +36,6 @@ format: ## Formats the code. Must have goimports installed (use make install-lin
 
 test: ## Run tests
 	-go clean -testcache &>/dev/null
-	${OPTS} go test ${TEST_OPTS} ./internal/...
 	${OPTS} go test ${TEST_OPTS} ./pkg/...
 
 help:
