@@ -31,7 +31,7 @@ func init() {
 var dlURL string
 
 func init() {
-	const defaultDlURL = "https://todo.com/todo.tar.xz"
+	const defaultDlURL = "https://github.com/evanlinjin/skybian/releases/download/v0.1.1-alpha.1/Skybian-v0.1.1.tar.xz"
 	flag.StringVar(&dlURL, "url", defaultDlURL,
 		"url of skybian image archive")
 }
