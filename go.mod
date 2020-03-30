@@ -9,7 +9,11 @@ require (
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
+	github.com/rakyll/statik v0.1.7
 	github.com/sirupsen/logrus v1.5.0
+	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/stretchr/testify v1.5.1
 	github.com/ulikunitz/xz v0.5.7 // indirect
+	github.com/zserge/webview v0.0.0-20200324053421-cccd9636402d
+	nhooyr.io/websocket v1.8.4
 )

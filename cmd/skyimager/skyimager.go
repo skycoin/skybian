@@ -1,4 +1,4 @@
-package main
+package imager
 
 import (
 	"encoding/json"
@@ -22,16 +22,13 @@ func init() {
 		home, _ := os.UserHomeDir()
 		return filepath.Join(home, "./skyimager")
 	}()
-	flag.StringVar(&root, "root", defaultWorkDir,
-		"root directory used by skyimager")
+	flag.StringVar(&root, "root", defaultWorkDir, "root directory used by skyimager")
 }
 
 var dlURL string
 
 func init() {
-	const defaultDlURL = "https://github.com/evanlinjin/skybian/releases/download/v0.1.1-alpha.1/Skybian-v0.1.1.tar.xz"
-	flag.StringVar(&dlURL, "url", defaultDlURL,
-		"url of skybian image archive")
+	flag.StringVar(&dlURL, "url", imager.DefaultDlURL, "url of skybian image archive")
 }
 
 func main() {

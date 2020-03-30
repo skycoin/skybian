@@ -43,8 +43,10 @@ func MakeBootParams(localIP, gatewayIP, localSK string, hypervisorPKs []string) 
 	if err := bp.LocalSK.UnmarshalText([]byte(localSK)); localSK != "" && err != nil {
 		return bp, fmt.Errorf("failed to read Local Secret Key: %v", err)
 	}
-	if err := bp.HypervisorPKs.Set(strings.Join(hypervisorPKs, ",")); err != nil {
-		return bp, fmt.Errorf("failed to read Hypervisor Public Keys: %v", err)
+	if bp.HypervisorPKs = make(cipher.PubKeys, 0); len(hypervisorPKs) > 0 {
+		if err := bp.HypervisorPKs.Set(strings.Join(hypervisorPKs, ",")); err != nil {
+			return bp, fmt.Errorf("failed to read Hypervisor Public Keys: %v", err)
+		}
 	}
 	return bp, nil
 }

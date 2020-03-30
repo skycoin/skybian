@@ -26,6 +26,11 @@ const (
 	ExtSHA1  = ".img.sha1"
 )
 
+// Default URLs.
+const (
+	DefaultDlURL = "https://github.com/evanlinjin/skybian/releases/download/v0.1.1-alpha.1/Skybian-v0.1.1.tar.xz"
+)
+
 type Builder struct {
 	log logrus.FieldLogger
 	mx  sync.Mutex
@@ -83,7 +88,7 @@ func (b *Builder) ExtractArchive() (err error) {
 	log := b.log.WithField("func", "ExtractPackage")
 
 	pkgFile := b.DownloadPath()
-	log.WithField("file", pkgFile).Info("Extracting...")
+	log.WithField("archive_file", pkgFile).Info("Extracting...")
 
 	tarXz := archiver.NewTarXz()
 	defer func() {

@@ -40,8 +40,13 @@ test: ## Run tests
 	-go clean -testcache &>/dev/null
 	${OPTS} go test ${TEST_OPTS} ./pkg/...
 
-image: ## Run skyimager
+run-skyimager: ## Run skyimager
 	echo ${IMG_BOOT_PARAMS} | go run ./cmd/skyimager/skyimager.go
+
+run-skyimager-gui: ## Builds skyimager GUI
+	#${OPTS} go get github.com/rakyll/statik
+	statik -src=./cmd/skyimager-gui/assets -dest ./cmd/skyimager-gui -f
+	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -d
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
