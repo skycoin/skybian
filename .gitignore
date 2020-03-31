@@ -4,6 +4,8 @@
 ./fyne-cross
 ./bin
 ./output
+./base
+./final
 
 .DS_Store
 *.img
