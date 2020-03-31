@@ -15,12 +15,16 @@ NET_NAME="skynet"
 # These parameters are stored in the MBR (Master Boot Record) Bootstrap code
 # area of the boot device. This starts at position +0E0(hex) and has 216 bytes.
 function extract_boot_params() {
-  if ! readonly BOOT_PARAMS=$(./read-boot-params -if=$DEV_FILE); then
+  if ! readonly BOOT_PARAMS=$(/usr/bin/skywire/read-boot-params -if=$DEV_FILE); then
     echo "Failed to read boot params."
     return 1
   fi
   eval "$BOOT_PARAMS"
   readonly IP GW SK HVS
+  echo "IP=$IP"
+  echo "GW=$GW"
+  echo "SK=$SK"
+  echo "HVS=$HVS"
 }
 
 
@@ -30,18 +34,29 @@ function extract_boot_params() {
 # will be done.
 function setup_network() {
   # If IP and GW are both empty, do nothing.
-  [[ -z "$IP" && -z "$GW" ]] && return 0
+  if [[ -z "$IP" && -z "$GW" ]]; then
+    echo "ENVs (IP, GW) are both empty, skipping network setup."
+    return 0
+  fi
 
   # If network is already setup, do nothing.
-  [[ "$(nmcli -g IP4.ADDRESS c show "$NET_NAME")" == "$IP/24" ]] && return 0
+  CURRENT_IP=$(nmcli c show "$NET_NAME" | grep IP4.ADDRESS | awk '{print $2}' | xargs)
+  echo "Current IP address for connection $NET_NAME: $CURRENT_IP"
+
+  if [[ "$CURRENT_IP" == "$IP/24" ]]; then
+    echo "Connection $NET_NAME already set, skipping network setup."
+    return 0
+  fi
 
   # Delete all nm connections.
+  echo "Deleting all nm connections..."
   TEMP_FILE=$(mktemp)
-  nmcli -c=no -f=NAME -t c show > "$TEMP_FILE"
+  nmcli -t --fields=NAME c show > "$TEMP_FILE"
   while read -r line; do nmcli c delete "$line"; done < "$TEMP_FILE"
   rm "$TEMP_FILE"
 
   # Recreate connections.
+  echo "Setting up nm connection $NET_NAME..."
   nmcli con add con-name "$NET_NAME" ifname eth0 type ethernet
   [[ -n "$IP" ]] && nmcli con mod "$NET_NAME" ip4 "$IP"/24
   [[ -n "$GW" ]] && nmcli con mod "$NET_NAME" gw4 "$GW"
@@ -113,10 +128,10 @@ fi
 
 # Anyways ensure hypervisors are set.
 # Otherwise, we will lose control over our visor.
-set_hypervisors
+#set_hypervisors #TODO(evanlinjin): Reenable this once we update skywire to latest.
 
 # Clean up.
 rm -rf "${TEMP_FILE}"
 
 echo "Starting skywire..."
-/etc/skywire/visor-config.json "$VISOR_CONF" &
+/usr/bin/skywire/skywire-visor "$VISOR_CONF" &

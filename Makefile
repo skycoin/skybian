@@ -40,6 +40,12 @@ test: ## Run tests
 	-go clean -testcache &>/dev/null
 	${OPTS} go test ${TEST_OPTS} ./pkg/...
 
+build-skybian-img: ## builds skybian base image.
+	rm -rf ./output
+	./build.sh -c 2>&1 /dev/null
+	./build.sh
+	./build.sh -p
+
 build-skyimager-gui: ## builds skyimager GUI
 	mkdir -p ./bin
 	${OPTS} GOBIN=${PWD}/bin go get github.com/lucor/fyne-cross/cmd/fyne-cross

@@ -8,7 +8,7 @@ require (
 	github.com/SkycoinProject/dmsg v0.1.0
 	github.com/SkycoinProject/skycoin v0.27.0
 	github.com/frankban/quicktest v1.8.1 // indirect
-	github.com/lucor/fyne-cross v1.4.0 // indirect
+	github.com/godbus/dbus v4.1.0+incompatible
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/nwaples/rardecode v1.1.0 // indirect
 	github.com/pierrec/lz4 v2.4.1+incompatible // indirect
