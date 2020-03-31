@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -59,7 +58,7 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 }
 
 func (fg *FyneGUI) initMainApp() {
-	_ = os.Setenv("FYNE_SCALE", "0.75")
+	//_ = os.Setenv("FYNE_SCALE", "-1.0")
 
 	fa := app.New()
 	fa.SetIcon(loadResource(fg.assets, "/icon.png"))

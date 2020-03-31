@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 
+	"fyne.io/fyne"
 	"github.com/SkycoinProject/dmsg/cmdutil"
 	_ "github.com/SkycoinProject/skybian/cmd/skyimager-gui/statik"
 	"github.com/SkycoinProject/skybian/pkg/imager"
@@ -38,13 +40,26 @@ func init() {
 	flag.StringVar(&guiType, "ui", defaultMode, usage)
 }
 
+var uiScale float64
+
+func init() {
+	const defaultUIScale = float64(fyne.SettingsScaleAuto)
+	usage := fmt.Sprintf("Scale of FYNE interface. If set to %v, FYNE will scale according to DPI.", defaultUIScale)
+	flag.Float64Var(&uiScale, "scale", defaultUIScale, usage)
+}
+
 func main() {
 	flag.Parse()
+
+	_ = os.Setenv("FYNE_SCALE", fmt.Sprint(uiScale))
 
 	assets, err := fs.New()
 	if err != nil {
 		log.WithError(err).Fatal("Failed to init statik filesystem.")
 	}
+
+
+
 
 	switch guiType {
 	case guiFyne:
