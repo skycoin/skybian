@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/app"
 	"fyne.io/fyne/dialog"
+	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
 	"github.com/sirupsen/logrus"
@@ -61,7 +62,7 @@ func (fg *FyneGUI) initMainApp() {
 	_ = os.Setenv("FYNE_SCALE", "0.75")
 
 	fa := app.New()
-	fa.SetIcon(loadResource(fg.assets, "/skyimager.png"))
+	fa.SetIcon(loadResource(fg.assets, "/icon.png"))
 	fa.Settings().SetTheme(theme.LightTheme())
 	fg.app = fa
 }
@@ -182,9 +183,10 @@ func (fg *FyneGUI) build() {
 		for {
 			select {
 			case <-t.C:
-				total := float64(builder.DownloadTotal())
-				current := float64(builder.DownloadCurrent())
-				dlDialog.SetValue(current / total)
+				dlC, dlT := float64(builder.DownloadCurrent()), float64(builder.DownloadTotal())
+				if pc := dlC / dlT; pc > 0 && pc <= 1 {
+					dlDialog.SetValue(pc)
+				}
 			case <-dlDone:
 				t.Stop()
 				return
@@ -233,14 +235,14 @@ func (fg *FyneGUI) build() {
 	// Inform user of completion.
 	createREADME(fg.log, filepath.Join(builder.finalDir, "README.txt"))
 
-	box := fyne.NewContainer(
+	cont := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
 		widget.NewLabel("Successfully built images!"),
 		widget.NewLabel("Images are built to: "+builder.finalDir),
 		widget.NewButton("Open Folder", func() { _ = open.Run(builder.finalDir) }),
 		widget.NewLabel("To flash the images, use a tool such as balenaEtcher:"),
 		widget.NewButton("Open URL", func() { _ = open.Run("https://www.balena.io/etcher") }),
 	)
-	dialog.ShowCustom("Success", "Close", box, fg.mainW)
+	dialog.ShowCustom("Success", "Close", cont, fg.mainW)
 }
 
 func makeBpsGenerator(fg *FyneGUI, finalBpsE *widget.Entry) func() {

@@ -40,6 +40,11 @@ test: ## Run tests
 	-go clean -testcache &>/dev/null
 	${OPTS} go test ${TEST_OPTS} ./pkg/...
 
+build-skyimager-gui: ## builds skyimager GUI
+	mkdir -p ./bin
+	${OPTS} GOBIN=${PWD}/bin go get github.com/lucor/fyne-cross/cmd/fyne-cross
+	./bin/fyne-cross --targets=linux/amd64,windows/amd64,darwin/amd64 --icon=./cmd/skyimager-gui/assets/icon.png ./cmd/skyimager-gui
+
 run-skyimager: ## Run skyimager
 	echo ${IMG_BOOT_PARAMS} | go run ./cmd/skyimager/skyimager.go
 
@@ -47,7 +52,7 @@ run-skyimager-gui: ## Builds skyimager GUI
 	mkdir -p ./bin
 	${OPTS} GOBIN=${PWD}/bin go get github.com/rakyll/statik
 	./bin/statik -src=./cmd/skyimager-gui/assets -dest ./cmd/skyimager-gui -f
-	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -debug -ui FYNE
+	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -debug -ui BROWSER
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

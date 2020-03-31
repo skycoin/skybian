@@ -77,6 +77,7 @@
     </div>
     <div>
         <button onclick="build()" style="background-color: deepskyblue">Download and Build</button>
+        <button onclick="quit()" style="background-color: orangered">Quit</button>
     </div>
 
     <textarea id="build-overlay" readonly></textarea>
@@ -174,6 +175,17 @@
                     "Last Log Message:\n" +
                     lastMsg);
             }
+            window.location.replace(getBaseURL());
+        };
+    }
+
+    function quit() {
+        const url = "/api/quit";
+
+        let req = new XMLHttpRequest;
+        req.open("GET", url, true);
+        req.send();
+        req.onerror = function() {
             window.location.replace(getBaseURL());
         };
     }

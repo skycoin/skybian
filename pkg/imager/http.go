@@ -102,10 +102,14 @@ func MakeHTTPServeMux() *http.ServeMux {
 		_ = open.Run(filepath.Join(wd, "final"))
 		_ = ws.Close(websocket.StatusNormalClosure, "")
 	}
+	quit := func(w http.ResponseWriter, r *http.Request) {
+		os.Exit(0)
+	}
 	mux := http.NewServeMux()
 	mux.Handle("/api/latest-dl-url", http.HandlerFunc(latestDlURL))
 	mux.Handle("/api/work-dir", http.HandlerFunc(defaultWorkDir))
 	mux.Handle("/api/bps-template", http.HandlerFunc(bpsTemplate))
 	mux.Handle("/api/build", http.HandlerFunc(downloadAndBuild))
+	mux.Handle("/api/quit", http.HandlerFunc(quit))
 	return mux
 }

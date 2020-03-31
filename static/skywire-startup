@@ -29,8 +29,8 @@ function extract_boot_params() {
 # params. If these are not defined, or the network is already set up, nothing
 # will be done.
 function setup_network() {
-  # If IP or GW is empty, do nothing.
-  [[ -z "$IP" || -z "$GW" ]] && return 0
+  # If IP and GW are both empty, do nothing.
+  [[ -z "$IP" && -z "$GW" ]] && return 0
 
   # If network is already setup, do nothing.
   [[ "$(nmcli -g IP4.ADDRESS c show "$NET_NAME")" == "$IP/24" ]] && return 0
@@ -42,7 +42,9 @@ function setup_network() {
   rm "$TEMP_FILE"
 
   # Recreate connections.
-  nmcli con add con-name "$NET_NAME" ifname eth0 type ethernet ip4 "$IP"/24 gw4 "$GW"
+  nmcli con add con-name "$NET_NAME" ifname eth0 type ethernet
+  [[ -n "$IP" ]] && nmcli con mod "$NET_NAME" ip4 "$IP"/24
+  [[ -n "$GW" ]] && nmcli con mod "$NET_NAME" gw4 "$GW"
   nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
 }
 

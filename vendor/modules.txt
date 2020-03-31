@@ -20,6 +20,7 @@ fyne.io/fyne/theme
 fyne.io/fyne/widget
 # github.com/SkycoinProject/dmsg v0.1.0
 github.com/SkycoinProject/dmsg/cipher
+github.com/SkycoinProject/dmsg/cmdutil
 github.com/SkycoinProject/dmsg/httputil
 # github.com/SkycoinProject/skycoin v0.27.0
 github.com/SkycoinProject/skycoin/src/cipher
@@ -93,8 +94,6 @@ github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
 # github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 github.com/xi2/xz
-# github.com/zserge/webview v0.0.0-20200324053421-cccd9636402d
-github.com/zserge/webview
 # golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 golang.org/x/crypto/ssh/terminal
 # golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8

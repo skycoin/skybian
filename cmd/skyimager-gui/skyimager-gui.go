@@ -1,17 +1,18 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"net"
 	"net/http"
 
-	"github.com/SkycoinProject/skycoin/src/util/logging"
-	"github.com/rakyll/statik/fs"
-	"github.com/zserge/webview"
-
+	"github.com/SkycoinProject/dmsg/cmdutil"
 	_ "github.com/SkycoinProject/skybian/cmd/skyimager-gui/statik"
 	"github.com/SkycoinProject/skybian/pkg/imager"
+	"github.com/SkycoinProject/skycoin/src/util/logging"
+	"github.com/rakyll/statik/fs"
+	"github.com/skratchdot/open-golang/open"
 )
 
 var log = logging.MustGetLogger("skyimager")
@@ -25,7 +26,7 @@ func init() {
 }
 
 const (
-	guiWebView = "WEBVIEW"
+	guiBrowser = "BROWSER"
 	guiFyne    = "FYNE"
 )
 
@@ -33,7 +34,7 @@ var guiType string
 
 func init() {
 	const defaultMode = guiFyne
-	usage := fmt.Sprintf("GUI type to use %v", []string{guiWebView, guiFyne})
+	usage := fmt.Sprintf("GUI type to use %v", []string{guiBrowser, guiFyne})
 	flag.StringVar(&guiType, "ui", defaultMode, usage)
 }
 
@@ -48,7 +49,7 @@ func main() {
 	switch guiType {
 	case guiFyne:
 		imager.NewFyneGUI(log, assets).Run()
-	case guiWebView:
+	case guiBrowser:
 		runWebviewGUI(assets)
 	default:
 		log.Fatalf("'%s' is not a valid gui.")
@@ -56,7 +57,10 @@ func main() {
 }
 
 func runWebviewGUI(assets http.FileSystem) {
-	lis, err := net.Listen("tcp", "127.0.0.1:8080")
+	ctx, cancel := cmdutil.SignalContext(context.Background(), log)
+	defer cancel()
+
+	lis, err := net.Listen("tcp", "127.0.0.1:")
 	if err != nil {
 		log.WithError(err).Fatal("Failed to listen TCP.")
 	}
@@ -77,13 +81,11 @@ func runWebviewGUI(assets http.FileSystem) {
 		}
 	}()
 
-	w := webview.New(debug)
-	defer w.Destroy()
+	if err := open.Run("http://" + lis.Addr().String() + "/index.html"); err != nil {
+		log.WithError(err).Error("Failed to open browser.")
+	}
 
-	w.SetTitle("skyimager")
-	w.SetSize(1200, 1100, webview.HintNone)
-	w.Navigate("http://" + lis.Addr().String() + "/index.html")
-	w.Run()
+	<-ctx.Done()
 }
 
 // https://godoc.org/github.com/skratchdot/open-golang/open
