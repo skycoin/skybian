@@ -58,7 +58,7 @@ run-skyimager-gui: ## Builds skyimager GUI
 	mkdir -p ./bin
 	${OPTS} GOBIN=${PWD}/bin go get github.com/rakyll/statik
 	./bin/statik -src=./cmd/skyimager-gui/assets -dest ./cmd/skyimager-gui -f
-	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -debug -ui BROWSER
+	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -debug
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
