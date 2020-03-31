@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"net"
 	"net/http"
 
@@ -9,9 +10,8 @@ import (
 	"github.com/rakyll/statik/fs"
 	"github.com/zserge/webview"
 
-	"github.com/SkycoinProject/skybian/pkg/imager"
-
 	_ "github.com/SkycoinProject/skybian/cmd/skyimager-gui/statik"
+	"github.com/SkycoinProject/skybian/pkg/imager"
 )
 
 var log = logging.MustGetLogger("skyimager")
@@ -22,7 +22,19 @@ func init() {
 	const defaultDebug = false
 	const usage = "whether to enable debug logging"
 	flag.BoolVar(&debug, "debug", defaultDebug, usage)
-	flag.BoolVar(&debug, "d", defaultDebug, "shorthand for 'debug'")
+}
+
+const (
+	guiWebView = "WEBVIEW"
+	guiFyne    = "FYNE"
+)
+
+var guiType string
+
+func init() {
+	const defaultMode = guiFyne
+	usage := fmt.Sprintf("GUI type to use %v", []string{guiWebView, guiFyne})
+	flag.StringVar(&guiType, "ui", defaultMode, usage)
 }
 
 func main() {
@@ -33,6 +45,17 @@ func main() {
 		log.WithError(err).Fatal("Failed to init statik filesystem.")
 	}
 
+	switch guiType {
+	case guiFyne:
+		imager.NewFyneGUI(log, assets).Run()
+	case guiWebView:
+		runWebviewGUI(assets)
+	default:
+		log.Fatalf("'%s' is not a valid gui.")
+	}
+}
+
+func runWebviewGUI(assets http.FileSystem) {
 	lis, err := net.Listen("tcp", "127.0.0.1:8080")
 	if err != nil {
 		log.WithError(err).Fatal("Failed to listen TCP.")
@@ -46,7 +69,7 @@ func main() {
 		WithField("addr", lis.Addr().String()).
 		Info("Listening...")
 
-	mux := imager.MakeServeMux()
+	mux := imager.MakeHTTPServeMux()
 	mux.Handle("/", http.FileServer(assets))
 	go func() {
 		if err := http.Serve(lis, mux); err != nil {

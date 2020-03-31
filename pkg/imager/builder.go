@@ -29,7 +29,13 @@ const (
 // Default URLs.
 const (
 	DefaultDlURL = "https://github.com/evanlinjin/skybian/releases/download/v0.1.1-alpha.1/Skybian-v0.1.1.tar.xz"
+	DefaultGwIP  = "192.168.0.1"
 )
+
+func DefaultRootDir() string {
+	homeDir, _ := os.UserHomeDir()
+	return filepath.Join(homeDir, "skyimager")
+}
 
 type Builder struct {
 	log logrus.FieldLogger
@@ -47,7 +53,11 @@ type Builder struct {
 	bImgs map[string]BaseImage
 }
 
-func NewBuilder(log logrus.FieldLogger, baseDir, finalDir string) (*Builder, error) {
+func NewBuilder(log logrus.FieldLogger, root string) (*Builder, error) {
+	var (
+		baseDir  = filepath.Join(root, "base")
+		finalDir = filepath.Join(root, "final")
+	)
 	if err := os.MkdirAll(baseDir, 0700); err != nil {
 		return nil, err
 	}

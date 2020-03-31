@@ -1,8 +1,10 @@
 module github.com/SkycoinProject/skybian
 
-go 1.14
+// go 1.14 presents problems for fyne so 1.13 is used.
+go 1.13
 
 require (
+	fyne.io/fyne v1.2.3
 	github.com/SkycoinProject/dmsg v0.1.0
 	github.com/SkycoinProject/skycoin v0.27.0
 	github.com/frankban/quicktest v1.8.1 // indirect

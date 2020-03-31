@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/SkycoinProject/dmsg/cipher"
 	"github.com/sirupsen/logrus"
 
 	"github.com/SkycoinProject/skybian/pkg/bootparams"
@@ -19,15 +20,23 @@ Use a tool such as balenaEtcher: https://www.balena.io/etcher/
 Enjoy!
 `
 
-func Build(log logrus.FieldLogger, root, dlURL string, bpsSlice []bootparams.BootParams) error {
-	var (
-		baseDir  = filepath.Join(root, "base")
-		finalDir = filepath.Join(root, "final")
-	)
+func GenerateBootParams(n int, gw string, hvs []string) ([]bootparams.BootParams, error) {
+	bpsSlice := make([]bootparams.BootParams, 0, n)
+	for i := 0; i < n; i++ {
+		_, sk := cipher.GenerateKeyPair()
+		bps, err := bootparams.MakeBootParams("", gw, sk.String(), hvs)
+		if err != nil {
+			return nil, err
+		}
+		bpsSlice = append(bpsSlice, bps)
+	}
+	return bpsSlice, nil
+}
 
+func Build(log logrus.FieldLogger, root, dlURL string, bpsSlice []bootparams.BootParams) error {
 	log.Info("Initializing builder...")
 
-	builder, err := NewBuilder(log, baseDir, finalDir)
+	builder, err := NewBuilder(log, root)
 	if err != nil {
 		return fmt.Errorf("failed to init builder: %v", err)
 	}
@@ -84,21 +93,22 @@ DownloadDone:
 		return fmt.Errorf("failed to make final images: %v", err)
 	}
 
-	log.WithField("dir", finalDir).Info("Final images are created!")
+	log.WithField("dir", builder.finalDir).Info("Final images are created!")
 
-	readme, err := os.Create(filepath.Join(builder.finalDir, "README.txt"))
+	createREADME(log, filepath.Join(builder.finalDir, "README.txt"))
+	return nil
+}
+
+func createREADME(log logrus.FieldLogger, path string) {
+	readme, err := os.Create(path)
 	if err != nil {
 		log.WithError(err).Error("Failed to create README.txt")
-		return nil
+		return
 	}
-	defer func() {
-		if err := readme.Close(); err != nil {
-			log.WithError(err).Error("Failed to close README.txt")
-		}
-	}()
 	if _, err := readme.WriteString(readmeTxt); err != nil {
 		log.WithError(err).Error("Failed to write README.txt")
 	}
-
-	return nil
+	if err := readme.Close(); err != nil {
+		log.WithError(err).Error("Failed to close README.txt")
+	}
 }
