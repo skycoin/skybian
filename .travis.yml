@@ -9,6 +9,7 @@ go:
 
 before_script:
   - sudo apt update
+  - apt-get install gcc libgl1-mesa-dev xorg-dev
   - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
 
 script:
