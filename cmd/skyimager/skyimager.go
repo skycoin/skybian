@@ -1,4 +1,4 @@
-package imager
+package main
 
 import (
 	"encoding/json"
@@ -34,7 +34,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	var bpsSlice []boot.VisorParams
+	var bpsSlice []boot.Params
 	if err := json.NewDecoder(os.Stdin).Decode(&bpsSlice); err != nil {
 		log.WithError(err).Fatal("Failed to read boot params from STDIN.")
 	}
