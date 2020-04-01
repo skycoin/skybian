@@ -31,7 +31,6 @@ BASE_IMG=${IMAGE_DIR}/base_image
 # Download directories.
 PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
 PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-PARTS_JQ_DIR=${PARTS_DIR}/jq
 PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
 # Image related variables.
@@ -130,7 +129,7 @@ function create_folders() {
     info "Creating output folder structure..."
     mkdir -p "$FINAL_IMG_DIR"
     mkdir -p "$FS_MNT_POINT"
-    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_JQ_DIR" "$PARTS_TOOLS_DIR"
+    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
     mkdir -p "$IMAGE_DIR"
 
     info "Done!"
@@ -138,22 +137,14 @@ function create_folders() {
 
 
 function get_tools() {
-  local _src="$ROOT/cmd/read-boot-params/read-boot-params.go"
-  local _out="$PARTS_TOOLS_DIR/read-boot-params"
+  local _src="$ROOT/cmd/skyconf/skyconf.go"
+  local _out="$PARTS_TOOLS_DIR/skyconf"
 
-  info "Building read-boot-params..."
+  info "Building skyconf..."
   info "_src=$_src"
   info "_out=$_out"
   env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
 
-  info "Done!"
-}
-
-
-# Downloads jq .pkg packages.
-function get_jq() {
-  rm -rf "${PARTS_JQ_DIR:?}"/* &> /dev/null || true
-  wget "${JQ_DOWNLOAD_URLS[@]}" -P "${PARTS_JQ_DIR}" || return 1
   info "Done!"
 }
 
@@ -336,24 +327,20 @@ function prepare_base_image() {
 
 
 function copy_to_img() {
-  # Copy jq packages (they will we installed by ./static/chroot_extra_commands.sh)
-
-  info "Copying jq packages..."
-  sudo cp -r "${PARTS_JQ_DIR}" "${FS_MNT_POINT}/tmp" || return 1
 
   # Copy skywire bins
 
   info "Copying skywire bins..."
   sudo mkdir "$FS_MNT_POINT"/usr/bin/skywire
-  sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/skywire/ || return 1
+  sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
 
-  sudo cp "$ROOT/static/skywire-startup" "$FS_MNT_POINT/usr/bin/skywire/" || return 1
-  sudo chmod +x "$FS_MNT_POINT/usr/bin/skywire/skywire-startup" || return 1
+  sudo cp "$ROOT"/static/skywire-startup "$FS_MNT_POINT"/usr/bin/ || return 1
+  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skywire-startup || return 1
 
   # Copy skywire tools
 
   info "Copying skywire tools..."
-  sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/skywire/ || return 1
+  sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
 
   # Copy scripts
 

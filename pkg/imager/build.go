@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"github.com/SkycoinProject/dmsg/cipher"
+	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/sirupsen/logrus"
-
-	"github.com/SkycoinProject/skybian/pkg/bootparams"
 )
 
 const readmeTxt = `These skybian images are ready to be flashed to disk!
@@ -20,11 +19,11 @@ Use a tool such as balenaEtcher: https://www.balena.io/etcher/
 Enjoy!
 `
 
-func GenerateBootParams(n int, gw string, hvs []string) ([]bootparams.BootParams, error) {
-	bpsSlice := make([]bootparams.BootParams, 0, n)
+func GenerateBootParams(n int, gw string, hvs []string) ([]boot.Params, error) {
+	bpsSlice := make([]boot.Params, 0, n)
 	for i := 0; i < n; i++ {
 		_, sk := cipher.GenerateKeyPair()
-		bps, err := bootparams.MakeBootParams("", gw, sk.String(), hvs)
+		bps, err := boot.MakeParams(boot.VisorMode,"", gw, sk.String(), hvs...)
 		if err != nil {
 			return nil, err
 		}
@@ -33,7 +32,7 @@ func GenerateBootParams(n int, gw string, hvs []string) ([]bootparams.BootParams
 	return bpsSlice, nil
 }
 
-func Build(log logrus.FieldLogger, root, dlURL string, bpsSlice []bootparams.BootParams) error {
+func Build(log logrus.FieldLogger, root, dlURL string, bpsSlice []boot.Params) error {
 	log.Info("Initializing builder...")
 
 	builder, err := NewBuilder(log, root)

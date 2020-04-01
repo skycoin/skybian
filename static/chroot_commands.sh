@@ -25,22 +25,13 @@ locale-gen en_US.UTF-8
 info "Updating apt..."
 export DEBIAN_FRONTEND=noninteractive
 apt-get -y update
-info "Installing jq..."
-dpkg -i /tmp/jq/*.deb
 # keep this on the very end of this block
 info "Cleaning apt cache..."
 apt-get clean
 
-info "Running update-command-not-found..."
-update-command-not-found
-
 # forge a time on the system to avoid fs dates are in the future
 info "Setting the chroot clock to now to avoid bugs with the date..."
 /sbin/fake-hwclock save force
-
-# Create symbolic links for skywire bins.
-ln -s /usr/bin/skywire/skywire-visor /usr/bin/skywire-visor
-ln -s /usr/bin/skywire/skywire-cli /usr/bin/skywire-cli
 
 # Enable systemd units.
 info "Enabling systemd units..."

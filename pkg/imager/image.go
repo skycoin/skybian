@@ -10,7 +10,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/SkycoinProject/skybian/pkg/bootparams"
+	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
 type BaseImage struct {
@@ -54,7 +54,7 @@ type FinalImage struct {
 }
 
 func (fi FinalImage) Finalize() error {
-	if err := bootparams.WriteToFile(fi.f, fi.bps); err != nil {
+	if err := boot.WriteRawToFile(fi.f, fi.bps); err != nil {
 		return err
 	}
 	return fi.f.Close()

@@ -34,7 +34,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	var bpsSlice []bootparams.BootParams
+	var bpsSlice []boot.VisorParams
 	if err := json.NewDecoder(os.Stdin).Decode(&bpsSlice); err != nil {
 		log.WithError(err).Fatal("Failed to read boot params from STDIN.")
 	}

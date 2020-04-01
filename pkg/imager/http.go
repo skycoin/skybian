@@ -10,12 +10,11 @@ import (
 	"strings"
 
 	"github.com/SkycoinProject/dmsg/httputil"
+	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/SkycoinProject/skycoin/src/util/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	"nhooyr.io/websocket"
-
-	"github.com/SkycoinProject/skybian/pkg/bootparams"
 )
 
 func MakeHTTPServeMux() *http.ServeMux {
@@ -62,7 +61,7 @@ func MakeHTTPServeMux() *http.ServeMux {
 		var (
 			wd  = r.URL.Query().Get("wd")
 			url = r.URL.Query().Get("url")
-			bps []bootparams.BootParams
+			bps []boot.Params
 		)
 
 		ws, err := websocket.Accept(w, r, nil)

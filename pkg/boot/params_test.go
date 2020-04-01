@@ -1,4 +1,4 @@
-package bootparams
+package boot
 
 import (
 	"encoding/hex"
@@ -96,14 +96,14 @@ func TestBootParams(t *testing.T) {
 	imgName := prepareMockImg(t)
 	defer func() { require.NoError(t, os.Remove(imgName)) }()
 
-	_, err := Read(imgName)
+	_, err := ReadParams(imgName)
 	require.EqualError(t, err, ErrCannotReadParams.Error())
 
 	pk, sk := cipher.GenerateKeyPair()
 	fmt.Println("pk =", pk) // pk = 027c823e9e183f3a89c5c200705f2017c0df253a66bdfae5aa0755d191713b7520
 	fmt.Println("sk =", sk) // sk = 34992ada3a6daa4fbb5ad8b5b958d993ad4e5ed0f51b5ba822c8370212030826
 
-	params := BootParams{
+	params := Params{
 		LocalIP:       net.ParseIP("192.168.0.2"),
 		GatewayIP:     net.ParseIP("192.168.0.1"),
 		LocalSK:       sk,
@@ -114,9 +114,9 @@ func TestBootParams(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, raw, size)
 
-	require.NoError(t, Write(imgName, params))
+	require.NoError(t, WriteParams(imgName, params))
 
-	readParams, err := Read(imgName)
+	readParams, err := ReadParams(imgName)
 	require.NoError(t, err)
 	require.Equal(t, params, readParams)
 }

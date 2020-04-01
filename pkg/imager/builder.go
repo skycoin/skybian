@@ -14,7 +14,7 @@ import (
 	"github.com/mholt/archiver"
 	"github.com/sirupsen/logrus"
 
-	"github.com/SkycoinProject/skybian/pkg/bootparams"
+	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
 // File extensions which we expect to see in the archive.
@@ -198,7 +198,7 @@ func verifyOrDelete(log logrus.FieldLogger, bImgs map[string]BaseImage) {
 	}
 }
 
-func (b *Builder) MakeFinalImages(imgName string, bpsSlice []bootparams.BootParams) error {
+func (b *Builder) MakeFinalImages(imgName string, bpsSlice []boot.Params) error {
 	b.mx.Lock()
 	defer b.mx.Unlock()
 
