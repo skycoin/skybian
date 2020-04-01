@@ -10,11 +10,12 @@ import (
 
 	"fyne.io/fyne"
 	"github.com/SkycoinProject/dmsg/cmdutil"
-	_ "github.com/SkycoinProject/skybian/cmd/skyimager-gui/statik"
-	"github.com/SkycoinProject/skybian/pkg/imager"
 	"github.com/SkycoinProject/skycoin/src/util/logging"
 	"github.com/rakyll/statik/fs"
 	"github.com/skratchdot/open-golang/open"
+
+	_ "github.com/SkycoinProject/skybian/cmd/skyimager-gui/statik"
+	"github.com/SkycoinProject/skybian/pkg/imager"
 )
 
 var log = logging.MustGetLogger("skyimager")
@@ -58,9 +59,6 @@ func main() {
 	if err != nil {
 		log.WithError(err).Fatal("Failed to init statik filesystem.")
 	}
-
-
-
 
 	switch uiType {
 	case uiFyne:

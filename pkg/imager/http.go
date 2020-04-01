@@ -10,11 +10,12 @@ import (
 	"strings"
 
 	"github.com/SkycoinProject/dmsg/httputil"
-	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/SkycoinProject/skycoin/src/util/logging"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	"nhooyr.io/websocket"
+
+	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
 func MakeHTTPServeMux() *http.ServeMux {

@@ -84,12 +84,12 @@ func (fg *FyneGUI) Page3() fyne.CanvasObject {
 	bps := widget.NewMultiLineEntry()
 	bps.SetText(fg.generateBPS())
 	conf := pageConfig{
-		I:    3,
-		Name: "Finalize Boot Parameters",
-		Prev: func() { fg.w.SetContent(fg.Page2()) },
+		I:         3,
+		Name:      "Finalize Boot Parameters",
+		Prev:      func() { fg.w.SetContent(fg.Page2()) },
 		ResetText: "Regenerate",
-		Reset: func() { bps.SetText(fg.generateBPS()) },
-		NextText: "Download and Build",
+		Reset:     func() { bps.SetText(fg.generateBPS()) },
+		NextText:  "Download and Build",
 		Next: func() {
 			dialog.ShowConfirm("Confirmation", "Start download and build?", func(b bool) {
 				if b {
@@ -100,5 +100,3 @@ func (fg *FyneGUI) Page3() fyne.CanvasObject {
 	}
 	return makePage(fg.w, conf, bps)
 }
-
-

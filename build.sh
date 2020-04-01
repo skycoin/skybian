@@ -2,12 +2,9 @@
 
 # This is the main script to build the Skybian OS for Skycoin miners.
 #
-# Author: stdevPavelmc@github.com, @pavelmc in telegram
-# Skycoin / Simelo team
+# Author: evanlinjin@github.com, @evanlinjin in telegram
+# Skycoin / Rudi team
 #
-
-# Fail on any error
-#set -eo pipefail
 
 # load env variables.
 # shellcheck source=./build.conf
@@ -168,10 +165,6 @@ get_skywire()
 
   info "Cleaning..."
   rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
-
-  info "Generating SSL certificate for hypervisor..."
-  openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3650 \
-  -subj "/C=US/ST=Oregon/L=Portland/O=Company Name/OU=Org/CN=www.example.com"
 
   info "Done!"
 }

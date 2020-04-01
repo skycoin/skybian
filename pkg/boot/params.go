@@ -110,7 +110,7 @@ type Params struct {
 	Mode      Mode          `json:"mode"`
 	LocalIP   net.IP        `json:"local_ip"`
 	GatewayIP net.IP        `json:"gateway_ip"`
-	LocalPK   cipher.PubKey  `json:"local_pk"` // Not actually encoded to bps.
+	LocalPK   cipher.PubKey `json:"local_pk"` // Not actually encoded to bps.
 	LocalSK   cipher.SecKey `json:"local_sk"`
 
 	// only valid if mode == "0x00" (hypervisor)
@@ -121,11 +121,11 @@ type Params struct {
 func MakeHypervisorParams(sk cipher.SecKey) Params {
 	pk, _ := sk.PubKey()
 	return Params{
-		Mode:             HypervisorMode,
-		LocalIP:          net.ParseIP(DefaultHypervisorIP),
-		GatewayIP:        net.ParseIP(DefaultGatewayIP),
-		LocalPK:          pk,
-		LocalSK:          sk,
+		Mode:      HypervisorMode,
+		LocalIP:   net.ParseIP(DefaultHypervisorIP),
+		GatewayIP: net.ParseIP(DefaultGatewayIP),
+		LocalPK:   pk,
+		LocalSK:   sk,
 	}
 }
 
@@ -283,9 +283,10 @@ func (vp Params) genHypervisorConf() (interface{}, error) {
 	conf.DmsgPort = 46
 	conf.HTTPAddr = ":8000"
 	conf.EnableTLS = true
-	conf.TLSCertFile = "/etc/skywire-hypervisor/hypervisor.crt"
-	conf.TLSKeyFile = "/etc/skywire-hypervisor/hypervisor.key"
-	return conf, nil
+	conf.TLSCertFile = "/etc/skywire-hypervisor/cert.pem"
+	conf.TLSKeyFile = "/etc/skywire-hypervisor/key.pem"
+	err = genCert(conf.TLSCertFile, conf.TLSKeyFile)
+	return conf, err
 }
 
 func (vp Params) genVisorConf() (interface{}, error) {

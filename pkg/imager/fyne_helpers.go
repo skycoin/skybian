@@ -62,14 +62,14 @@ func newLinkedEntry(p *string) *widget.Entry {
 }
 
 type pageConfig struct {
-	I     int
-	Name  string
-	Reset func()
+	I         int
+	Name      string
+	Reset     func()
 	ResetText string
-	Check func() error
-	Prev  func()
-	Next  func()
-	NextText string
+	Check     func() error
+	Prev      func()
+	Next      func()
+	NextText  string
 }
 
 func makePage(w fyne.Window, conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {

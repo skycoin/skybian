@@ -13,14 +13,15 @@ import (
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
 	"github.com/SkycoinProject/dmsg/cipher"
-	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
+
+	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
 const (
-	DefaultVCount  = 7
-	DefaultHVIP = "192.168.0.2"
+	DefaultVCount = 7
+	DefaultHVIP   = "192.168.0.2"
 )
 
 type FyneGUI struct {
@@ -28,7 +29,7 @@ type FyneGUI struct {
 	assets http.FileSystem
 
 	app fyne.App
-	w  fyne.Window
+	w   fyne.Window
 
 	wkDir   string
 	baseURL string
@@ -58,7 +59,7 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 	w := fa.NewWindow("skyimager-gui")
 	w.SetMaster()
 	w.SetContent(fg.Page1())
-	w.Resize(fyne.Size{ Width: 800, Height: 600})
+	w.Resize(fyne.Size{Width: 800, Height: 600})
 	fg.w = w
 
 	return fg
@@ -165,4 +166,3 @@ func (fg *FyneGUI) build() {
 	)
 	dialog.ShowCustom("Success", "Close", cont, fg.w)
 }
-

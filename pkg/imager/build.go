@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/SkycoinProject/dmsg/cipher"
-	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/sirupsen/logrus"
+
+	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
 const readmeTxt = `These skybian images are ready to be flashed to disk!
@@ -23,7 +24,7 @@ func GenerateBootParams(n int, gw string, hvs []string) ([]boot.Params, error) {
 	bpsSlice := make([]boot.Params, 0, n)
 	for i := 0; i < n; i++ {
 		_, sk := cipher.GenerateKeyPair()
-		bps, err := boot.MakeParams(boot.VisorMode,"", gw, sk.String(), hvs...)
+		bps, err := boot.MakeParams(boot.VisorMode, "", gw, sk.String(), hvs...)
 		if err != nil {
 			return nil, err
 		}

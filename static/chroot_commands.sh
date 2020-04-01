@@ -33,6 +33,10 @@ apt-get clean
 info "Setting the chroot clock to now to avoid bugs with the date..."
 /sbin/fake-hwclock save force
 
+# Mkdir
+mkdir -p /etc/skywire-hypervisor || 0
+mkdir -p /var/skywire-hypervisor || 0
+
 # Enable systemd units.
 info "Enabling systemd units..."
 systemctl enable skywire-startup.service
