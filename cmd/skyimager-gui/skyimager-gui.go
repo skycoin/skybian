@@ -28,16 +28,17 @@ func init() {
 }
 
 const (
-	guiBrowser = "BROWSER"
-	guiFyne    = "FYNE"
+	uiBrowser = "BROWSER"
+	uiFyne    = "FYNE"
+	uiCLI     = "CLI"
 )
 
-var guiType string
+var uiType string
 
 func init() {
-	const defaultMode = guiFyne
-	usage := fmt.Sprintf("GUI type to use %v", []string{guiBrowser, guiFyne})
-	flag.StringVar(&guiType, "ui", defaultMode, usage)
+	const defaultMode = uiFyne
+	usage := fmt.Sprintf("UI type to use %v", []string{uiBrowser, uiFyne})
+	flag.StringVar(&uiType, "ui", defaultMode, usage)
 }
 
 var uiScale float64
@@ -61,10 +62,10 @@ func main() {
 
 
 
-	switch guiType {
-	case guiFyne:
+	switch uiType {
+	case uiFyne:
 		imager.NewFyneGUI(log, assets).Run()
-	case guiBrowser:
+	case uiBrowser:
 		runWebviewGUI(assets)
 	default:
 		log.Fatalf("'%s' is not a valid gui.")

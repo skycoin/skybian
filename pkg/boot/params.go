@@ -110,6 +110,7 @@ type Params struct {
 	Mode      Mode          `json:"mode"`
 	LocalIP   net.IP        `json:"local_ip"`
 	GatewayIP net.IP        `json:"gateway_ip"`
+	LocalPK   cipher.PubKey  `json:"local_pk"` // Not actually encoded to bps.
 	LocalSK   cipher.SecKey `json:"local_sk"`
 
 	// only valid if mode == "0x00" (hypervisor)
@@ -118,19 +119,23 @@ type Params struct {
 }
 
 func MakeHypervisorParams(sk cipher.SecKey) Params {
+	pk, _ := sk.PubKey()
 	return Params{
 		Mode:             HypervisorMode,
 		LocalIP:          net.ParseIP(DefaultHypervisorIP),
 		GatewayIP:        net.ParseIP(DefaultGatewayIP),
+		LocalPK:          pk,
 		LocalSK:          sk,
 	}
 }
 
 func MakeVisorParams(i int, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey, socksPC string) Params {
+	pk, _ := sk.PubKey()
 	return Params{
 		Mode:             VisorMode,
 		LocalIP:          net.ParseIP(fmt.Sprintf(ipPattern, i+3)),
 		GatewayIP:        gwIP,
+		LocalPK:          pk,
 		LocalSK:          sk,
 		HypervisorPKs:    hvPKs,
 		SkysocksPasscode: socksPC,
@@ -352,7 +357,7 @@ func (vp Params) Encode() ([]byte, error) {
 	for _, hvPK := range vp.HypervisorPKs {
 		keys = append(keys, hvPK[:]...)
 	}
-	raw := bytes.Join([][]byte{vp.LocalIP, vp.GatewayIP, keys}, []byte{sep})
+	raw := bytes.Join([][]byte{vp.LocalIP, vp.GatewayIP, []byte(vp.SkysocksPasscode), keys}, []byte{sep})
 	if len(raw) > size {
 		return nil, ErrParamsTooLarge
 	}
@@ -363,14 +368,14 @@ func (vp Params) Encode() ([]byte, error) {
 }
 
 func (vp *Params) Decode(raw []byte) error {
-	split := bytes.SplitN(raw, []byte{sep}, 3)
-	if len(split) != 3 {
+	split := bytes.SplitN(raw, []byte{sep}, 4)
+	if len(split) != 4 {
 		return ErrCannotReadParams
 	}
 
-	vp.LocalIP, vp.GatewayIP = split[0], split[1]
+	vp.LocalIP, vp.GatewayIP, vp.SkysocksPasscode = split[0], split[1], string(split[2])
 
-	keys := split[2]
+	keys := split[3]
 	keys = keys[copy(vp.LocalSK[:], keys):]
 	for {
 		var pk cipher.PubKey

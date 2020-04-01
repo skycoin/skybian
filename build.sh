@@ -78,29 +78,32 @@ EOF
     exit 0
 fi
 
-
 # for logging
 
-function info() {
+info()
+{
     printf '\033[0;32m[ INFO ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
-function notice() {
+notice()
+{
     printf '\033[0;34m[ NOTI ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
-function warn() {
+warn()
+{
     printf '\033[0;33m[ WARN ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
-function error() {
+error()
+{
     printf '\033[0;31m[ ERRO ]\033[0m %s\n' "${FUNCNAME[1]}: ${1}"
 }
 
-
 # Test the needed tools to build the script, iterate over the needed tools
 # and warn if one is missing, exit 1 is generated
-function tool_test() {
+tool_test()
+{
     # info
     info "Testing the workspace for needed tools"
     for t in ${NEEDED_TOOLS} ; do
@@ -116,10 +119,10 @@ function tool_test() {
     info "All tools are installed, going forward."
 }
 
-
 # Build the output/work folder structure, this is excluded from the git
 # tracking on purpose: this will generate GB of data on each push
-function create_folders() {
+create_folders()
+{
     # output [main folder]
     #   /final [this will be the final images dir]
     #   /parts [all thing we download from the internet]
@@ -135,8 +138,8 @@ function create_folders() {
     info "Done!"
 }
 
-
-function get_tools() {
+get_tools()
+{
   local _src="$ROOT/cmd/skyconf/skyconf.go"
   local _out="$PARTS_TOOLS_DIR/skyconf"
 
@@ -148,9 +151,8 @@ function get_tools() {
   info "Done!"
 }
 
-
-# Downloads and extracts skywire.
-function get_skywire() {
+get_skywire()
+{
   local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
   if [ ! -f "${_DST}" ] ; then
@@ -167,12 +169,15 @@ function get_skywire() {
   info "Cleaning..."
   rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
+  info "Generating SSL certificate for hypervisor..."
+  openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 3650 \
+  -subj "/C=US/ST=Oregon/L=Portland/O=Company Name/OU=Org/CN=www.example.com"
+
   info "Done!"
 }
 
-
-# download armbian
-function download_armbian() {
+download_armbian()
+{
   local _DST=${PARTS_ARMBIAN_DIR}/armbian.7z # Download destination file name.
 
   info "Downloading image from ${ARMBIAN_DOWNLOAD_URL} to ${_DST} ..."
@@ -180,9 +185,9 @@ function download_armbian() {
     (error "Download failed." && return 1)
 }
 
-
 # Get the latest ARMBIAN image for Orange Pi Prime
-function get_armbian() {
+get_armbian()
+{
   local ARMBIAN_IMG_7z="armbian.7z"
 
     # change to dest dir
@@ -246,18 +251,17 @@ function get_armbian() {
     notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 }
 
-
-function get_all() {
+get_all()
+{
   get_armbian || return 1
-  get_jq || return 1
   get_skywire || return 1
   get_tools || return 1
 }
 
 
 # setup the rootfs to a loop device
-function setup_loop() {
-
+setup_loop()
+{
   # find free loop device
   IMG_LOOP=$(losetup -f)
 
@@ -274,9 +278,9 @@ function setup_loop() {
   sudo losetup -o "$((IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
 }
 
-
 # root fs check
-function rootfs_check() {
+rootfs_check()
+{
     # info
     info "Checking root fs"
     # local var to trap exit status
@@ -289,12 +293,12 @@ function rootfs_check() {
     fi
 }
 
-
 # Prepares base image.
 # - Copy armbian img to base img loc
 # - Increase base image size & prepare loop device
 # - Mount loop device
-function prepare_base_image() {
+prepare_base_image()
+{
     # Armbian image is tight packed, and we need room for adding our
     # bins, apps & configs, so we will make it bigger
 
@@ -325,36 +329,29 @@ function prepare_base_image() {
     info "Done!"
 }
 
-
-function copy_to_img() {
-
+copy_to_img()
+{
   # Copy skywire bins
-
   info "Copying skywire bins..."
   sudo mkdir "$FS_MNT_POINT"/usr/bin/skywire
   sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
-
   sudo cp "$ROOT"/static/skywire-startup "$FS_MNT_POINT"/usr/bin/ || return 1
   sudo chmod +x "$FS_MNT_POINT"/usr/bin/skywire-startup || return 1
 
   # Copy skywire tools
-
   info "Copying skywire tools..."
   sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
 
   # Copy scripts
-
   info "Copying disable user creation script..."
   sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
   sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-
   info "Copying headers (so OS presents itself as Skybian)..."
   sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
   sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
   sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
 
   # Copy systemd units
-
   info "Copying systemd unit services..."
   local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
   sudo cp -f "${ROOT}/static/skywire-startup.service" "${SYSTEMD_DIR}" || return 1
@@ -362,9 +359,9 @@ function copy_to_img() {
   info "Done!"
 }
 
-
 # fix some defaults on armian to skywire defaults
-function chroot_actions() {
+chroot_actions()
+{
   # copy chroot scripts to root fs
   info "Copying chroot script..."
   sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
@@ -397,9 +394,9 @@ function chroot_actions() {
   info "Done!"
 }
 
-
 # calculate md5, sha1 and compress
-function calc_sums_compress() {
+calc_sums_compress()
+{
     # change to final dest
     cd "${FINAL_IMG_DIR}" ||
       (error "Failed to cd." && return 1)
@@ -428,8 +425,8 @@ function calc_sums_compress() {
     info "Done!"
 }
 
-
-function clean_image() {
+clean_image()
+{
     sudo umount "${FS_MNT_POINT}/sys"
     sudo umount "${FS_MNT_POINT}/proc"
     sudo umount "${FS_MNT_POINT}/dev/pts"
@@ -443,8 +440,8 @@ function clean_image() {
     [[ -n "${IMG_LOOP}" ]] && sudo losetup -d "${IMG_LOOP}"
 }
 
-
-function clean_output_dir() {
+clean_output_dir()
+{
   # Clean parts.
   cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
@@ -457,9 +454,9 @@ function clean_output_dir() {
   cd "${ROOT}" || return 1
 }
 
-
 # build disk
-function build_disk() {
+build_disk()
+{
     # move to correct dir
     cd "${IMAGE_DIR}" || return 1
 
@@ -502,9 +499,9 @@ function build_disk() {
     info "Image for ${NAME} ready"
 }
 
-
 # main exec block
-function main() {
+main()
+{
     # test for needed tools
     tool_test || return 1
 
@@ -534,13 +531,15 @@ function main() {
     info "Success!"
 }
 
-function main_clean() {
+main_clean()
+{
   clean_output_dir
   clean_image || return 0
 }
 
 # clean exec block
-function main_package() {
+main_package()
+{
     tool_test || return 1
     #create_folders || return 1
     calc_sums_compress || return 1

@@ -8,7 +8,7 @@ import (
 
 	"github.com/SkycoinProject/skycoin/src/util/logging"
 
-	"github.com/SkycoinProject/skybian/pkg/bootparams"
+	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/SkycoinProject/skybian/pkg/imager"
 )
 
