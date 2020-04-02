@@ -148,8 +148,11 @@ func generateHypervisorConfig(bp boot.Params) (interface{}, error) {
 	conf.DmsgPort = skyenv.DmsgHypervisorPort
 	conf.HTTPAddr = ":8000"
 	conf.EnableTLS = true
+
+	// TODO(evanlinjin): Pass filenames as cli args in 'skyconf'.
 	conf.TLSCertFile = "/etc/skywire-hypervisor/cert.pem"
 	conf.TLSKeyFile = "/etc/skywire-hypervisor/key.pem"
 	err = GenCert(conf.TLSCertFile, conf.TLSKeyFile)
+
 	return conf, err
 }
