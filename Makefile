@@ -58,5 +58,8 @@ run-skyimager-gui: ## Builds skyimager GUI
 	./bin/statik -src=./cmd/skyimager-gui/assets -dest ./cmd/skyimager-gui -f
 	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -debug -scale "-1.0"
 
+tag: ## Make git tag using VERSION in build.conf
+	source ./build.conf && git tag $VERSION
+
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
