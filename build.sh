@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This is the main script to build the Skybian OS for Skycoin miners.
 #
