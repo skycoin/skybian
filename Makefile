@@ -47,9 +47,7 @@ build-skybian-img: ## builds skybian base image.
 	./build.sh -p
 
 build-skyimager-gui: ## builds skyimager GUI
-	mkdir -p ./bin
-	${OPTS} GOBIN=${PWD}/bin go get github.com/lucor/fyne-cross/cmd/fyne-cross
-	./bin/fyne-cross -v -targets=linux/amd64,darwin/amd64,windows/amd64 -icon=./cmd/skyimager-gui/assets/icon.png ./cmd/skyimager-gui
+	./build-skyimager.sh
 
 run-skyimager: ## Run skyimager
 	echo ${IMG_BOOT_PARAMS} | go run ./cmd/skyimager/skyimager.go

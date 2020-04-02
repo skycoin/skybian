@@ -24,8 +24,7 @@ function setup_skywire() {
   echo "Skywire Startup Mode: MD=$MD"
   echo "Local IP: IP=$IP"
   echo "Local Gateway IP: GW=$GW"
-  echo "Local Public Key: PK=$PK"
-  echo "Local Secret Key: SK=$SK"
+  echo "Local Public Key: PK=$PK (derived from SK - which is not shown here for security reasons)"
   echo "Trusted Hypervisors: HVS=$HVS"
   echo "Skysocks Passcode: SS=$SS"
 }
