@@ -25,7 +25,7 @@ deploy:
   - output/final/*.tar.xz
   - fyne-cross/bin/*.tar.xz
   draft: true
-  prerelease: true
+  prerelease: false
   skip_cleanup: true
   on:
     all_branches: true
