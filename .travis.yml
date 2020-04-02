@@ -1,14 +1,21 @@
 os: linux
 dist: bionic
 sudo: required
-language: bash
+language: go
+
+go:
+  # - "1.13.x" At minimum the code should run make check on the latest two go versions in the default linux environment provided by Travis.
+  - "1.13.x"
 
 before_script:
-- sudo apt update
-- sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+  - sudo apt update
+  - sudo apt-get install gcc libgl1-mesa-dev xorg-dev
+  - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
 
 script:
-- bash build.sh
+  - make test
+  - make build-skybian-img
+  - make build-skyimager-gui
 
 notifications:
   email:
@@ -23,9 +30,11 @@ deploy:
   api_key:
     secure: L82XzmWZt40Fz2A+rx0lsAWQq+AO9KhA0YKJdRhlTlAMWPeCY27wlmNmmHCnP0VXo++7Pq7ZlX9lZclgrirnl2OvSZgKJQj+aFCIIXgBytkCX6lyoKgye+9ggLojOIFqLp1Ddf4W2R0QzSXZw64qN44VP+F4nIOsbIXn16JzK5u1ZNY3o+rT2aNXskCGCbW0Xxudzu6A3lh5DHK3N+aRnNzwK0rapzhvbZ6aHrFloBCeM769CG6QedRcgqreA44wwvOYl4vRIUlIqRatl1plxaPvWxS6S3mHELU4xUOlckgusjlqvyvnVw8/QvwcnikDuqW+nLWTamgkafeA81VaQjOATMNe7dtCIQaf3+TheghrNHpU7PUmvnpHvHL8wlZOKijCSrwYq05knmdKsvHCUVjA1dff/NmnTT42C6j1pq8WuV60dZTaI1UJ7LMOQGj/FKeYcgmWfg7y+GBwuN197w2Af40oWHth4i/ar/rKXXMCexpVQdGKcOGeP9+0MbQhcjWfy06oEEnVmjcy8x9kUzthLZ6HIvm/xty7H+2iwOYPtoB637uaL8ztbleZRJGlKXbOa1/BRgevHGI3+JbCjyrGEtf+83/94bSfbnQxNe111yfbX4fWBmLPNLUzoQ2McGoOxhgrY9NWFy67BAz6GdqthTKIPu1ibmlU731R+2I=
   file_glob: true
-  file: "output/final/*.xz"
+  file:
+    - "output/final/*.tar.xz"
+    - "fyne-cross/bin/*.tar.xz"
   draft: true
   skip_cleanup: true
   on:
     all_branches: true
-    condition: "$TRAVIS_BRANCH =~ ^master$|^release-.*$"
+    tags: true

@@ -18,6 +18,12 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
+## [0.0.5] - 2019-11-04
+
+### Added
+
+- added new managerUI code
+- updated the discovery address
 
 ## [0.0.4] - 2019-04-18
 

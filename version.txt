@@ -1,8 +1,0 @@
-# This file holds the latest version links for both releases, testnet & mainnet
-# the format is as follow: type_of_image|http://link/to/release/file
-# for example:
-#
-# testnet|https://github.com/SkycoinProject/skybian/releases/download/Skybian-v0.0.4/Skybian-v0.0.4.tar.xz
-# mainnet|https://github.com/SkycoinProject/skybian/releases/download/Skybian-v0.0.4/Skybian-v0.0.4.tar.xz
-
-testnet|https://github.com/SkycoinProject/skybian/releases/download/Skybian-v0.0.4/Skybian-v0.0.4.tar.xz

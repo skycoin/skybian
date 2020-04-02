@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>skyimager</title>
+
+    <style>
+        div      {
+            padding: 10px;
+        }
+        input    {
+            width:       100%;
+            font-family: monospace;
+        }
+        button   {
+            width:            100%;
+            background-color: gray;
+            color:            white;
+        }
+        label    {
+            width: 100%;
+            font-family: sans-serif;
+        }
+        textarea {
+            width: 100%;
+            font-family: monospace;
+        }
+        html, body {
+            margin:0;
+            padding:0;
+            height:100%;
+        }
+        #build-overlay {
+            position: fixed; /* Sit on top of the page content */
+            display: none; /* Hidden by default */
+            width: 100%; /* Full width (cover the whole page) */
+            height: 100%; /* Full height (cover the whole page) */
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.9); /* Black background with opacity */
+            color: white;
+            z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <label for="edit-dl-url">Base Image URL:</label>
+        <input type="url" id="edit-dl-url">
+        <button onclick="setLatestBaseImageURL()">Use Latest</button>
+    </div>
+    <div>
+        <label for="edit-hvs">Trusted hypervisors:</label>
+        <input type="text" id="edit-hvs" placeholder="public keys separated with commas" onchange="setBps()">
+    </div>
+    <div>
+        <label for="edit-gw">Gateway IP:</label>
+        <input type="text" id="edit-gw" value="192.168.0.1" onchange="setBps()">
+    </div>
+    <div>
+        <label for="edit-n">Number of final images to generate:</label>
+        <input type="number" id="edit-n" min="1" value="1" onchange="setBps()">
+    </div>
+    <div>
+        <label for="edit-bps">Configure final images:</label>
+        <textarea id="edit-bps" onclick="resizeEditBps()" oninput="resizeEditBps()"></textarea>
+        <button onclick="setBps()">Regenerate</button>
+    </div>
+    <div>
+        <label for="edit-dir">Work directory (created if nonexistent):</label>
+        <input id="edit-dir">
+        <button onclick="setWorkDir()">Default</button>
+    </div>
+    <div>
+        <button onclick="build()" style="background-color: deepskyblue">Download and Build</button>
+        <button onclick="quit()" style="background-color: orangered">Quit</button>
+    </div>
+
+    <textarea id="build-overlay" readonly></textarea>
+</body>
+
+<script>
+    function resizeEditBps() {
+        let x = document.getElementById("edit-bps");
+        x.style.height = "";
+        x.style.height = x.scrollHeight + "px";
+    }
+</script>
+
+<script>
+    function getBaseURL() {
+        return location.protocol + "//" + location.host
+    }
+
+    function setLatestBaseImageURL() {
+        const url = "/api/latest-dl-url";
+
+        let req = new XMLHttpRequest;
+        req.open("GET", url, false);
+        req.send();
+
+        document.getElementById("edit-dl-url").value =
+            JSON.parse(req.responseText).toString();
+    }
+
+    function setWorkDir() {
+        let url = "/api/work-dir";
+
+        let req = new XMLHttpRequest;
+        req.open("GET", url, false);
+        req.send();
+
+        document.getElementById("edit-dir").value =
+            JSON.parse(req.responseText).toString();
+    }
+
+    function setBps() {
+        let url = "/api/bps-template";
+        url += "?n=" + document.getElementById("edit-n").value;
+        url += "&gw=" + document.getElementById("edit-gw").value;
+
+        let hvs = document.getElementById("edit-hvs").value;
+        for (let hv of hvs.split(",")) {
+            if (hv.length === 0) {
+                continue
+            }
+            url += "&hv=" + hv.trim();
+        }
+
+        let req = new XMLHttpRequest;
+        req.open("GET", url, false);
+        req.send();
+
+        document.getElementById("edit-bps").value =
+            JSON.stringify(JSON.parse(req.responseText),null,4);
+
+        resizeEditBps();
+    }
+
+    function build() {
+        document.getElementById("build-overlay").style.display = "block";
+
+        let dlURL = document.getElementById("edit-dl-url").value;
+        let workDir = document.getElementById("edit-dir").value;
+
+        let url = "ws://" + location.host + "/api/build";
+        url += "?url=" + dlURL;
+        url += "&wd=" + workDir;
+
+        let lastMsg = "";
+
+        let ws = new WebSocket(url);
+        ws.onopen = function () {
+            ws.send(document.getElementById("edit-bps").value);
+        };
+        ws.onmessage = function (event) {
+            lastMsg = event.data;
+            let buildOverlay = document.getElementById("build-overlay");
+            buildOverlay.value += event.data;
+            buildOverlay.scrollTop = buildOverlay.scrollHeight;
+        };
+        ws.onclose = function (event) {
+            if (event.wasClean) {
+                alert("Successfully built images!\n\n" +
+                    "Final Image Dir:\n" +
+                    workDir + "/final\n\n" +
+                    "To flash the images, use a tool such as balenaEtcher:\n" +
+                    "https://www.balena.io/etcher/");
+            } else {
+                alert("Failed to build images.\n\n" +
+                    "Last Log Message:\n" +
+                    lastMsg);
+            }
+            window.location.replace(getBaseURL());
+        };
+    }
+
+    function quit() {
+        const url = "/api/quit";
+
+        let req = new XMLHttpRequest;
+        req.open("GET", url, true);
+        req.send();
+        req.onerror = function() {
+            window.location.replace(getBaseURL());
+        };
+    }
+</script>
+
+<script>
+    setLatestBaseImageURL();
+    setBps();
+    setWorkDir();
+</script>
+
+</html>

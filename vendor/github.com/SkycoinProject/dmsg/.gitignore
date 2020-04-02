@@ -1,0 +1,16 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.rdb
+*.json
+.DS_Store
+
+.idea/
+bin/
+
+dmsg-discovery
+dmsg-server

@@ -1,6 +1,12 @@
-output/*
-*img
-sky*fs
-.vscode/*
+/.idea
+/.vscode
+
+/fyne-cross
+/bin
+/output
+/base
+/final
+
+.DS_Store
+*.img
 *.code-workspace
-.idea/*
