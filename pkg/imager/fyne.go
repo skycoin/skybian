@@ -47,7 +47,7 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 	fg.assets = assets
 
 	fg.wkDir = DefaultRootDir()
-	fg.baseURL = DefaultDlURL
+	fg.baseURL = ""
 	fg.gwIP = net.ParseIP(DefaultGwIP)
 	fg.hv = true
 	fg.visors = DefaultVCount

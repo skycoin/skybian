@@ -28,8 +28,7 @@ const (
 
 // Default URLs.
 const (
-	DefaultDlURL = "https://github.com/evanlinjin/skybian/releases/download/v0.1.1-alpha.2/Skybian-v0.1.1-alpha.2.tar.xz"
-	DefaultGwIP  = "192.168.0.1"
+	DefaultGwIP = "192.168.0.1"
 )
 
 func DefaultRootDir() string {

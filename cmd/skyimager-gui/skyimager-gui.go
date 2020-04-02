@@ -87,7 +87,7 @@ func runWebviewGUI(assets http.FileSystem) {
 		WithField("addr", lis.Addr().String()).
 		Info("Listening...")
 
-	mux := imager.MakeHTTPServeMux()
+	mux := imager.MakeHTTPServeMux(log)
 	mux.Handle("/", http.FileServer(assets))
 	go func() {
 		if err := http.Serve(lis, mux); err != nil {

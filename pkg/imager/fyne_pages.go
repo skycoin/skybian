@@ -1,11 +1,15 @@
 package imager
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
 	"path/filepath"
 	"strconv"
+	"strings"
+	"time"
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/dialog"
@@ -40,12 +44,16 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 	hv := widget.NewCheck("Generate Hypervisor Image.", func(b bool) { fg.hv = b })
 	hv.SetChecked(fg.hv)
 
+	if fg.baseURL == "" {
+		baseUrl.SetText(fg.latestBaseURL())
+	}
+
 	conf := pageConfig{
 		I:    2,
 		Name: "Prepare Boot Parameters",
 		Reset: func() {
 			wkDir.SetText(DefaultRootDir())
-			baseUrl.SetText(DefaultDlURL)
+			baseUrl.SetText(fg.latestBaseURL())
 			gwIP.SetText(DefaultGwIP)
 			socksPC.SetText("")
 			visors.SetText(strconv.Itoa(DefaultVCount))
@@ -54,6 +62,9 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 		Check: func() error {
 			if _, err := filepath.Abs(fg.wkDir); err != nil {
 				return fmt.Errorf("invalid Work Directory: %v", err)
+			}
+			if strings.TrimSpace(fg.baseURL) == "" {
+				return errors.New("invalid Base Image URL: cannot be empty")
 			}
 			if _, err := url.Parse(fg.baseURL); err != nil {
 				return fmt.Errorf("invalid Base Image URL: %v", err)
@@ -99,4 +110,24 @@ func (fg *FyneGUI) Page3() fyne.CanvasObject {
 		},
 	}
 	return makePage(fg.w, conf, bps)
+}
+
+func (fg *FyneGUI) latestBaseURL() string {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	title := "Please Wait"
+	msg := "Obtaining latest base image URL from GitHub..."
+	d := dialog.NewProgressInfinite(title, msg, fg.w)
+
+	d.Show()
+	imgURL, err := LatestBaseImgURL(ctx, fg.log)
+	d.Hide()
+
+	if err != nil {
+		dialog.ShowError(err, fg.w)
+		return ""
+	}
+	fg.baseURL = imgURL
+	return imgURL
 }

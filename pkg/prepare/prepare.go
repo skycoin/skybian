@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/SkycoinProject/dmsg/cipher"
-	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/SkycoinProject/skywire-mainnet/pkg/app/appcommon"
 	"github.com/SkycoinProject/skywire-mainnet/pkg/hypervisor"
 	"github.com/SkycoinProject/skywire-mainnet/pkg/restart"
 	"github.com/SkycoinProject/skywire-mainnet/pkg/routing"
 	"github.com/SkycoinProject/skywire-mainnet/pkg/skyenv"
 	"github.com/SkycoinProject/skywire-mainnet/pkg/visor"
+
+	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
 // Config file paths.
@@ -121,10 +122,10 @@ func generateVisorConfig(bp boot.Params) (interface{}, error) {
 			Args:      skysocksArgs(),
 		},
 		{
-			App: skyenv.SkysocksClientName,
+			App:       skyenv.SkysocksClientName,
 			AutoStart: false,
-			Port: routing.Port(skyenv.SkysocksClientPort),
-			Args: []string{"-addr", skyenv.SkysocksClientAddr},
+			Port:      routing.Port(skyenv.SkysocksClientPort),
+			Args:      []string{"-addr", skyenv.SkysocksClientAddr},
 		},
 	}
 	return conf, nil

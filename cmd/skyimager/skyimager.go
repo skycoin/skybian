@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"os"
@@ -28,7 +29,8 @@ func init() {
 var dlURL string
 
 func init() {
-	flag.StringVar(&dlURL, "url", imager.DefaultDlURL, "url of skybian image archive")
+	defaultDlURL, _ := imager.LatestBaseImgURL(context.Background(), log)
+	flag.StringVar(&dlURL, "url", defaultDlURL, "url of skybian image archive")
 }
 
 func main() {

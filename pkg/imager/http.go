@@ -18,9 +18,14 @@ import (
 	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
-func MakeHTTPServeMux() *http.ServeMux {
+func MakeHTTPServeMux(log logrus.FieldLogger) *http.ServeMux {
 	latestDlURL := func(w http.ResponseWriter, r *http.Request) {
-		httputil.WriteJSON(w, r, http.StatusOK, DefaultDlURL)
+		imgURL, err := LatestBaseImgURL(r.Context(), log)
+		if err != nil {
+			httputil.WriteJSON(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		httputil.WriteJSON(w, r, http.StatusOK, imgURL)
 	}
 	defaultWorkDir := func(w http.ResponseWriter, r *http.Request) {
 		homeDir, _ := os.UserHomeDir()

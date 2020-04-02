@@ -8,7 +8,8 @@ require (
 	github.com/SkycoinProject/dmsg v0.1.0
 	github.com/SkycoinProject/skycoin v0.27.0
 	github.com/SkycoinProject/skywire-mainnet v0.1.2
-	github.com/lucor/fyne-cross v1.4.0 // indirect
+	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/rakyll/statik v0.1.7
 	github.com/sirupsen/logrus v1.5.0
