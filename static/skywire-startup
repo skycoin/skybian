@@ -71,12 +71,12 @@ setup_network || exit 1
 case $MD in
   "VISOR")
     echo "Starting 'skywire-visor'..."
-    /usr/bin/skywire-visor "$VISOR_CONF" & ;;
-
+    /usr/bin/skywire-visor "$VISOR_CONF" &
+    ;;
   "HYPERVISOR")
     echo "Starting 'skywire-hypervisor'..."
-    /usr/bin/skywire-hypervisor "$HYPERVISOR_CONF" & ;;
-
+    /usr/bin/skywire-hypervisor "$HYPERVISOR_CONF" &
+    ;;
   *)
     exit 1
 esac

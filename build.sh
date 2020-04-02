@@ -163,6 +163,9 @@ get_skywire()
   mkdir "${PARTS_SKYWIRE_DIR}/bin"
   tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
 
+  info "Renaming 'hypervisor' to 'skywire-hypervisor'..."
+  mv "${PARTS_SKYWIRE_DIR}/bin/hypervisor" "${PARTS_SKYWIRE_DIR}/bin/skywire-hypervisor" || 0
+
   info "Cleaning..."
   rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
@@ -326,7 +329,6 @@ copy_to_img()
 {
   # Copy skywire bins
   info "Copying skywire bins..."
-  sudo mkdir "$FS_MNT_POINT"/usr/bin/skywire
   sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
   sudo cp "$ROOT"/static/skywire-startup "$FS_MNT_POINT"/usr/bin/ || return 1
   sudo chmod +x "$FS_MNT_POINT"/usr/bin/skywire-startup || return 1
@@ -492,8 +494,8 @@ build_disk()
     info "Image for ${NAME} ready"
 }
 
-# main exec block
-main()
+# main build block
+main_build()
 {
     # test for needed tools
     tool_test || return 1
@@ -549,6 +551,6 @@ case "$1" in
     main_clean || (error "Failed." && exit 1)
     ;;
 *)
-    main || (error "Failed." && exit 1)
+    main_build || (error "Failed." && exit 1)
     ;;
  esac
