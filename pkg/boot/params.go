@@ -211,7 +211,7 @@ func (bp Params) Encode() ([]byte, error) {
 	for _, hvPK := range bp.HypervisorPKs {
 		keys = append(keys, hvPK[:]...)
 	}
-	raw := bytes.Join([][]byte{bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode), keys}, []byte{sep})
+	raw := bytes.Join([][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode), keys}, []byte{sep})
 	if len(raw) > size {
 		return nil, ErrParamsTooLarge
 	}
@@ -222,14 +222,15 @@ func (bp Params) Encode() ([]byte, error) {
 }
 
 func (bp *Params) Decode(raw []byte) error {
-	split := bytes.SplitN(raw, []byte{sep}, 4)
-	if len(split) != 4 {
+	split := bytes.SplitN(raw, []byte{sep}, 5)
+	if len(split) != 5 {
 		return ErrCannotReadParams
 	}
 
-	bp.LocalIP, bp.GatewayIP, bp.SkysocksPasscode = split[0], split[1], string(split[2])
+	bp.Mode, bp.LocalIP, bp.GatewayIP, bp.SkysocksPasscode =
+		Mode(split[0][0]), split[1], split[2], string(split[3])
 
-	keys := split[3]
+	keys := split[4]
 	keys = keys[copy(bp.LocalSK[:], keys):]
 	for {
 		var pk cipher.PubKey

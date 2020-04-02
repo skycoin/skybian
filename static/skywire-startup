@@ -52,7 +52,7 @@ function setup_network() {
   # Delete all nm connections.
   echo "Deleting all nm connections..."
   TEMP_FILE=$(mktemp)
-  nmcli -t --fields=NAME c show > "$TEMP_FILE"
+  nmcli -f NAME -t c > "$TEMP_FILE"
   while read -r line; do nmcli c delete "$line"; done < "$TEMP_FILE"
   rm "$TEMP_FILE"
 
@@ -74,7 +74,7 @@ case $MD in
     ;;
   "HYPERVISOR")
     echo "Starting 'skywire-hypervisor'..."
-    /usr/bin/skywire-hypervisor "$HYPERVISOR_CONF" &
+    /usr/bin/skywire-hypervisor -c "$HYPERVISOR_CONF" &
     ;;
   *)
     exit 1

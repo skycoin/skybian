@@ -150,6 +150,6 @@ func generateHypervisorConfig(bp boot.Params) (interface{}, error) {
 	conf.EnableTLS = true
 	conf.TLSCertFile = "/etc/skywire-hypervisor/cert.pem"
 	conf.TLSKeyFile = "/etc/skywire-hypervisor/key.pem"
-	err = genCert(conf.TLSCertFile, conf.TLSKeyFile)
+	err = GenCert(conf.TLSCertFile, conf.TLSKeyFile)
 	return conf, err
 }

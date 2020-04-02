@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func genCert(certName, keyName string) error {
+func GenCert(certName, keyName string) error {
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return fmt.Errorf("failed to generate private key: %v", err)
@@ -53,7 +53,7 @@ func genCert(certName, keyName string) error {
 	template.IsCA = true
 	template.KeyUsage |= x509.KeyUsageCertSign
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, priv.PublicKey, priv)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
 	if err != nil {
 		return fmt.Errorf("failed to create certificate: %v", err)
 	}
