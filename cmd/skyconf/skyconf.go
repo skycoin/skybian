@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/SkycoinProject/skybian/pkg/boot"
+	"github.com/SkycoinProject/skybian/pkg/prepare"
 )
 
 var filename string
@@ -24,7 +25,8 @@ func main() {
 		logger.Println("failed to read params:", err)
 		os.Exit(1)
 	}
-	if err := params.EnsureConfigFile(); err != nil {
+
+	if err := prepare.Prepare(params); err != nil {
 		logger.Println("failed to ensure config file:", err)
 		os.Exit(1)
 	}

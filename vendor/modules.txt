@@ -35,9 +35,8 @@ github.com/SkycoinProject/skycoin/src/cipher/ripemd160
 github.com/SkycoinProject/skycoin/src/cipher/secp256k1-go
 github.com/SkycoinProject/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/SkycoinProject/skycoin/src/util/logging
-# github.com/SkycoinProject/skywire-mainnet v0.1.1
+# github.com/SkycoinProject/skywire-mainnet v0.1.2
 github.com/SkycoinProject/skywire-mainnet/internal/httpauth
-github.com/SkycoinProject/skywire-mainnet/internal/skyenv
 github.com/SkycoinProject/skywire-mainnet/pkg/app
 github.com/SkycoinProject/skywire-mainnet/pkg/app/appcommon
 github.com/SkycoinProject/skywire-mainnet/pkg/app/appnet
@@ -49,6 +48,7 @@ github.com/SkycoinProject/skywire-mainnet/pkg/routefinder/rfclient
 github.com/SkycoinProject/skywire-mainnet/pkg/router
 github.com/SkycoinProject/skywire-mainnet/pkg/routing
 github.com/SkycoinProject/skywire-mainnet/pkg/setup/setupclient
+github.com/SkycoinProject/skywire-mainnet/pkg/skyenv
 github.com/SkycoinProject/skywire-mainnet/pkg/snet
 github.com/SkycoinProject/skywire-mainnet/pkg/snet/snettest
 github.com/SkycoinProject/skywire-mainnet/pkg/snet/stcp
@@ -127,9 +127,9 @@ github.com/mholt/archiver/v3
 github.com/mitchellh/colorstring
 # github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 github.com/nfnt/resize
-# github.com/nwaples/rardecode v1.1.0
+# github.com/nwaples/rardecode v1.0.0
 github.com/nwaples/rardecode
-# github.com/pierrec/lz4 v2.4.1+incompatible
+# github.com/pierrec/lz4 v2.0.5+incompatible
 github.com/pierrec/lz4
 github.com/pierrec/lz4/internal/xxh32
 # github.com/pmezard/go-difflib v1.0.0
@@ -152,14 +152,14 @@ github.com/stretchr/objx
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
-# github.com/ulikunitz/xz v0.5.7
+# github.com/ulikunitz/xz v0.5.6
 github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
 github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
 # github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 github.com/xi2/xz
-# go.etcd.io/bbolt v1.3.3
+# go.etcd.io/bbolt v1.3.4
 go.etcd.io/bbolt
 # golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 golang.org/x/crypto/blake2b

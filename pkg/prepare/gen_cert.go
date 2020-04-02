@@ -1,4 +1,4 @@
-package boot
+package prepare
 
 import (
 	"crypto/rand"
