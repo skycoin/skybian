@@ -2,6 +2,8 @@ package imager
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"path/filepath"
@@ -31,8 +33,10 @@ type FyneGUI struct {
 	app fyne.App
 	w   fyne.Window
 
+	releases []Release
+
 	wkDir   string
-	baseURL string
+	baseImg string
 	gwIP    net.IP
 	socksPC string
 	hv      bool
@@ -47,7 +51,7 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 	fg.assets = assets
 
 	fg.wkDir = DefaultRootDir()
-	fg.baseURL = ""
+	fg.baseImg = ""
 	fg.gwIP = net.ParseIP(DefaultGwIP)
 	fg.hv = true
 	fg.visors = DefaultVCount
@@ -89,15 +93,24 @@ func (fg *FyneGUI) generateBPS() string {
 func (fg *FyneGUI) build() {
 	bpsSlice := fg.bps
 
+	baseURL, err := releaseURL(fg.releases, fg.baseImg)
+	if err != nil {
+		err = fmt.Errorf("failed to find download URL for base image: %v", err)
+		dialog.ShowError(err, fg.w)
+		return
+	}
+
 	// Prepare builder.
 	builder, err := NewBuilder(fg.log, fg.wkDir)
 	if err != nil {
-		dialog.NewInformation("Error", err.Error(), fg.w).Show()
+		dialog.ShowError(err, fg.w)
 		return
 	}
 
 	// Download section.
-	dlDialog := dialog.NewProgress("Downloading Base Archive", fg.baseURL, fg.w)
+	dlTitle := "Downloading Base Image"
+	dlMsg := fg.baseImg + "\n" + baseURL
+	dlDialog := dialog.NewProgress(dlTitle, dlMsg, fg.w)
 	dlDialog.Show()
 	dlDone := make(chan struct{})
 	go func() {
@@ -115,11 +128,11 @@ func (fg *FyneGUI) build() {
 			}
 		}
 	}()
-	err = builder.Download(fg.baseURL)
+	err = builder.Download(baseURL)
 	close(dlDone)
 	dlDialog.Hide()
 	if err != nil {
-		dialog.NewInformation("Error", err.Error(), fg.w).Show()
+		dialog.ShowError(err, fg.w)
 		return
 	}
 
@@ -129,7 +142,7 @@ func (fg *FyneGUI) build() {
 	err = builder.ExtractArchive()
 	extDialog.Hide()
 	if err != nil {
-		dialog.NewInformation("Error", err.Error(), fg.w).Show()
+		dialog.ShowError(err, fg.w)
 		return
 	}
 
@@ -140,7 +153,7 @@ func (fg *FyneGUI) build() {
 		Info("Obtained base images.")
 
 	if len(imgs) == 0 {
-		dialog.NewInformation("Error", "no valid images in archive", fg.w).Show()
+		dialog.ShowError(errors.New("no valid images in archive"), fg.w)
 		return
 	}
 
@@ -150,13 +163,12 @@ func (fg *FyneGUI) build() {
 	err = builder.MakeFinalImages(imgs[0], bpsSlice)
 	finDialog.Hide()
 	if err != nil {
-		dialog.NewInformation("Error", err.Error(), fg.w).Show()
+		dialog.ShowError(err, fg.w)
 		return
 	}
 
 	// Inform user of completion.
 	createREADME(fg.log, filepath.Join(builder.finalDir, "README.txt"))
-
 	cont := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
 		widget.NewLabel("Successfully built images!"),
 		widget.NewLabel("Images are built to: "+builder.finalDir),

@@ -2,5 +2,5 @@
 
 # shellcheck source=./build.conf
 source "$(pwd)/build.conf"
-git tag -f "${VERSION}"
-git push -f origin "${VERSION}"
+git tag "${VERSION}" || exit 1
+git push origin "${VERSION}" || exit 1

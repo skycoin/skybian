@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -36,16 +36,35 @@ func (fg *FyneGUI) Page1() fyne.CanvasObject {
 
 func (fg *FyneGUI) Page2() fyne.CanvasObject {
 	wkDir := newLinkedEntry(&fg.wkDir)
-	baseUrl := newLinkedEntry(&fg.baseURL)
-	gwIP := newEntry(fg.gwIP.String(), func(s string) { fg.gwIP = net.ParseIP(s) })
+
+	baseImgs, latestImg := fg.listBaseImgs()
+	baseImg := widget.NewSelect(baseImgs, func(s string) {
+		fg.baseImg = s
+		fg.log.Debugf("Set: fg.baseImg = %v", s)
+	})
+	baseImg.Selected = fg.baseImg
+
+	gwIP := newEntry(fg.gwIP.String(), func(s string) {
+		fg.gwIP = net.ParseIP(s)
+		fg.log.Debugf("Set: fg.gwIP = %v", s)
+	})
+
 	socksPC := newLinkedEntry(&fg.socksPC)
 	socksPC.SetPlaceHolder("passcode")
-	visors := newEntry(strconv.Itoa(fg.visors), func(s string) { fg.visors, _ = strconv.Atoi(s) })
-	hv := widget.NewCheck("Generate Hypervisor Image.", func(b bool) { fg.hv = b })
+
+	visors := newEntry(strconv.Itoa(fg.visors), func(s string) {
+		fg.visors, _ = strconv.Atoi(s)
+		fg.log.Debugf("Set: fg.visors = %v", s)
+	})
+
+	hv := widget.NewCheck("Generate Hypervisor Image.", func(b bool) {
+		fg.hv = b
+		fg.log.Debugf("Set: fg.hv = %v", b)
+	})
 	hv.SetChecked(fg.hv)
 
-	if fg.baseURL == "" {
-		baseUrl.SetText(fg.latestBaseURL())
+	if baseImg.Selected == "" && len(baseImg.Options) > 0 {
+		baseImg.SetSelected(latestImg)
 	}
 
 	conf := pageConfig{
@@ -53,21 +72,40 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 		Name: "Prepare Boot Parameters",
 		Reset: func() {
 			wkDir.SetText(DefaultRootDir())
-			baseUrl.SetText(fg.latestBaseURL())
+			if baseImgs, latestImg := fg.listBaseImgs(); len(baseImgs) > 0 {
+				baseImg.Options = baseImgs
+				baseImg.SetSelected(latestImg)
+			}
 			gwIP.SetText(DefaultGwIP)
 			socksPC.SetText("")
 			visors.SetText(strconv.Itoa(DefaultVCount))
 			hv.SetChecked(true)
 		},
 		Check: func() error {
-			if _, err := filepath.Abs(fg.wkDir); err != nil {
+			wkDir, err := filepath.Abs(fg.wkDir)
+			if err != nil {
 				return fmt.Errorf("invalid Work Directory: %v", err)
 			}
-			if strings.TrimSpace(fg.baseURL) == "" {
-				return errors.New("invalid Base Image URL: cannot be empty")
+			if _, err := os.Stat(wkDir); err == nil {
+				cTitle := "Work Directory Already Exists"
+				cMsg := fmt.Sprintf("Directory %s already exists.\n", wkDir) +
+					"Delete everything and continue?"
+				dialog.ShowConfirm(cTitle, cMsg, func(b bool) {
+					if !b {
+						fg.w.SetContent(fg.Page2())
+						return
+					}
+					if err := os.RemoveAll(wkDir); err != nil {
+						err = fmt.Errorf("failed to clear work directory: %v", err)
+						dialog.ShowError(err, fg.w)
+						fg.w.SetContent(fg.Page2())
+						return
+					}
+					dialog.ShowInformation("Information", "Work directory cleared.", fg.w)
+				}, fg.w)
 			}
-			if _, err := url.Parse(fg.baseURL); err != nil {
-				return fmt.Errorf("invalid Base Image URL: %v", err)
+			if strings.TrimSpace(fg.baseImg) == "" {
+				return errors.New("invalid Base Image URL: cannot be empty")
 			}
 			if fg.gwIP == nil {
 				return fmt.Errorf("invalid Gateway IP")
@@ -85,7 +123,7 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(fg.w, conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image URL:"), baseUrl,
+		widget.NewLabel("Base Image:"), baseImg,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
 		widget.NewLabel("Number of Visor Images:"), visors, hv)
@@ -128,6 +166,27 @@ func (fg *FyneGUI) latestBaseURL() string {
 		dialog.ShowError(err, fg.w)
 		return ""
 	}
-	fg.baseURL = imgURL
+	fg.baseImg = imgURL
 	return imgURL
+}
+
+func (fg *FyneGUI) listBaseImgs() ([]string, string) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	title := "Please Wait"
+	msg := "Obtaining base image releases from GitHub..."
+	d := dialog.NewProgressInfinite(title, msg, fg.w)
+
+	d.Show()
+	rs, lr, err := ListReleases(ctx, fg.log)
+	d.Hide()
+
+	if err != nil {
+		dialog.ShowError(err, fg.w)
+		return nil, ""
+	}
+
+	fg.releases = rs
+	return releaseStrings(rs), lr.String()
 }
