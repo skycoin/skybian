@@ -25,7 +25,7 @@ func TestPrepare(t *testing.T) {
 		TLSCert:        filepath.Join(dir, "cert.pem"),
 	}
 	pk, sk := cipher.GenerateKeyPair()
-	visorParams := boot.Params{
+	vParams := boot.Params{
 		Mode:             boot.VisorMode,
 		LocalIP:          net.ParseIP(boot.DefaultGatewayIP),
 		GatewayIP:        net.ParseIP(boot.DefaultGatewayIP),
@@ -43,8 +43,23 @@ func TestPrepare(t *testing.T) {
 		HypervisorPKs:    []cipher.PubKey{pk},
 		SkysocksPasscode: "test",
 	}
-	require.NoError(t, Prepare(conf, visorParams))
-	require.Error(t, Prepare(conf, visorParams))
+	require.NoError(t, Prepare(conf, vParams))
+	v1, err := ioutil.ReadFile(conf.VisorConf)
+	require.NoError(t, err)
+
+	vParams.LocalPK, vParams.LocalSK = cipher.GenerateKeyPair()
+	require.NoError(t, Prepare(conf, vParams))
+	v2, err := ioutil.ReadFile(conf.VisorConf)
+	require.NoError(t, err)
+
 	require.NoError(t, Prepare(conf, hvParams))
-	require.Error(t, Prepare(conf, hvParams))
+	v3, err := ioutil.ReadFile(conf.HypervisorConf)
+	require.NoError(t, err)
+
+	hvParams.LocalPK, hvParams.LocalSK = cipher.GenerateKeyPair()
+	require.NoError(t, Prepare(conf, hvParams))
+	v4, err := ioutil.ReadFile(conf.HypervisorConf)
+
+	require.Equal(t, v1, v2)
+	require.Equal(t, v3, v4)
 }
