@@ -48,7 +48,7 @@ func LatestBaseImgURL(ctx context.Context, log logrus.FieldLogger) (string, erro
 	return "", errors.New("latest release of Skybian Base Image cannot not found")
 }
 
-const TimeFormat = "2006-01-02 15:04"
+const TimeFormat = "2006/01/02 15:04"
 
 type Release struct {
 	Tag  string
@@ -58,34 +58,12 @@ type Release struct {
 }
 
 func (r *Release) String() string {
-	return fmt.Sprintf("%s (%s) [%s]",
+	if r == nil {
+		return ""
+	}
+	return fmt.Sprintf("%s (%s) (%s)",
 		r.Tag, r.Type, r.Date.Format(TimeFormat))
 }
-
-//func (r *Release) Set(s string) error {
-//	buf := bytes.NewBufferString(s)
-//	dateRaw, err := buf.ReadString(	']')
-//	if err != nil {
-//		return err
-//	}
-//	if r.Date, err = time.Parse(TimeFormat, strings.Trim(dateRaw, "[]")); err != nil {
-//		return err
-//	}
-//
-//	tagRaw, err := buf.ReadString(' ')
-//	if err != nil {
-//		return err
-//	}
-//	r.Tag = strings.Trim(tagRaw, " ")
-//
-//	typeRaw, err := buf.ReadString(')')
-//	if err != nil {
-//		return err
-//	}
-//	r.Type = strings.Trim(typeRaw, "()")
-//
-//	return nil
-//}
 
 func releaseURL(releases []Release, releaseStr string) (string, error) {
 
