@@ -26,11 +26,6 @@ const (
 	ExtSHA1  = ".img.sha1"
 )
 
-// Default URLs.
-const (
-	DefaultGwIP = "192.168.0.1"
-)
-
 func DefaultRootDir() string {
 	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, "skyimager")

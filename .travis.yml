@@ -10,6 +10,7 @@ before_script:
 - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
 script:
 - make test
+- go install ./cmd/*
 - make build-skybian-img
 - make build-skyimager-gui
 notifications:
@@ -27,6 +28,7 @@ deploy:
   draft: true
   prerelease: true
   skip_cleanup: true
+  overwrite: true
   on:
     all_branches: true
     tags: true

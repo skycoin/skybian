@@ -14,6 +14,8 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/dialog"
 	"fyne.io/fyne/widget"
+
+	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
 func (fg *FyneGUI) Page1() fyne.CanvasObject {
@@ -76,7 +78,7 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 				baseImg.Options = baseImgs
 				baseImg.SetSelected(latestImg)
 			}
-			gwIP.SetText(DefaultGwIP)
+			gwIP.SetText(boot.DefaultGatewayIP)
 			socksPC.SetText("")
 			visors.SetText(strconv.Itoa(DefaultVCount))
 			hv.SetChecked(true)
@@ -130,15 +132,28 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 }
 
 func (fg *FyneGUI) Page3() fyne.CanvasObject {
+	bpsStr, err := fg.generateBPS()
+	if err != nil {
+		dialog.ShowError(err, fg.w)
+		return fg.Page2()
+	}
+
 	bps := widget.NewMultiLineEntry()
-	bps.SetText(fg.generateBPS())
+	bps.SetText(bpsStr)
 	conf := pageConfig{
 		I:         3,
 		Name:      "Finalize Boot Parameters",
 		Prev:      func() { fg.w.SetContent(fg.Page2()) },
 		ResetText: "Regenerate",
-		Reset:     func() { bps.SetText(fg.generateBPS()) },
-		NextText:  "Download and Build",
+		Reset: func() {
+			bpsStr, err := fg.generateBPS()
+			if err != nil {
+				dialog.ShowError(err, fg.w)
+				return
+			}
+			bps.SetText(bpsStr)
+		},
+		NextText: "Download and Build",
 		Next: func() {
 			dialog.ShowConfirm("Confirmation", "Start download and build?", func(b bool) {
 				if b {

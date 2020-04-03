@@ -37,13 +37,6 @@ const (
 	SocksPassEnv     = "SS"
 )
 
-// Defaults.
-const (
-	ipPattern           = "192.168.0.%d"
-	DefaultGatewayIP    = "192.168.0.1"
-	DefaultHypervisorIP = "192.168.0.2"
-)
-
 // Modes.
 const (
 	HypervisorMode = Mode(0x00)
@@ -95,28 +88,36 @@ type Params struct {
 	SkysocksPasscode string         `json:"skysocks_passcode,omitempty"`
 }
 
-func MakeHypervisorParams(sk cipher.SecKey) Params {
+func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
 	pk, _ := sk.PubKey()
+	hvIP, err := NextIP(gwIP)
+	if err != nil {
+		return Params{}, err
+	}
 	return Params{
 		Mode:      HypervisorMode,
-		LocalIP:   net.ParseIP(DefaultHypervisorIP),
-		GatewayIP: net.ParseIP(DefaultGatewayIP),
+		LocalIP:   hvIP,
+		GatewayIP: gwIP,
 		LocalPK:   pk,
 		LocalSK:   sk,
-	}
+	}, nil
 }
 
-func MakeVisorParams(i int, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey, socksPC string) Params {
+func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey, socksPC string) (Params, error) {
 	pk, _ := sk.PubKey()
+	vIP, err := NextIP(prevIP)
+	if err != nil {
+		return Params{}, err
+	}
 	return Params{
 		Mode:             VisorMode,
-		LocalIP:          net.ParseIP(fmt.Sprintf(ipPattern, i+3)),
+		LocalIP:          vIP,
 		GatewayIP:        gwIP,
 		LocalPK:          pk,
 		LocalSK:          sk,
 		HypervisorPKs:    hvPKs,
 		SkysocksPasscode: socksPC,
-	}
+	}, nil
 }
 
 func MakeParams(mode Mode, lIP, gwIP, lSK string, hvPKs ...string) (Params, error) {

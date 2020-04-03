@@ -23,7 +23,6 @@ import (
 
 const (
 	DefaultVCount = 7
-	DefaultHVIP   = "192.168.0.2"
 )
 
 type FyneGUI struct {
@@ -52,7 +51,7 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 
 	fg.wkDir = DefaultRootDir()
 	fg.baseImg = ""
-	fg.gwIP = net.ParseIP(DefaultGwIP)
+	fg.gwIP = net.ParseIP(boot.DefaultGatewayIP)
 	fg.hv = true
 	fg.visors = DefaultVCount
 
@@ -73,21 +72,32 @@ func (fg *FyneGUI) Run() {
 	fg.w.ShowAndRun()
 }
 
-func (fg *FyneGUI) generateBPS() string {
+func (fg *FyneGUI) generateBPS() (string, error) {
+	prevIP := fg.gwIP
 	bpsSlice := make([]boot.Params, 0, fg.visors+1)
-	var hvPKs []cipher.PubKey
+	hvPKs := make([]cipher.PubKey, 0, 1)
 	if fg.hv {
 		hvPK, hvSK := cipher.GenerateKeyPair()
-		bpsSlice = append(bpsSlice, boot.MakeHypervisorParams(hvSK))
+		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK)
+		if err != nil {
+			return "", fmt.Errorf("boot_params[%d]: failed to generate for hypervisor: %v", len(bpsSlice), err)
+		}
+		prevIP = hvBps.LocalIP
+		bpsSlice = append(bpsSlice, hvBps)
 		hvPKs = append(hvPKs, hvPK)
 	}
 	for i := 0; i < fg.visors; i++ {
 		_, vSK := cipher.GenerateKeyPair()
-		bpsSlice = append(bpsSlice, boot.MakeVisorParams(i, fg.gwIP, vSK, hvPKs, fg.socksPC))
+		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC)
+		if err != nil {
+			return "", fmt.Errorf("boot_params[%d]: failed to generate for visor: %v", len(bpsSlice), err)
+		}
+		prevIP = vBps.LocalIP
+		bpsSlice = append(bpsSlice, vBps)
 	}
 	fg.bps = bpsSlice
 	jsonStr, _ := json.MarshalIndent(bpsSlice, "", "    ")
-	return string(jsonStr)
+	return string(jsonStr), nil
 }
 
 func (fg *FyneGUI) build() {
