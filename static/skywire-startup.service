@@ -1,5 +1,5 @@
 [Unit]
-Description=Starts up skywire-visor.
+Description=Skywire startup.
 After=network.target
 
 [Service]
