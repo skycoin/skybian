@@ -1,6 +1,7 @@
 package imager
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -70,6 +71,27 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 
 func (fg *FyneGUI) Run() {
 	fg.w.ShowAndRun()
+}
+
+func (fg *FyneGUI) listBaseImgs() ([]string, string) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	title := "Please Wait"
+	msg := "Obtaining base image releases from GitHub..."
+	d := dialog.NewProgressInfinite(title, msg, fg.w)
+
+	d.Show()
+	rs, lr, err := ListReleases(ctx, fg.log)
+	d.Hide()
+
+	if err != nil {
+		dialog.ShowError(err, fg.w)
+		return nil, ""
+	}
+
+	fg.releases = rs
+	return releaseStrings(rs), lr.String()
 }
 
 func (fg *FyneGUI) generateBPS() (string, error) {

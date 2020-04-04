@@ -10,6 +10,7 @@ require (
 	github.com/SkycoinProject/skywire-mainnet v0.1.2
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
+	github.com/lucor/fyne-cross v1.4.0 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/rakyll/statik v0.1.7
 	github.com/sirupsen/logrus v1.5.0

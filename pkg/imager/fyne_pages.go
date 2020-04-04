@@ -1,7 +1,7 @@
 package imager
 
 import (
-	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/dialog"
@@ -140,6 +139,7 @@ func (fg *FyneGUI) Page3() fyne.CanvasObject {
 
 	bps := widget.NewMultiLineEntry()
 	bps.SetText(bpsStr)
+
 	conf := pageConfig{
 		I:         3,
 		Name:      "Finalize Boot Parameters",
@@ -155,6 +155,12 @@ func (fg *FyneGUI) Page3() fyne.CanvasObject {
 		},
 		NextText: "Download and Build",
 		Next: func() {
+			// Decode bps entry text to ensure changes are recorded.
+			dec := json.NewDecoder(strings.NewReader(bps.Text))
+			if err := dec.Decode(&fg.bps); err != nil {
+				dialog.ShowError(fmt.Errorf("invalid boot paramters: %v", err), fg.w)
+				return
+			}
 			dialog.ShowConfirm("Confirmation", "Start download and build?", func(b bool) {
 				if b {
 					fg.build()
@@ -163,45 +169,4 @@ func (fg *FyneGUI) Page3() fyne.CanvasObject {
 		},
 	}
 	return makePage(fg.w, conf, bps)
-}
-
-func (fg *FyneGUI) latestBaseURL() string {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	title := "Please Wait"
-	msg := "Obtaining latest base image URL from GitHub..."
-	d := dialog.NewProgressInfinite(title, msg, fg.w)
-
-	d.Show()
-	imgURL, err := LatestBaseImgURL(ctx, fg.log)
-	d.Hide()
-
-	if err != nil {
-		dialog.ShowError(err, fg.w)
-		return ""
-	}
-	fg.baseImg = imgURL
-	return imgURL
-}
-
-func (fg *FyneGUI) listBaseImgs() ([]string, string) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	title := "Please Wait"
-	msg := "Obtaining base image releases from GitHub..."
-	d := dialog.NewProgressInfinite(title, msg, fg.w)
-
-	d.Show()
-	rs, lr, err := ListReleases(ctx, fg.log)
-	d.Hide()
-
-	if err != nil {
-		dialog.ShowError(err, fg.w)
-		return nil, ""
-	}
-
-	fg.releases = rs
-	return releaseStrings(rs), lr.String()
 }
