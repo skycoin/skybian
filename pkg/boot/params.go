@@ -22,7 +22,7 @@ const (
 // Errors.
 var (
 	ErrCannotReadParams = errors.New("failed to read params from bootloader")
-	ErrParamsTooLarge   = errors.New("params too large")
+	ErrParamsTooLarge   = errors.New("boot params for image is too large - max size is 216 bytes")
 	ErrInvalidMode      = errors.New("invalid mode")
 )
 
@@ -94,13 +94,15 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
 	if err != nil {
 		return Params{}, err
 	}
-	return Params{
+	params := Params{
 		Mode:      HypervisorMode,
 		LocalIP:   hvIP,
 		GatewayIP: gwIP,
 		LocalPK:   pk,
 		LocalSK:   sk,
-	}, nil
+	}
+	_, err = params.Encode()
+	return params, err
 }
 
 func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey, socksPC string) (Params, error) {
@@ -109,7 +111,7 @@ func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []ciphe
 	if err != nil {
 		return Params{}, err
 	}
-	return Params{
+	params := Params{
 		Mode:             VisorMode,
 		LocalIP:          vIP,
 		GatewayIP:        gwIP,
@@ -117,7 +119,9 @@ func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []ciphe
 		LocalSK:          sk,
 		HypervisorPKs:    hvPKs,
 		SkysocksPasscode: socksPC,
-	}, nil
+	}
+	_, err = params.Encode()
+	return params, err
 }
 
 func MakeParams(mode Mode, lIP, gwIP, lSK string, hvPKs ...string) (Params, error) {

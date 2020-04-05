@@ -61,37 +61,35 @@ func newLinkedEntry(p *string) *widget.Entry {
 	return newEntry(*p, func(s string) { *p = s })
 }
 
+// Display error message (if any) and does not advance to next page.
+func showErr(fg *FyneGUI, err ...error) bool {
+	for _, e := range err {
+		dialog.ShowError(e, fg.w)
+	}
+	return false
+}
+
 type pageConfig struct {
 	I         int
 	Name      string
 	Reset     func()
 	ResetText string
-	Check     func() error
 	Prev      func()
 	Next      func()
 	NextText  string
 }
 
-func makePage(w fyne.Window, conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {
+func makePage(conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {
 	const totalPages = 3
 	makeButton := func(label string, icon fyne.Resource, fn func(), check bool) *widget.Button {
-		b := widget.NewButtonWithIcon(label, icon, nil)
+		b := widget.NewButtonWithIcon(label, icon, fn)
 		if fn == nil {
 			b.Disable()
 			return b
 		}
-		b.OnTapped = func() {
-			if check && conf.Check != nil {
-				if err := conf.Check(); err != nil {
-					dialog.ShowError(err, w)
-					return
-				}
-			}
-			fn()
-		}
 		return b
 	}
-	resetText := "Defaults"
+	resetText := "Reset"
 	if conf.ResetText != "" {
 		resetText = conf.ResetText
 	}

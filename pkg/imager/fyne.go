@@ -39,8 +39,9 @@ type FyneGUI struct {
 	baseImg string
 	gwIP    net.IP
 	socksPC string
-	hv      bool
 	visors  int
+	hvImg   bool
+	hvPKs   []cipher.PubKey
 
 	bps []boot.Params
 }
@@ -50,11 +51,7 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 	fg.log = log
 	fg.assets = assets
 
-	fg.wkDir = DefaultRootDir()
-	fg.baseImg = ""
-	fg.gwIP = net.ParseIP(boot.DefaultGatewayIP)
-	fg.hv = true
-	fg.visors = DefaultVCount
+	fg.resetPage2Values()
 
 	fa := app.New()
 	fa.SetIcon(loadResource(fg.assets, "/icon.png"))
@@ -97,8 +94,8 @@ func (fg *FyneGUI) listBaseImgs() ([]string, string) {
 func (fg *FyneGUI) generateBPS() (string, error) {
 	prevIP := fg.gwIP
 	bpsSlice := make([]boot.Params, 0, fg.visors+1)
-	hvPKs := make([]cipher.PubKey, 0, 1)
-	if fg.hv {
+	hvPKs := fg.hvPKs
+	if fg.hvImg {
 		hvPK, hvSK := cipher.GenerateKeyPair()
 		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK)
 		if err != nil {

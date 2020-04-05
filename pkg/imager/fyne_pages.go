@@ -12,7 +12,10 @@ import (
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/dialog"
+	"fyne.io/fyne/layout"
+	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
+	"github.com/SkycoinProject/dmsg/cipher"
 
 	"github.com/SkycoinProject/skybian/pkg/boot"
 )
@@ -30,7 +33,7 @@ func (fg *FyneGUI) Page1() fyne.CanvasObject {
 		Name: "Introduction",
 		Next: func() { fg.w.SetContent(fg.Page2()) },
 	}
-	return makePage(fg.w, conf, widget.NewVBox(
+	return makePage(conf, widget.NewVBox(
 		widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabelWithStyle(body, fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})))
 }
@@ -43,7 +46,9 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 		fg.baseImg = s
 		fg.log.Debugf("Set: fg.baseImg = %v", s)
 	})
-	baseImg.Selected = fg.baseImg
+	if baseImg.Selected = fg.baseImg; baseImg.Selected == "" && len(baseImg.Options) > 0 {
+		baseImg.SetSelected(latestImg)
+	}
 
 	gwIP := newEntry(fg.gwIP.String(), func(s string) {
 		fg.gwIP = net.ParseIP(s)
@@ -58,85 +63,142 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 		fg.log.Debugf("Set: fg.visors = %v", s)
 	})
 
-	hv := widget.NewCheck("Generate Hypervisor Image.", func(b bool) {
-		fg.hv = b
-		fg.log.Debugf("Set: fg.hv = %v", b)
+	genHvImg := widget.NewCheck("Generate Hypervisor Image.", func(b bool) {
+		fg.hvImg = b
+		fg.log.Debugf("Set: fg.genHvImg = %v", b)
 	})
-	hv.SetChecked(fg.hv)
+	genHvImg.SetChecked(fg.hvImg)
 
-	if baseImg.Selected == "" && len(baseImg.Options) > 0 {
-		baseImg.SetSelected(latestImg)
+	hvPKs := widget.NewVBox()
+	hvPKs.Hide()
+	hvPKsRefresh := func() {
+		hvPKs.Children = nil
+		for _, pk := range fg.hvPKs {
+			hvPKs.Append(widget.NewLabelWithStyle(pk.String(),
+				fyne.TextAlignLeading, fyne.TextStyle{Monospace: true}))
+		}
 	}
+
+	hvPKsAdd := widget.NewButtonWithIcon("", theme.ContentAddIcon(), func() {
+		title := "Trusted Hypervisors"
+		confirm := "Add"
+		dismiss := "Cancel"
+		input := widget.NewEntry()
+		input.SetPlaceHolder("public key")
+		cont := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
+			widget.NewLabel("Add trusted hypervisor public key:"), input)
+		dialog.ShowCustomConfirm(title, confirm, dismiss, cont, func(b bool) {
+			if !b {
+				return
+			}
+			var pk cipher.PubKey
+			if err := pk.Set(input.Text); err != nil {
+				showErr(fg, fmt.Errorf("failed to add public key: %v", err))
+				return
+			}
+			for _, oldPK := range fg.hvPKs {
+				if pk == oldPK {
+					showErr(fg, fmt.Errorf("public key '%s' is already added", pk))
+					return
+				}
+			}
+			fg.hvPKs = append(fg.hvPKs, pk)
+			hvPKsRefresh()
+		}, fg.w)
+	})
+	hvPKsAdd.Hide()
+
+	enableHvPKs := widget.NewCheck("Manually Add Trusted Hypervisors.", func(b bool) {
+		if b {
+			hvPKsRefresh()
+			hvPKs.Show()
+			hvPKsAdd.Show()
+		} else {
+			fg.hvPKs = nil
+			hvPKs.Hide()
+			hvPKsAdd.Hide()
+		}
+	})
+	enableHvPKs.SetChecked(len(fg.hvPKs) > 0)
 
 	conf := pageConfig{
 		I:    2,
 		Name: "Prepare Boot Parameters",
 		Reset: func() {
-			wkDir.SetText(DefaultRootDir())
-			if baseImgs, latestImg := fg.listBaseImgs(); len(baseImgs) > 0 {
-				baseImg.Options = baseImgs
-				baseImg.SetSelected(latestImg)
-			}
-			gwIP.SetText(boot.DefaultGatewayIP)
-			socksPC.SetText("")
-			visors.SetText(strconv.Itoa(DefaultVCount))
-			hv.SetChecked(true)
-		},
-		Check: func() error {
-			wkDir, err := filepath.Abs(fg.wkDir)
-			if err != nil {
-				return fmt.Errorf("invalid Work Directory: %v", err)
-			}
-			if _, err := os.Stat(wkDir); err == nil {
-				cTitle := "Work Directory Already Exists"
-				cMsg := fmt.Sprintf("Directory %s already exists.\n", wkDir) +
-					"Delete everything and continue?"
-				dialog.ShowConfirm(cTitle, cMsg, func(b bool) {
-					if !b {
-						fg.w.SetContent(fg.Page2())
-						return
-					}
-					if err := os.RemoveAll(wkDir); err != nil {
-						err = fmt.Errorf("failed to clear work directory: %v", err)
-						dialog.ShowError(err, fg.w)
-						fg.w.SetContent(fg.Page2())
-						return
-					}
-					dialog.ShowInformation("Information", "Work directory cleared.", fg.w)
-				}, fg.w)
-			}
-			if strings.TrimSpace(fg.baseImg) == "" {
-				return errors.New("invalid Base Image URL: cannot be empty")
-			}
-			if fg.gwIP == nil {
-				return fmt.Errorf("invalid Gateway IP")
-			}
-			if _, err := strconv.Atoi(visors.Text); err != nil {
-				return fmt.Errorf("invalid Number of Visor Images: %v", err)
-			}
-			if fg.visors < 0 {
-				return fmt.Errorf("cannot create %d Visor Images", fg.visors)
-			}
-			return nil
+			fg.resetPage2Values()
+			fg.w.SetContent(fg.Page2())
 		},
 		Prev: func() { fg.w.SetContent(fg.Page1()) },
-		Next: func() { fg.w.SetContent(fg.Page3()) },
+		Next: func() {
+			if !checkPage2Inputs(fg, visors.Text) {
+				return
+			}
+			confirmPage2Continue(fg, fg.wkDir, func() {
+				bpsStr, err := fg.generateBPS()
+				if err != nil {
+					dialog.ShowError(err, fg.w)
+					return
+				}
+				fg.w.SetContent(fg.Page3(bpsStr))
+			})
+		},
 	}
-	return makePage(fg.w, conf,
+	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
 		widget.NewLabel("Base Image:"), baseImg,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
-		widget.NewLabel("Number of Visor Images:"), visors, hv)
+		widget.NewLabel("Number of Visor Images:"), visors,
+		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
 }
 
-func (fg *FyneGUI) Page3() fyne.CanvasObject {
-	bpsStr, err := fg.generateBPS()
-	if err != nil {
-		dialog.ShowError(err, fg.w)
-		return fg.Page2()
-	}
+func (fg *FyneGUI) resetPage2Values() {
+	fg.wkDir = DefaultRootDir()
+	fg.baseImg = ""
+	fg.gwIP = net.ParseIP(boot.DefaultGatewayIP)
+	fg.socksPC = ""
+	fg.visors = DefaultVCount
+	fg.hvImg = true
+	fg.hvPKs = nil
+}
 
+func checkPage2Inputs(fg *FyneGUI, visorsText string) bool {
+	if _, err := filepath.Abs(fg.wkDir); err != nil {
+		return showErr(fg, fmt.Errorf("invalid Work Directory: %v", err))
+	}
+	if strings.TrimSpace(fg.baseImg) == "" {
+		return showErr(fg, errors.New("invalid Base Image URL: cannot be empty"))
+	}
+	if fg.gwIP == nil {
+		return showErr(fg, fmt.Errorf("invalid Gateway IP"))
+	}
+	if _, err := strconv.Atoi(visorsText); err != nil {
+		return showErr(fg, fmt.Errorf("invalid Number of Visor Images: %v", err))
+	}
+	if fg.visors < 0 {
+		return showErr(fg, fmt.Errorf("cannot create %d Visor Images", fg.visors))
+	}
+	return true
+}
+
+func confirmPage2Continue(fg *FyneGUI, wkDir string, next func()) {
+	cTitle := "Work Directory Already Exists"
+	cMsg := fmt.Sprintf("Directory %s already exists.\nDelete everything and continue?", wkDir)
+	dialog.ShowConfirm(cTitle, cMsg, func(b bool) {
+		if !b {
+			showErr(fg)
+			return
+		}
+		if err := os.RemoveAll(wkDir); err != nil {
+			showErr(fg, fmt.Errorf("failed to clear work directory: %v", err))
+			return
+		}
+		dialog.ShowInformation("Information", "Work directory cleared.", fg.w)
+		next()
+	}, fg.w)
+}
+
+func (fg *FyneGUI) Page3(bpsStr string) fyne.CanvasObject {
 	bps := widget.NewMultiLineEntry()
 	bps.SetText(bpsStr)
 
@@ -168,5 +230,5 @@ func (fg *FyneGUI) Page3() fyne.CanvasObject {
 			}, fg.w)
 		},
 	}
-	return makePage(fg.w, conf, bps)
+	return makePage(conf, bps)
 }
