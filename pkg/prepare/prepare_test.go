@@ -59,6 +59,7 @@ func TestPrepare(t *testing.T) {
 	hvParams.LocalPK, hvParams.LocalSK = cipher.GenerateKeyPair()
 	require.NoError(t, Prepare(conf, hvParams))
 	v4, err := ioutil.ReadFile(conf.HypervisorConf)
+	require.NoError(t, err)
 
 	require.Equal(t, v1, v2)
 	require.Equal(t, v3, v4)

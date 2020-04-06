@@ -1,4 +1,4 @@
-package main
+package main //nolint:typecheck
 
 import (
 	"context"
@@ -41,7 +41,7 @@ func main() {
 		log.WithError(err).Fatal("Failed to read boot params from STDIN.")
 	}
 
-	if err := imager.Build(log, root, dlURL, bpsSlice); err != nil {
+	if err := imager.CLIBuild(log, root, dlURL, bpsSlice); err != nil {
 		log.WithError(err).Fatal("Build failed.")
 	}
 

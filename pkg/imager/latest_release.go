@@ -21,6 +21,7 @@ func expectedBaseImgAssetName(tag string) string {
 	return fmt.Sprintf("Skybian-%s%s", tag, ExtTarXz)
 }
 
+// LatestBaseImgURL returns the latest stable base image download URL.
 func LatestBaseImgURL(ctx context.Context, log logrus.FieldLogger) (string, error) {
 	gh := github.NewClient(nil)
 	release, _, err := gh.Repositories.GetLatestRelease(ctx, ghOwner, ghRepo)
@@ -48,8 +49,10 @@ func LatestBaseImgURL(ctx context.Context, log logrus.FieldLogger) (string, erro
 	return "", errors.New("latest release of Skybian Base Image cannot not found")
 }
 
+// TimeFormat is our default time format.
 const TimeFormat = "2006/01/02 15:04"
 
+// Release represents a base image release obtained from GitHub.
 type Release struct {
 	Tag  string
 	Type string // stable, prerelease
@@ -57,6 +60,7 @@ type Release struct {
 	URL  string
 }
 
+// String implements io.Stringer
 func (r *Release) String() string {
 	if r == nil {
 		return ""
@@ -91,6 +95,8 @@ func releaseStrings(releases []Release) (rs []string) {
 	return rs
 }
 
+// ListReleases obtains a list of base image releases.
+// The output 'latest' is non-nil when a latest release is found.
 func ListReleases(ctx context.Context, log logrus.FieldLogger) (rs []Release, latest *Release, err error) {
 	gh := github.NewClient(nil)
 	ghRs, _, err := gh.Repositories.ListReleases(ctx, ghOwner, ghRepo, nil)

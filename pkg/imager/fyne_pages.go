@@ -20,7 +20,8 @@ import (
 	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
-func (fg *FyneGUI) Page1() fyne.CanvasObject {
+// Page1 returns the canvas that draws page 1 of the Fyne interface.
+func (fg *FyneUI) Page1() fyne.CanvasObject {
 	title := "Welcome to Skyimager!"
 	body := "This tool will:\n\n" +
 		"1. Download a base image of Skybian.\n" +
@@ -38,7 +39,8 @@ func (fg *FyneGUI) Page1() fyne.CanvasObject {
 		widget.NewLabelWithStyle(body, fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})))
 }
 
-func (fg *FyneGUI) Page2() fyne.CanvasObject {
+// Page2 returns the canvas that draws page 2 of the Fyne interface.
+func (fg *FyneUI) Page2() fyne.CanvasObject {
 	wkDir := newLinkedEntry(&fg.wkDir)
 
 	baseImgs, latestImg := fg.listBaseImgs()
@@ -152,17 +154,17 @@ func (fg *FyneGUI) Page2() fyne.CanvasObject {
 		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
 }
 
-func (fg *FyneGUI) resetPage2Values() {
+func (fg *FyneUI) resetPage2Values() {
 	fg.wkDir = DefaultRootDir()
 	fg.baseImg = ""
 	fg.gwIP = net.ParseIP(boot.DefaultGatewayIP)
 	fg.socksPC = ""
-	fg.visors = DefaultVCount
+	fg.visors = DefaultVisors
 	fg.hvImg = true
 	fg.hvPKs = nil
 }
 
-func checkPage2Inputs(fg *FyneGUI, visorsText string) bool {
+func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
 	if _, err := filepath.Abs(fg.wkDir); err != nil {
 		return showErr(fg, fmt.Errorf("invalid Work Directory: %v", err))
 	}
@@ -181,7 +183,7 @@ func checkPage2Inputs(fg *FyneGUI, visorsText string) bool {
 	return true
 }
 
-func confirmPage2Continue(fg *FyneGUI, wkDir string, next func()) {
+func confirmPage2Continue(fg *FyneUI, wkDir string, next func()) {
 	cTitle := "Work Directory Already Exists"
 	cMsg := fmt.Sprintf("Directory %s already exists.\nDelete everything and continue?", wkDir)
 	dialog.ShowConfirm(cTitle, cMsg, func(b bool) {
@@ -198,7 +200,8 @@ func confirmPage2Continue(fg *FyneGUI, wkDir string, next func()) {
 	}, fg.w)
 }
 
-func (fg *FyneGUI) Page3(bpsStr string) fyne.CanvasObject {
+// Page3 returns a canvas that draws page 3 of the Fyne interface.
+func (fg *FyneUI) Page3(bpsStr string) fyne.CanvasObject {
 	bps := widget.NewMultiLineEntry()
 	bps.SetText(bpsStr)
 

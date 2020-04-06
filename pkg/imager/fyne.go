@@ -22,32 +22,32 @@ import (
 	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
-const (
-	DefaultVCount = 7
-)
+// DefaultVisors is the default number of visor boot parameters to generate.
+const DefaultVisors = 7
 
-type FyneGUI struct {
+// FyneUI is a UI to handle the image creation process (using Fyne).
+type FyneUI struct {
 	log    logrus.FieldLogger
 	assets http.FileSystem
 
+	// Fyne parts.
 	app fyne.App
 	w   fyne.Window
 
 	releases []Release
-
-	wkDir   string
-	baseImg string
-	gwIP    net.IP
-	socksPC string
-	visors  int
-	hvImg   bool
-	hvPKs   []cipher.PubKey
-
-	bps []boot.Params
+	wkDir    string
+	baseImg  string
+	gwIP     net.IP
+	socksPC  string
+	visors   int
+	hvImg    bool
+	hvPKs    []cipher.PubKey
+	bps      []boot.Params
 }
 
-func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
-	fg := new(FyneGUI)
+// NewFyneUI creates a new Fyne UI.
+func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
+	fg := new(FyneUI)
 	fg.log = log
 	fg.assets = assets
 
@@ -66,11 +66,12 @@ func NewFyneGUI(log logrus.FieldLogger, assets http.FileSystem) *FyneGUI {
 	return fg
 }
 
-func (fg *FyneGUI) Run() {
+// Run shows and runs the Fyne interface.
+func (fg *FyneUI) Run() {
 	fg.w.ShowAndRun()
 }
 
-func (fg *FyneGUI) listBaseImgs() ([]string, string) {
+func (fg *FyneUI) listBaseImgs() ([]string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -91,7 +92,7 @@ func (fg *FyneGUI) listBaseImgs() ([]string, string) {
 	return releaseStrings(rs), lr.String()
 }
 
-func (fg *FyneGUI) generateBPS() (string, error) {
+func (fg *FyneUI) generateBPS() (string, error) {
 	prevIP := fg.gwIP
 	bpsSlice := make([]boot.Params, 0, fg.visors+1)
 	hvPKs := fg.hvPKs
@@ -119,7 +120,7 @@ func (fg *FyneGUI) generateBPS() (string, error) {
 	return string(jsonStr), nil
 }
 
-func (fg *FyneGUI) build() {
+func (fg *FyneUI) build() {
 	bpsSlice := fg.bps
 
 	baseURL, err := releaseURL(fg.releases, fg.baseImg)

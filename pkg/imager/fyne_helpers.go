@@ -62,7 +62,7 @@ func newLinkedEntry(p *string) *widget.Entry {
 }
 
 // Display error message (if any) and does not advance to next page.
-func showErr(fg *FyneGUI, err ...error) bool {
+func showErr(fg *FyneUI, err ...error) bool {
 	for _, e := range err {
 		dialog.ShowError(e, fg.w)
 	}

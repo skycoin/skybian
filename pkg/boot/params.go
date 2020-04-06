@@ -43,8 +43,11 @@ const (
 	VisorMode      = Mode(0x01)
 )
 
+// Mode is the operating mode of the node.
+// Currently, this can either be HYPERVISOR or VISOR.
 type Mode byte
 
+// String implements io.Stringer
 func (m Mode) String() string {
 	text, err := m.MarshalText()
 	if err != nil {
@@ -53,6 +56,7 @@ func (m Mode) String() string {
 	return string(text)
 }
 
+// MarshalText implements encoding.TextMarshaller.
 func (m *Mode) MarshalText() (text []byte, err error) {
 	switch *m {
 	case HypervisorMode:
@@ -64,6 +68,7 @@ func (m *Mode) MarshalText() (text []byte, err error) {
 	}
 }
 
+// UnmarshalText implements encoding.TextUnmarshaler
 func (m *Mode) UnmarshalText(text []byte) (err error) {
 	switch string(text) {
 	case "HYPERVISOR":
@@ -76,6 +81,7 @@ func (m *Mode) UnmarshalText(text []byte) (err error) {
 	return
 }
 
+// Params are the boot parameters for a given node.
 type Params struct {
 	Mode      Mode          `json:"mode"`
 	LocalIP   net.IP        `json:"local_ip"`
@@ -88,8 +94,12 @@ type Params struct {
 	SkysocksPasscode string         `json:"skysocks_passcode,omitempty"`
 }
 
+// MakeHypervisorParams is a convenience function for creating boot parameters for a hypervisor.
 func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
-	pk, _ := sk.PubKey()
+	pk, err := sk.PubKey()
+	if err != nil {
+		return Params{}, err
+	}
 	hvIP, err := NextIP(gwIP)
 	if err != nil {
 		return Params{}, err
@@ -105,8 +115,12 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
 	return params, err
 }
 
+// MakeVisorParams is a convenience function for creating boot parameters for a visor.
 func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey, socksPC string) (Params, error) {
-	pk, _ := sk.PubKey()
+	pk, err := sk.PubKey()
+	if err != nil {
+		return Params{}, err
+	}
 	vIP, err := NextIP(prevIP)
 	if err != nil {
 		return Params{}, err
@@ -124,6 +138,7 @@ func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []ciphe
 	return params, err
 }
 
+// MakeParams is a convenience function for creating a slice of boot parameters.
 func MakeParams(mode Mode, lIP, gwIP, lSK string, hvPKs ...string) (Params, error) {
 	var bp Params
 	switch mode {
@@ -154,6 +169,9 @@ func MakeParams(mode Mode, lIP, gwIP, lSK string, hvPKs ...string) (Params, erro
 	return bp, nil
 }
 
+// PrintEnvs generates a set of environment variables from the boot parameters.
+// Each environment variable is wrote on a different line with format:
+// <env>=<value>
 func (bp Params) PrintEnvs(w io.Writer) error {
 	printEnv := func(key, val string) error {
 		_, err := fmt.Fprintf(w, "%s=%s\n", key, val)
@@ -202,15 +220,7 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 	return nil
 }
 
-func (bp Params) genKeyPair() (pk cipher.PubKey, sk cipher.SecKey, err error) {
-	if sk = bp.LocalSK; sk.Null() {
-		pk, sk = cipher.GenerateKeyPair()
-	} else {
-		pk, err = sk.PubKey()
-	}
-	return
-}
-
+// Encode encodes the boot parameters in a concise format to be wrote to the MBR.
 func (bp Params) Encode() ([]byte, error) {
 	keys := bp.LocalSK[:]
 	for _, hvPK := range bp.HypervisorPKs {
@@ -226,6 +236,7 @@ func (bp Params) Encode() ([]byte, error) {
 	return out, nil
 }
 
+// Decode decodes the boot parameters from the given raw bytes.
 func (bp *Params) Decode(raw []byte) error {
 	split := bytes.SplitN(raw, []byte{sep}, 5)
 	if len(split) != 5 {
@@ -247,6 +258,8 @@ func (bp *Params) Decode(raw []byte) error {
 	return nil
 }
 
+// WriteParams writes boot parameters to a given filename at the expected MBR
+// position.
 func WriteParams(filename string, params Params) (err error) {
 	var rawParams []byte
 	if rawParams, err = params.Encode(); err != nil {
@@ -264,9 +277,11 @@ func WriteParams(filename string, params Params) (err error) {
 	return WriteRawToFile(f, rawParams)
 }
 
+// ReadParams reads boot parameters from a given file at the expected MBR
+// position.
 func ReadParams(filename string) (params Params, err error) {
 	var f *os.File
-	if f, err = os.Open(filename); err != nil {
+	if f, err = os.Open(filename); err != nil { //nolint:gosec
 		return params, err
 	}
 	defer func() {
@@ -282,11 +297,13 @@ func ReadParams(filename string) (params Params, err error) {
 	return params, err
 }
 
+// WriteRawToFile writes raw bytes to a file at the expected MBR offset.
 func WriteRawToFile(f *os.File, raw []byte) (err error) {
 	_, err = f.WriteAt(raw, offset)
 	return err
 }
 
+// ReadRawFromFile reads raw bytes from a file at the expected MBR offset.
 func ReadRawFromFile(f *os.File) (raw []byte, err error) {
 	raw = make([]byte, size)
 	if _, err = f.ReadAt(raw, offset); err != nil {

@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/SkycoinProject/dmsg/cipher"
 	"github.com/sirupsen/logrus"
 
 	"github.com/SkycoinProject/skybian/pkg/boot"
@@ -20,20 +19,8 @@ Use a tool such as balenaEtcher: https://www.balena.io/etcher/
 Enjoy!
 `
 
-func GenerateBootParams(n int, gw string, hvs []string) ([]boot.Params, error) {
-	bpsSlice := make([]boot.Params, 0, n)
-	for i := 0; i < n; i++ {
-		_, sk := cipher.GenerateKeyPair()
-		bps, err := boot.MakeParams(boot.VisorMode, "", gw, sk.String(), hvs...)
-		if err != nil {
-			return nil, err
-		}
-		bpsSlice = append(bpsSlice, bps)
-	}
-	return bpsSlice, nil
-}
-
-func Build(log logrus.FieldLogger, root, dlURL string, bpsSlice []boot.Params) error {
+// CLIBuild is used by the CLI to download and build images.
+func CLIBuild(log logrus.FieldLogger, root, dlURL string, bpsSlice []boot.Params) error {
 	log.Info("Initializing builder...")
 
 	builder, err := NewBuilder(log, root)

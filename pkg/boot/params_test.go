@@ -49,8 +49,9 @@ var mockMBR = []byte{
 }
 
 // genMockMBR generates the 'mockMBR'.
+//nolint:unused,deadcode
 func genMockMBR(filename string) {
-	inF, err := os.Open(filename)
+	inF, err := os.Open(filename) //nolint:gosec
 	if err != nil {
 		panic(err)
 	}
@@ -100,8 +101,8 @@ func TestBootParams(t *testing.T) {
 	require.EqualError(t, err, ErrCannotReadParams.Error())
 
 	pk, sk := cipher.GenerateKeyPair()
-	fmt.Println("pk =", pk) // pk = 027c823e9e183f3a89c5c200705f2017c0df253a66bdfae5aa0755d191713b7520
-	fmt.Println("sk =", sk) // sk = 34992ada3a6daa4fbb5ad8b5b958d993ad4e5ed0f51b5ba822c8370212030826
+	fmt.Println("pk =", pk)
+	fmt.Println("sk =", sk)
 
 	params := Params{
 		Mode:             VisorMode,

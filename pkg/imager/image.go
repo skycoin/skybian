@@ -13,6 +13,7 @@ import (
 	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
+// BaseImage represents a base image file extracted from the downloaded archive.
 type BaseImage struct {
 	File         *os.File
 	MD5          hash.Hash
@@ -21,6 +22,7 @@ type BaseImage struct {
 	ExpectedSHA1 [sha1.Size]byte
 }
 
+// Init initializes BaseImage from a given filename.
 func (bi *BaseImage) Init(filename string) error {
 	if bi.File == nil {
 		osF, err := os.Create(filename)
@@ -34,10 +36,12 @@ func (bi *BaseImage) Init(filename string) error {
 	return nil
 }
 
+// Writer returns an io.Writer implementation which writes to BaseImage.
 func (bi *BaseImage) Writer() io.Writer {
 	return io.MultiWriter(bi.File, bi.MD5, bi.SHA1)
 }
 
+// Verify verifies the validity of the BaseImage.
 func (bi *BaseImage) Verify() error {
 	if !bytes.Equal(bi.ExpectedMD5[:], bi.MD5.Sum(nil)) {
 		return errors.New("MD5 hash does not match expected")
@@ -48,11 +52,13 @@ func (bi *BaseImage) Verify() error {
 	return nil
 }
 
+// FinalImage represents a final image.
 type FinalImage struct {
 	f   *os.File
 	bps []byte
 }
 
+// Finalize writes the boot parameters to the final image.
 func (fi FinalImage) Finalize() error {
 	if err := boot.WriteRawToFile(fi.f, fi.bps); err != nil {
 		return err

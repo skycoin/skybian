@@ -13,6 +13,7 @@ import (
 	"time"
 )
 
+// GenCert generates key and certificate files for TLS.
 func GenCert(certName, keyName string) error {
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {

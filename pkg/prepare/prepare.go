@@ -15,6 +15,7 @@ import (
 	"github.com/SkycoinProject/skybian/pkg/boot"
 )
 
+// Config configures how hypervisor and visor images are to be generated.
 type Config struct {
 	VisorConf      string
 	HypervisorConf string
@@ -22,6 +23,8 @@ type Config struct {
 	TLSKey         string
 }
 
+// Prepare prepares either a hypervisor and visor config file (based on provided
+// conf and boot parameters).
 func Prepare(conf Config, bp boot.Params) error {
 
 	// generate config struct
@@ -35,11 +38,10 @@ func Prepare(conf Config, bp boot.Params) error {
 			return nil
 		}
 		// Create file.
-		f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0744)
+		f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
 			return err
 		}
-		defer func() { _ = f.Close() }()
 		// Generate and write config to file.
 		conf, err := genConfig(conf, bp)
 		if err != nil {
@@ -100,7 +102,9 @@ func generateVisorConfig(conf Config, bp boot.Params) (interface{}, error) {
 		PubKey: pk,
 		SecKey: sk,
 	}
-	out.STCP, _ = visor.DefaultSTCPConfig()
+	if out.STCP, err = visor.DefaultSTCPConfig(); err != nil {
+		return nil, err
+	}
 	out.Dmsg = visor.DefaultDmsgConfig()
 	out.DmsgPty = visor.DefaultDmsgPtyConfig()
 	out.DmsgPty.AuthFile = "/var/skywire-visor/dsmgpty/whitelist.json"

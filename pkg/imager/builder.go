@@ -1,4 +1,4 @@
-package imager
+package imager //nolint:typecheck
 
 import (
 	"encoding/hex"
@@ -26,11 +26,13 @@ const (
 	ExtSHA1  = ".img.sha1"
 )
 
+// DefaultRootDir returns the default root (or work) directory.
 func DefaultRootDir() string {
 	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, "skyimager")
 }
 
+// Builder is responsible for actually downloading and building the final images.
 type Builder struct {
 	log logrus.FieldLogger
 	mx  sync.Mutex
@@ -47,6 +49,7 @@ type Builder struct {
 	bImgs map[string]BaseImage
 }
 
+// NewBuilder creates a new builder.
 func NewBuilder(log logrus.FieldLogger, root string) (*Builder, error) {
 	var (
 		baseDir  = filepath.Join(root, "base")
@@ -66,18 +69,23 @@ func NewBuilder(log logrus.FieldLogger, root string) (*Builder, error) {
 	}, nil
 }
 
+// DownloadPath returns the path to the download file.
 func (b *Builder) DownloadPath() string {
 	return filepath.Join(b.baseDir, "download"+ExtTarXz)
 }
 
+// DownloadTotal is a thread-safe function that returns the total download size.
 func (b *Builder) DownloadTotal() int64 {
 	return atomic.LoadInt64(&b.dlTotal)
 }
 
+// DownloadCurrent is a thread-safe function that returns the current download
+// size.
 func (b *Builder) DownloadCurrent() int64 {
 	return atomic.LoadInt64(&b.dlCurrent)
 }
 
+// Download starts downloading from the given URL.
 func (b *Builder) Download(url string) error {
 	b.mx.Lock()
 	defer b.mx.Unlock()
@@ -85,6 +93,7 @@ func (b *Builder) Download(url string) error {
 	return Download(b.log, url, b.DownloadPath(), &b.dlTotal, &b.dlCurrent)
 }
 
+// ExtractArchive extracts the downloaded archive.
 func (b *Builder) ExtractArchive() (err error) {
 	b.mx.Lock()
 	defer b.mx.Unlock()
@@ -192,6 +201,7 @@ func verifyOrDelete(log logrus.FieldLogger, bImgs map[string]BaseImage) {
 	}
 }
 
+// MakeFinalImages builds the final images given a slice of boot parameters.
 func (b *Builder) MakeFinalImages(imgName string, bpsSlice []boot.Params) error {
 	b.mx.Lock()
 	defer b.mx.Unlock()
@@ -233,6 +243,7 @@ func (b *Builder) MakeFinalImages(imgName string, bpsSlice []boot.Params) error 
 	return nil
 }
 
+// Images returns images (extracted from the downloaded archive).
 func (b *Builder) Images() []string {
 	b.mx.Lock()
 	defer b.mx.Unlock()
