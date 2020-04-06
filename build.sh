@@ -17,10 +17,10 @@ source "$(pwd)/build.conf"
 NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go"
 
 # Output directory.
-FINAL_IMG_DIR=${ROOT}/output/final
 PARTS_DIR=${ROOT}/output/parts
-FS_MNT_POINT=${ROOT}/output/mnt
 IMAGE_DIR=${ROOT}/output/image
+FS_MNT_POINT=${ROOT}/output/mnt
+FINAL_IMG_DIR=${ROOT}/output/final
 
 # Base image location: we will work with partitions.
 BASE_IMG=${IMAGE_DIR}/base_image

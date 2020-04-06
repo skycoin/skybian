@@ -8,9 +8,33 @@ Currently, only the [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/) [S
 
 This repository has two main components. The first is a script for building a base Skybian image. The second is a tool named `skyimager`, that downloads a base Skybian image, and generates a number of final Skybian images (based on the provided options by the user).
 
+## Dependencies
+
+At the time of writing, only building on Linux is supported.
+
+Golang 1.13+ is requred.
+- [Installation/Setup for Golang 1.14](https://github.com/SkycoinProject/skycoin/blob/develop/INSTALLATION.md).
+
+**Additional dependencies for building Skybian base image:**
+
+```
+rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go
+```
+
+For Debian-based linux distributions, you can install these via:
+```bash
+$ sudo apt update && sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+```
+
+On Arch-based distributions, to satisfy the `qemu-aarch64-static` dependency, one can install the `qemu-arm-static` AUR package.
+
+**Additional dependencies for building `skyimager-gui`:**
+
+The GUI uses the [Fyne](https://github.com/fyne-io) library. The prerequisites for Fyne can be found here: https://fyne.io/develop/index
+
 ## Configure and build
 
-Both the script to build a Skybian base image, as well as the script to build `skyimager-gui` are configured via [`build.conf`](./build.conf).
+Both the script to build the Skybian base image, as well as the script to build `skyimager-gui` are configured via [`build.conf`](./build.conf).
 
 To build the Skybian base image, run:
 ```bash
@@ -22,11 +46,19 @@ To build `skyimager-gui`, run:
 $ make build-skyimager-gui
 ```
 
-## Developers
+## Developer Information
 
-Please check out the [doc](./doc) folder for resources that may help you out.
+### Skybian Image Build Process
 
-## FAQ
+The [`build.sh`](./build.sh) script orchestrates the Skybian image build process.
+
+It's supplemented by files in the `static` folder where auxiliary scripts and systemd service files reside.
+
+Running the script will create a folder named `output` containing:
+* `parts` - Where downloaded or compiled components such as the Armbian, Skywire and `skyconf` are stored.
+* `image` - Where the temporary image is stored during the build process.
+* `mnt` - Used as a mount point for the image. Scripts will be copied and executed for the image being built.
+* `final` - Where the final image is stored.
 
 ### What are Boot Parameters?
 
