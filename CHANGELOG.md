@@ -18,7 +18,7 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
-## [Unreleased]
+## [0.2.0] - 2020-04-06
 
 - Updated Skywire to `v0.2.0`.
 - Various changes and simplifications to files within [`static`](static), as well as to [`build.conf`](build.conf) and [`build.sh`](build.sh), in order to accommodate integration of Skywire `v0.2.0`.
