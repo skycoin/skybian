@@ -60,6 +60,15 @@ Running the script will create a folder named `output` containing:
 * `mnt` - Used as a mount point for the image. Scripts will be copied and executed for the image being built.
 * `final` - Where the final image is stored.
 
+### Preparing a Release
+
+1. Make sure your remote is set to a branch on origin.
+2. Change `VERSION` variable within [`build.conf`](./build.conf).
+3. Run `make tag`. Travis will prepare a release draft at https://github.com/SkycoinProject/skybian/releases
+4. Edit the draft and publish.
+
+## FAQ
+
 ### What are Boot Parameters?
 
 Final Skybian images have boot parameters written to the [Master Boot Record](https://en.wikipedia.org/wiki/Master_boot_record) section of the image. The encoded boot parameters have a maximum size of 216 bytes, and is located at offset `+0E0` (The bootstrap code area part 2).
