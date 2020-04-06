@@ -63,9 +63,11 @@ Running the script will create a folder named `output` containing:
 ### Preparing a Release
 
 1. Make sure your remote is set to a branch on origin.
-2. Change `VERSION` variable within [`build.conf`](./build.conf).
-3. Run `make tag`. Travis will prepare a release draft at https://github.com/SkycoinProject/skybian/releases
-4. Edit the draft and publish.
+2. Update [`CHANGELOG`](CHANGELOG.md) as required.
+3. Change `VERSION` variable within [`build.conf`](build.conf).
+4. Do `git add . && git commit -m "<your-commit-msg>"`.
+5. Run `make tag`. Travis will prepare a release draft at https://github.com/SkycoinProject/skybian/releases
+6. Edit the draft and publish.
 
 ## FAQ
 
