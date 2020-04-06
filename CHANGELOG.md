@@ -20,10 +20,16 @@ Dates must be YEAR-MONTH-DAY
 
 ## [0.2.0] - 2020-04-06
 
-- Updated Skywire to `v0.2.0`.
-- Various changes and simplifications to files within [`static`](static), as well as to [`build.conf`](build.conf) and [`build.sh`](build.sh), in order to accommodate integration of Skywire `v0.2.0`.
+### Added
+
 - Introduced [`skyconf`](cmd/skyconf) to help orchestrate initial boot of Skybian.
 - Introduced [`skyimager`](cmd/skyimager-gui) as a replacement for [`skyflash`](https://github.com/SkycoinProject/skyflash) and added [`build-skyimager.sh`](build-skyimager.sh) to orchestrate cross compiling of `skyimager`.
+
+### Changed
+
+- Updated Skywire to `v0.2.0`.
+- Various changes and simplifications to files within [`static`](static), as well as to [`build.conf`](build.conf) and [`build.sh`](build.sh), in order to accommodate integration of Skywire `v0.2.0`.
+
 
 ## [0.0.5] - 2019-11-04
 
