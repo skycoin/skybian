@@ -18,12 +18,19 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
+## [Unreleased]
+
+- Updated Skywire to `v0.2.0`.
+- Various changes and simplifications to files within [`static`](static), as well as to [`build.conf`](build.conf) and [`build.sh`](build.sh), in order to accommodate integration of Skywire `v0.2.0`.
+- Introduced [`skyconf`](cmd/skyconf) to help orchestrate initial boot of Skybian.
+- Introduced [`skyimager`](cmd/skyimager-gui) as a replacement for [`skyflash`](https://github.com/SkycoinProject/skyflash) and added [`build-skyimager.sh`](build-skyimager.sh) to orchestrate cross compiling of `skyimager`.
+
 ## [0.0.5] - 2019-11-04
 
 ### Added
 
-- added new managerUI code
-- updated the discovery address
+- Added new managerUI code.
+- Updated the discovery address.
 
 ## [0.0.4] - 2019-04-18
 
