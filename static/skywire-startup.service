@@ -1,5 +1,5 @@
 [Unit]
-Description=Skywire startup.
+Description=Skywire Startup
 After=network.target
 
 [Service]
