@@ -41,13 +41,8 @@ test: ## Run tests
 	-go clean -testcache &>/dev/null
 	${OPTS} go test ${TEST_OPTS} ./pkg/...
 
-integration-all: integration-skyconf ## runs all integration tests.
-
-integration-skyconf: build-skyconf ## test skyconf
-	source ./integration/env.sh && test_skyconf
-
-integration-teardown: ## teardown integration env
-	source ./integration/env.sh && teardown_chroot
+integration: build-skyconf ## runs integration tests.
+	./integration/run.sh
 
 build-skyconf: ## builds skyconf.
 	${OPTS} go install ./cmd/skyconf

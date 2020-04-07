@@ -48,3 +48,13 @@ test_skyconf()
   go run "$ROOT/integration/cmd/mock_mbr.go" -m=0 -of="$mbr_dev" || return 1
   sudo chroot "$CHROOT_DIR" /usr/bin/skyconf || return 1
 }
+
+# Magic starts here.
+
+if ! test_skyconf; then
+  teardown_chroot
+  exit 1
+fi
+
+teardown_chroot
+exit 0
