@@ -45,17 +45,23 @@ test_skyconf()
   mbr_dev="$CHROOT_DIR/dev/mmcblk0"
   touch "$mbr_dev" || return 1
 
+  cd "$CHROOT_DIR" || return 1
+
   ## Test visor setup.
   echo "Testing visor config generation..."
   go run "$ROOT/integration/cmd/mock_mbr.go" -m=1 -of="$mbr_dev" || return 1
-  sudo chroot "$CHROOT_DIR" /usr/bin/skyconf || return 1
-  cat /etc/skywire-visor.json || return 1
+  eval "$(sudo chroot "$CHROOT_DIR" /usr/bin/skyconf)"
+  sudo cat "$CHROOT_DIR/$LOGFILE" || return 1
+  cat "$CHROOT_DIR/etc/skywire-visor.json" || return 1
 
   ## Test hypervisor setup.
   echo "Testing hypervisor config generation..."
   go run "$ROOT/integration/cmd/mock_mbr.go" -m=0 -of="$mbr_dev" || return 1
-  sudo chroot "$CHROOT_DIR" /usr/bin/skyconf || return 1
-  cat /etc/skywire-hypervisor.json || return 1
+  eval "$(sudo chroot "$CHROOT_DIR" /usr/bin/skyconf)"
+  sudo cat "$CHROOT_DIR/$LOGFILE" || return 1
+  cat "$CHROOT_DIR/etc/skywire-hypervisor.json" || return 1
+  cat "$CHROOT_DIR/etc/skywire-hypervisor/key.pem" || return 1
+  cat "$CHROOT_DIR/etc/skywire-hypervisor/cert.pem" || return 1
 }
 
 # Magic starts here.

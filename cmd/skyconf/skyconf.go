@@ -89,4 +89,5 @@ func main() {
 	if err := boot.PrintEnv(os.Stdout, paramLogFile, f.Name()); err != nil {
 		fileLog.Fatalf("failed to print %s param: %v", paramLogFile, err)
 	}
+	fileLog.Printf("Done!")
 }
