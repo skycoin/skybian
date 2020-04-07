@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := help
 
 PROJECT_BASE := github.com/SkycoinProject/skybian
-OPTS?=GO111MODULE=on
+OPTS?=GO111MODULE=on GOBIN=$(PWD)/bin
 
 TEST_OPTS_BASE:=-cover -timeout=5m
 
@@ -35,10 +35,22 @@ lint: ## Run linters. Use make install-linters first
 format: ## Formats the code. Must have goimports installed (use make install-linters).
 	${OPTS} goimports -w -local ${PROJECT_BASE} ./pkg
 	${OPTS} goimports -w -local ${PROJECT_BASE} ./cmd
+	${OPTS} goimports -w -local ${PROJECT_BASE} ./integration/cmd
 
 test: ## Run tests
 	-go clean -testcache &>/dev/null
 	${OPTS} go test ${TEST_OPTS} ./pkg/...
+
+integration-all: integration-skyconf ## runs all integration tests.
+
+integration-skyconf: build-skyconf ## test skyconf
+	source ./integration/env.sh && test_skyconf
+
+integration-teardown: ## teardown integration env
+	source ./integration/env.sh && teardown_chroot
+
+build-skyconf: ## builds skyconf.
+	${OPTS} go install ./cmd/skyconf
 
 build-skybian-img: ## builds skybian base image.
 	rm -rf ./output

@@ -1,4 +1,4 @@
-package prepare
+package prepconf
 
 import (
 	"io/ioutil"

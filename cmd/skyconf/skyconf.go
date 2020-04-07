@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 
 	"github.com/SkycoinProject/skybian/pkg/boot"
-	"github.com/SkycoinProject/skybian/pkg/prepare"
+	"github.com/SkycoinProject/skybian/pkg/prepconf"
 )
 
 var filename string
@@ -44,28 +45,48 @@ func init() {
 	flag.StringVar(&certFile, "certf", certFileDefault, "hypervisor tls cert file")
 }
 
+const (
+	paramSuccess = "SUCCESS"
+	paramLogFile = "LOGFILE"
+)
+
 func main() {
 	flag.Parse()
-	logger := log.New(os.Stderr, "", log.LstdFlags)
+
+	f, err := ioutil.TempFile(os.TempDir(), "skyconf-log-")
+	if err != nil {
+		log.New(os.Stderr, "", log.LstdFlags).
+			Fatalf("failed to create temporary log file: %v", err)
+	}
+	defer func() {
+		if err := f.Close(); err != nil {
+			log.New(os.Stderr, "", log.LstdFlags).
+				Fatalf("failed to close temporary log file: %v", err)
+		}
+	}()
+	fileLog := log.New(f, "", log.LstdFlags)
+	fileLog.Printf("Started!")
 
 	params, err := boot.ReadParams(filename)
 	if err != nil {
-		logger.Println("failed to read params:", err)
-		os.Exit(1)
+		fileLog.Fatalf("failed to read params: %v", err)
 	}
-	conf := prepare.Config{
+	conf := prepconf.Config{
 		VisorConf:      vName,
 		HypervisorConf: hvName,
 		TLSKey:         keyFile,
 		TLSCert:        certFile,
 	}
-	if err := prepare.Prepare(conf, params); err != nil {
-		logger.Println("failed to ensure config file:", err)
-		os.Exit(1)
+	if err := prepconf.Prepare(conf, params); err != nil {
+		fileLog.Fatalf("failed to ensure config file: %v", err)
 	}
 	if err := params.PrintEnvs(os.Stdout); err != nil {
-		logger.Println("failed to print params:", err)
-		os.Exit(1)
+		fileLog.Fatalf("failed to print params: %v", err)
 	}
-	os.Exit(0)
+	if err := boot.PrintEnv(os.Stdout, paramSuccess, "1"); err != nil {
+		fileLog.Fatalf("failed to print %s param: %v", paramSuccess, err)
+	}
+	if err := boot.PrintEnv(os.Stdout, paramLogFile, f.Name()); err != nil {
+		fileLog.Fatalf("failed to print %s param: %v", paramLogFile, err)
+	}
 }

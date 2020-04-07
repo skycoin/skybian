@@ -169,24 +169,25 @@ func MakeParams(mode Mode, lIP, gwIP, lSK string, hvPKs ...string) (Params, erro
 	return bp, nil
 }
 
+// PrintEnv prints env to provided writer with format: <key>=<value>\n
+func PrintEnv(w io.Writer, key, val string) error {
+	_, err := fmt.Fprintf(w, "%s=%s\n", key, val)
+	return err
+}
+
 // PrintEnvs generates a set of environment variables from the boot parameters.
-// Each environment variable is wrote on a different line with format:
-// <env>=<value>
+// Each environment variable is wrote on a different line.
 func (bp Params) PrintEnvs(w io.Writer) error {
-	printEnv := func(key, val string) error {
-		_, err := fmt.Fprintf(w, "%s=%s\n", key, val)
-		return err
-	}
-	if err := printEnv(ModeENV, bp.Mode.String()); err != nil {
+	if err := PrintEnv(w, ModeENV, bp.Mode.String()); err != nil {
 		return err
 	}
 	if len(bp.LocalIP) > 0 {
-		if err := printEnv(LocalIPENV, bp.LocalIP.String()); err != nil {
+		if err := PrintEnv(w, LocalIPENV, bp.LocalIP.String()); err != nil {
 			return err
 		}
 	}
 	if len(bp.GatewayIP) > 0 {
-		if err := printEnv(GatewayIPENV, bp.GatewayIP.String()); err != nil {
+		if err := PrintEnv(w, GatewayIPENV, bp.GatewayIP.String()); err != nil {
 			return err
 		}
 	}
@@ -195,10 +196,10 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 		if err != nil {
 			return err
 		}
-		if err := printEnv(LocalPKENV, pk.String()); err != nil {
+		if err := PrintEnv(w, LocalPKENV, pk.String()); err != nil {
 			return err
 		}
-		if err := printEnv(LocalSKENV, bp.LocalSK.String()); err != nil {
+		if err := PrintEnv(w, LocalSKENV, bp.LocalSK.String()); err != nil {
 			return err
 		}
 	}
@@ -208,12 +209,12 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 			list += "'" + pk.String() + "' "
 		}
 		list = list[:len(list)-1] + ")"
-		if err := printEnv(HypervisorPKsENV, list); err != nil {
+		if err := PrintEnv(w, HypervisorPKsENV, list); err != nil {
 			return err
 		}
 	}
 	if len(bp.SkysocksPasscode) > 0 {
-		if err := printEnv(SocksPassEnv, bp.SkysocksPasscode); err != nil {
+		if err := PrintEnv(w, SocksPassEnv, bp.SkysocksPasscode); err != nil {
 			return err
 		}
 	}

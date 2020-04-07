@@ -16,5 +16,5 @@ require (
 	github.com/sirupsen/logrus v1.5.0
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/stretchr/testify v1.5.1
-	nhooyr.io/websocket v1.8.4
+	nhooyr.io/websocket v1.8.4 // indirect
 )

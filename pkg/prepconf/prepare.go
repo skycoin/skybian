@@ -1,4 +1,4 @@
-package prepare
+package prepconf
 
 import (
 	"encoding/json"
@@ -38,7 +38,7 @@ func Prepare(conf Config, bp boot.Params) error {
 			return nil
 		}
 		// Create file.
-		f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0600)
+		f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0644) //nolint:gosec
 		if err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func genKeyPair(bp boot.Params) (pk cipher.PubKey, sk cipher.SecKey, err error) 
 	return
 }
 
-func generateVisorConfig(conf Config, bp boot.Params) (interface{}, error) {
+func generateVisorConfig(_ Config, bp boot.Params) (interface{}, error) {
 	skysocksArgs := func() (args []string) {
 		if bp.SkysocksPasscode != "" {
 			args = []string{"-passcode", bp.SkysocksPasscode}

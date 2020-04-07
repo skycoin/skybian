@@ -1,6 +1,5 @@
 #!/bin/bash
-# Crafted by Skycoin/Simelo team
-# Modified by @evanlinjin
+# Developer: @evanlinjin of the Rudi Team.
 
 # TODO(evanlinjin): Write documentation for the following:
 # - Where we are placing the boot params.
@@ -25,14 +24,19 @@ setup_skywire()
     echo "Failed to setup skywire environment."
     return 1
   fi
-  eval "$BOOT_PARAMS"
-  readonly MD IP GW PK SK HVS SS
-  echo "Skywire Startup Mode: MD=$MD"
-  echo "Local IP: IP=$IP"
-  echo "Local Gateway IP: GW=$GW"
-  echo "Local Public Key: PK=$PK (derived from SK - which is not shown here for security reasons)"
-  echo "Trusted Hypervisors: HVS=$HVS"
-  echo "Skysocks Passcode: SS=$SS"
+
+  # Obtains the following ENVs from boot params:
+  # MD IP GW PK SK HVS SS SUCCESS LOGFILE
+  for param in $BOOT_PARAMS; do
+    eval "readonly export $param"
+    [[ "${param:0:2}" != "SK" ]] && echo "[boot_param] $param"
+  done
+
+  # Logs for 'skyconf'.
+  echo "'skyconf' logs:"
+  cat - < "$LOGFILE" | while IFS= read -r line; do
+    echo "[skyconf] $line"
+  done
 }
 
 # 'setup_network' sets up networking for Skybian.
@@ -79,8 +83,10 @@ case $MD in
     ;;
   "HYPERVISOR")
     echo "Starting 'skywire-hypervisor'..."
-    /usr/bin/skywire-hypervisor --config "$HYPERVISOR_CONF" &
+    /usr/bin/skywire-hypervisor -c "$HYPERVISOR_CONF" &
     ;;
   *)
     exit 1
 esac
+
+export CHILD_PID=$!

@@ -1,4 +1,4 @@
-package prepare
+package prepconf
 
 import (
 	"crypto/rand"
@@ -10,11 +10,23 @@ import (
 	"math/big"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 )
 
 // GenCert generates key and certificate files for TLS.
 func GenCert(certName, keyName string) error {
+
+	// Ensure directories for cert and key files exist.
+	//nolint:gosec
+	if err := os.MkdirAll(filepath.Dir(certName), 0755); err != nil {
+		return fmt.Errorf("failed to create cert dir: %v", err)
+	}
+	//nolint:gosec
+	if err := os.MkdirAll(filepath.Dir(keyName), 0755); err != nil {
+		return fmt.Errorf("failed to create key dir: %v", err)
+	}
+
 	priv, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return fmt.Errorf("failed to generate private key: %v", err)
@@ -59,7 +71,8 @@ func GenCert(certName, keyName string) error {
 		return fmt.Errorf("failed to create certificate: %v", err)
 	}
 
-	certOut, err := os.Create(certName)
+	//nolint:gosec
+	certOut, err := os.OpenFile(certName, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to open cert.pem for writing: %v", err)
 	}
@@ -70,7 +83,8 @@ func GenCert(certName, keyName string) error {
 		return fmt.Errorf("error closing cert.pem: %v", err)
 	}
 
-	keyOut, err := os.Create(keyName)
+	//nolint:gosec
+	keyOut, err := os.OpenFile(keyName, os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to open key.pem for writing: %v", err)
 	}
