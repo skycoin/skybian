@@ -49,11 +49,13 @@ test_skyconf()
   echo "Testing visor config generation..."
   go run "$ROOT/integration/cmd/mock_mbr.go" -m=1 -of="$mbr_dev" || return 1
   sudo chroot "$CHROOT_DIR" /usr/bin/skyconf || return 1
+  cat /etc/skywire-visor.json || return 1
 
   ## Test hypervisor setup.
   echo "Testing hypervisor config generation..."
   go run "$ROOT/integration/cmd/mock_mbr.go" -m=0 -of="$mbr_dev" || return 1
   sudo chroot "$CHROOT_DIR" /usr/bin/skyconf || return 1
+  cat /etc/skywire-hypervisor.json || return 1
 }
 
 # Magic starts here.
