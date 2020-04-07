@@ -37,12 +37,15 @@ func Prepare(conf Config, bp boot.Params) error {
 	ensureExists := func(name string, genConfig genFn) error {
 		//// Do nothing if file exists.
 		if _, err := os.Stat(name); err == nil {
-			log.Printf("Config file %q already exists, skipping", name)
-			if conf, err := ioutil.ReadFile(name); err == nil {
-				log.Printf("Contents of %q: %q", name, conf)
+			conf, err := ioutil.ReadFile(name)
+			if err == nil {
+				log.Printf("Contents of %q: %q", name, string(conf))
 			}
 
-			return nil
+			if len(conf) != 0 {
+				log.Printf("Config file %q already exists and is not empty", name)
+				return nil
+			}
 		}
 		// Create file.
 		f, err := os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0644) //nolint:gosec
