@@ -6,6 +6,7 @@
 /output
 /base
 /final
+/integration/mnt
 
 .DS_Store
 *.img
