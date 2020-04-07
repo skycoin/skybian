@@ -20,7 +20,7 @@ setup_chroot()
 
   # Copy binaries.
   cp -rv /bin/{bash,ls,mkdir,cat} "$CHROOT_DIR/bin" || return 1
-  cp -rv /usr/bin/{bash,ls,mkdir,cat} "$CHROOT_DIR/usr/bin" || return 1
+  cp -rv /usr/bin/{bash,ls,mkdir,cat} "$CHROOT_DIR/usr/bin" &> /dev/null
 }
 
 teardown_chroot()
