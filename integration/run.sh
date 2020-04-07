@@ -19,8 +19,9 @@ setup_chroot()
   cp -r /usr/{lib,lib64} "$CHROOT_DIR"/usr &> /dev/null
 
   # Copy binaries.
-  cp -rv /bin/{bash,ls,mkdir,cat} "$CHROOT_DIR/bin" || return 1
+  cp -rv /bin/{bash,ls,mkdir,cat} "$CHROOT_DIR/bin" &> /dev/null
   cp -rv /usr/bin/{bash,ls,mkdir,cat} "$CHROOT_DIR/usr/bin" &> /dev/null
+  return 0
 }
 
 teardown_chroot()
@@ -30,9 +31,15 @@ teardown_chroot()
 
 test_skyconf()
 {
-  setup_chroot || return 1
+  if ! setup_chroot; then
+    echo "setup_chroot failed"
+    return 1
+  fi
 
-  cp -v "$ROOT/bin/skyconf" "$CHROOT_DIR/usr/bin" || return 1
+  if ! cp -v "$ROOT/bin/skyconf" "$CHROOT_DIR/usr/bin"; then
+    echo "copying skyconf failed"
+    return 1
+  fi
 
   # Create mock device with MBR.
   mbr_dev="$CHROOT_DIR/dev/mmcblk0"
