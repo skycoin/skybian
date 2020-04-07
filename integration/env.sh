@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # ROOT should be the base directory of this repository.
 ROOT=$(pwd)

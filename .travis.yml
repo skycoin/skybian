@@ -8,7 +8,7 @@ before_script:
 - sudo apt update
 - sudo apt-get install gcc libgl1-mesa-dev xorg-dev
 - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
-- make install-linters
+- curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $GOPATH/bin v1.22.2
 script:
 - make check
 - make integration-all
