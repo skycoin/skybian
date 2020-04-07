@@ -43,6 +43,7 @@ test: ## Run tests
 
 integration: build-skyconf ## runs integration tests.
 	./integration/run.sh
+	sudo rm -rf ./integration/mnt
 
 build-skyconf: ## builds skyconf.
 	${OPTS} go install ./cmd/skyconf

@@ -43,15 +43,42 @@ func (fg *FyneUI) Page1() fyne.CanvasObject {
 func (fg *FyneUI) Page2() fyne.CanvasObject {
 	wkDir := newLinkedEntry(&fg.wkDir)
 
-	baseImgs, latestImg := fg.listBaseImgs()
-	baseImg := widget.NewSelect(baseImgs, func(s string) {
-		fg.baseImg = s
-		fg.log.Debugf("Set: fg.baseImg = %v", s)
+	remImgs, latestImg := fg.listBaseImgs()
+	remImg := widget.NewSelect(remImgs, func(s string) {
+		fg.remImg = s
+		fg.log.Debugf("Set: fg.remImg = %v", s)
 	})
-	if baseImg.Selected = fg.baseImg; baseImg.Selected == "" && len(baseImg.Options) > 0 {
-		baseImg.SetSelected(latestImg)
+	if remImg.Selected = fg.remImg; remImg.Selected == "" && len(remImg.Options) > 0 {
+		remImg.SetSelected(latestImg)
 	}
+	remImg.Hide()
 
+	fsImg := widget.NewEntry()
+	fsImg.SetPlaceHolder("path to .img file")
+	fsImg.OnChanged = func(s string) {
+		fg.fsImg = s
+		fg.log.Debugf("Set: fg.fsImg = %v", s)
+	}
+	fsImg.SetText(fg.fsImg)
+	fsImg.Hide()
+
+	imgLoc := widget.NewRadio(fg.locations, func(s string) {
+		switch fg.imgLoc = s; s {
+		case fg.locations[0]:
+			remImg.Show()
+			fsImg.Hide()
+		case fg.locations[1]:
+			remImg.Hide()
+			fsImg.Show()
+		default:
+			remImg.Hide()
+			fsImg.Hide()
+		}
+	})
+	imgLoc.SetSelected(fg.imgLoc)
+	imgLoc.OnChanged(fg.imgLoc)
+
+	// Gateway IP:
 	gwIP := newEntry(fg.gwIP.String(), func(s string) {
 		fg.gwIP = net.ParseIP(s)
 		fg.log.Debugf("Set: fg.gwIP = %v", s)
@@ -147,7 +174,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), baseImg,
+		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImg,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
 		widget.NewLabel("Number of Visor Images:"), visors,
@@ -156,7 +183,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 
 func (fg *FyneUI) resetPage2Values() {
 	fg.wkDir = DefaultRootDir()
-	fg.baseImg = ""
+	fg.remImg = ""
 	fg.gwIP = net.ParseIP(boot.DefaultGatewayIP)
 	fg.socksPC = ""
 	fg.visors = DefaultVisors
@@ -168,9 +195,22 @@ func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
 	if _, err := filepath.Abs(fg.wkDir); err != nil {
 		return showErr(fg, fmt.Errorf("invalid Work Directory: %v", err))
 	}
-	if strings.TrimSpace(fg.baseImg) == "" {
-		return showErr(fg, errors.New("invalid Base Image URL: cannot be empty"))
+	switch fg.imgLoc {
+	case fg.locations[0]:
+		if strings.TrimSpace(fg.remImg) == "" {
+			return showErr(fg, errors.New("invalid Base Image URL: cannot be empty"))
+		}
+	case fg.locations[1]:
+		if !strings.HasSuffix(fg.fsImg, ".img") {
+			return showErr(fg, errors.New("invalid Base Image Path: file needs to have .img extension"))
+		}
+		if _, err := os.Stat(fg.fsImg); err != nil {
+			return showErr(fg, fmt.Errorf("cannot access Base Image: %v", err))
+		}
+	default:
+		return showErr(fg, errors.New("no base image selected"))
 	}
+
 	if fg.gwIP == nil {
 		return showErr(fg, fmt.Errorf("invalid Gateway IP"))
 	}
@@ -218,7 +258,7 @@ func (fg *FyneUI) Page3(bpsStr string) fyne.CanvasObject {
 			}
 			bps.SetText(bpsStr)
 		},
-		NextText: "Download and Build",
+		NextText: "Build",
 		Next: func() {
 			// Decode bps entry text to ensure changes are recorded.
 			dec := json.NewDecoder(strings.NewReader(bps.Text))
@@ -226,7 +266,7 @@ func (fg *FyneUI) Page3(bpsStr string) fyne.CanvasObject {
 				dialog.ShowError(fmt.Errorf("invalid boot paramters: %v", err), fg.w)
 				return
 			}
-			dialog.ShowConfirm("Confirmation", "Start download and build?", func(b bool) {
+			dialog.ShowConfirm("Confirmation", "Start build?", func(b bool) {
 				if b {
 					fg.build()
 				}

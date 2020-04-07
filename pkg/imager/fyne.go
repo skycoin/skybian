@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -34,15 +35,19 @@ type FyneUI struct {
 	app fyne.App
 	w   fyne.Window
 
-	releases []Release
-	wkDir    string
-	baseImg  string
-	gwIP     net.IP
-	socksPC  string
-	visors   int
-	hvImg    bool
-	hvPKs    []cipher.PubKey
-	bps      []boot.Params
+	releases  []Release
+	locations []string
+
+	wkDir   string
+	imgLoc  string
+	remImg  string
+	fsImg   string
+	gwIP    net.IP
+	socksPC string
+	visors  int
+	hvImg   bool
+	hvPKs   []cipher.PubKey
+	bps     []boot.Params
 }
 
 // NewFyneUI creates a new Fyne UI.
@@ -51,6 +56,10 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	fg.log = log
 	fg.assets = assets
 
+	fg.locations = []string{
+		"From remote server.",
+		"From local filesystem.",
+	}
 	fg.resetPage2Values()
 
 	fa := app.New()
@@ -123,7 +132,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 func (fg *FyneUI) build() {
 	bpsSlice := fg.bps
 
-	baseURL, err := releaseURL(fg.releases, fg.baseImg)
+	baseURL, err := releaseURL(fg.releases, fg.remImg)
 	if err != nil {
 		err = fmt.Errorf("failed to find download URL for base image: %v", err)
 		dialog.ShowError(err, fg.w)
@@ -137,53 +146,81 @@ func (fg *FyneUI) build() {
 		return
 	}
 
-	// Download section.
-	dlTitle := "Downloading Base Image"
-	dlMsg := fg.baseImg + "\n" + baseURL
-	dlDialog := dialog.NewProgress(dlTitle, dlMsg, fg.w)
-	dlDialog.Show()
-	dlDone := make(chan struct{})
-	go func() {
-		t := time.NewTicker(time.Second)
-		for {
-			select {
-			case <-t.C:
-				dlC, dlT := float64(builder.DownloadCurrent()), float64(builder.DownloadTotal())
-				if pc := dlC / dlT; pc > 0 && pc <= 1 {
-					dlDialog.SetValue(pc)
+	// Final images to obtain.
+	var imgs []string
+
+	switch fg.imgLoc {
+	case fg.locations[0]:
+
+		// Download section.
+		dlTitle := "Downloading Base Image"
+		dlMsg := fg.remImg + "\n" + baseURL
+		dlDialog := dialog.NewProgress(dlTitle, dlMsg, fg.w)
+		dlDialog.Show()
+		dlDone := make(chan struct{})
+		go func() {
+			t := time.NewTicker(time.Second)
+			for {
+				select {
+				case <-t.C:
+					dlC, dlT := float64(builder.DownloadCurrent()), float64(builder.DownloadTotal())
+					if pc := dlC / dlT; pc > 0 && pc <= 1 {
+						dlDialog.SetValue(pc)
+					}
+				case <-dlDone:
+					t.Stop()
+					return
 				}
-			case <-dlDone:
-				t.Stop()
-				return
 			}
+		}()
+		err = builder.Download(baseURL)
+		close(dlDone)
+		dlDialog.Hide()
+		if err != nil {
+			dialog.ShowError(err, fg.w)
+			return
 		}
-	}()
-	err = builder.Download(baseURL)
-	close(dlDone)
-	dlDialog.Hide()
-	if err != nil {
+
+		// Extract section.
+		extDialog := dialog.NewProgressInfinite("Extracting Archive", builder.DownloadPath(), fg.w)
+		extDialog.Show()
+		err = builder.ExtractArchive()
+		extDialog.Hide()
+		if err != nil {
+			dialog.ShowError(err, fg.w)
+			return
+		}
+
+		imgs = builder.Images()
+		fg.log.
+			WithField("n", len(imgs)).
+			WithField("imgs", imgs).
+			Info("Obtained base images.")
+
+		if len(imgs) == 0 {
+			dialog.ShowError(errors.New("no valid images in archive"), fg.w)
+			return
+		}
+
+	case fg.locations[1]:
+		// TODO(evanlinjin): The following is very hacky. Please fix.
+		f, err := os.Open(fg.fsImg)
+		if err != nil {
+			dialog.ShowError(fmt.Errorf("failed to open base image: %v", err), fg.w)
+			return
+		}
+		imgs = append(imgs, fg.fsImg)
+		builder.bImgs[fg.fsImg] = BaseImage{
+			File:         f,
+			MD5:          nil,
+			SHA1:         nil,
+			ExpectedMD5:  [16]byte{},
+			ExpectedSHA1: [20]byte{},
+		}
+
+	default:
+		err := errors.New("no base image selected")
 		dialog.ShowError(err, fg.w)
-		return
-	}
-
-	// Extract section.
-	extDialog := dialog.NewProgressInfinite("Extracting Archive", builder.DownloadPath(), fg.w)
-	extDialog.Show()
-	err = builder.ExtractArchive()
-	extDialog.Hide()
-	if err != nil {
-		dialog.ShowError(err, fg.w)
-		return
-	}
-
-	imgs := builder.Images()
-	fg.log.
-		WithField("n", len(imgs)).
-		WithField("imgs", imgs).
-		Info("Obtained base images.")
-
-	if len(imgs) == 0 {
-		dialog.ShowError(errors.New("no valid images in archive"), fg.w)
 		return
 	}
 
