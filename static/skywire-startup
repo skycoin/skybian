@@ -13,8 +13,6 @@ NET_NAME="skynet"
 TLS_KEY=/etc/skywire-hypervisor/key.pem
 TLS_CERT=/etc/skywire-hypervisor/cert.pem
 
-mkdir -p /etc/skywire-hypervisor
-
 # 'setup_skywire' extracts boot parameters.
 # These parameters are stored in the MBR (Master Boot Record) Bootstrap code
 # area of the boot device. This starts at position +0E0(hex) and has 216 bytes.
@@ -27,16 +25,24 @@ setup_skywire()
 
   # Obtains the following ENVs from boot params:
   # MD IP GW PK SK HVS SS SUCCESS LOGFILE
-  for param in $BOOT_PARAMS; do
-    eval "readonly export $param"
-    [[ "${param:0:2}" != "SK" ]] && echo "[boot_param] $param"
-  done
+  echo "-----BEGIN BOOT PARAMS-----"
+  echo "$BOOT_PARAMS"
+  echo "-----END BOOT PARAMS-----"
+  if ! eval "$BOOT_PARAMS"; then
+    echo "Failed to eval boot params."
+    return 1
+  fi
 
-  # Logs for 'skyconf'.
-  echo "'skyconf' logs:"
-  cat - < "$LOGFILE" | while IFS= read -r line; do
-    echo "[skyconf] $line"
-  done
+  # Print 'skyconf' logs.
+  if [[ -n "$LOGFILE" ]] ; then
+    echo "-----BEGIN SKYCONF LOGS-----"
+    $(command -v cat) - < "$LOGFILE" | while IFS= read -r line; do
+      echo "$line"
+    done
+    echo "-----END SKYCONF LOGS-----"
+  else
+    echo "Cannot access 'skyconf' logs."
+  fi
 }
 
 # 'setup_network' sets up networking for Skybian.

@@ -27,7 +27,7 @@ type Config struct {
 
 // Prepare prepares either a hypervisor and visor config file (based on provided
 // conf and boot parameters).
-func Prepare(conf Config, bp boot.Params) error {
+func Prepare(logger *log.Logger, conf Config, bp boot.Params) error {
 
 	// generate config struct
 	type genFn func(conf Config, bp boot.Params) (out interface{}, err error)
@@ -39,11 +39,11 @@ func Prepare(conf Config, bp boot.Params) error {
 		if _, err := os.Stat(name); err == nil {
 			conf, err := ioutil.ReadFile(name)
 			if err == nil {
-				log.Printf("Contents of %q: %q", name, string(conf))
+				logger.Printf("Contents of %q: %q", name, string(conf))
 			}
 
 			if len(conf) != 0 {
-				log.Printf("Config file %q already exists and is not empty", name)
+				logger.Printf("Config file %q already exists and is not empty", name)
 				return nil
 			}
 		}

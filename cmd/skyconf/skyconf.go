@@ -1,10 +1,14 @@
 package main
 
 import (
+	"crypto/rand"
 	"flag"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"log"
 	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/SkycoinProject/skybian/pkg/boot"
 	"github.com/SkycoinProject/skybian/pkg/prepconf"
@@ -53,23 +57,23 @@ const (
 func main() {
 	flag.Parse()
 
-	f, err := ioutil.TempFile(os.TempDir(), "skyconf-log-")
-	if err != nil {
-		log.New(os.Stderr, "", log.LstdFlags).
-			Fatalf("failed to create temporary log file: %v", err)
-	}
-	defer func() {
-		if err := f.Close(); err != nil {
-			log.New(os.Stderr, "", log.LstdFlags).
-				Fatalf("failed to close temporary log file: %v", err)
+	logger, logF := makeLogger()
+	if logF != nil {
+		if err := boot.PrintEnv(os.Stdout, paramLogFile, logF.Name()); err != nil {
+			logger.Fatalf("failed to print %s param: %v", paramLogFile, err)
 		}
-	}()
-	fileLog := log.New(f, "", log.LstdFlags)
-	fileLog.Printf("Started!")
+		defer func() {
+			if err := logF.Close(); err != nil {
+				logger.Printf("failed to close log file: %v", err)
+			}
+		}()
+	}
+
+	logger.Printf("Started!")
 
 	params, err := boot.ReadParams(filename)
 	if err != nil {
-		fileLog.Fatalf("failed to read params: %v", err)
+		logger.Fatalf("failed to read params: %v", err)
 	}
 	conf := prepconf.Config{
 		VisorConf:      vName,
@@ -77,17 +81,35 @@ func main() {
 		TLSKey:         keyFile,
 		TLSCert:        certFile,
 	}
-	if err := prepconf.Prepare(conf, params); err != nil {
-		fileLog.Fatalf("failed to ensure config file: %v", err)
+	if err := prepconf.Prepare(logger, conf, params); err != nil {
+		logger.Fatalf("failed to ensure config file: %v", err)
 	}
 	if err := params.PrintEnvs(os.Stdout); err != nil {
-		fileLog.Fatalf("failed to print params: %v", err)
+		logger.Fatalf("failed to print boot params: %v", err)
 	}
 	if err := boot.PrintEnv(os.Stdout, paramSuccess, "1"); err != nil {
-		fileLog.Fatalf("failed to print %s param: %v", paramSuccess, err)
+		logger.Fatalf("failed to print %s env: %v", paramSuccess, err)
 	}
-	if err := boot.PrintEnv(os.Stdout, paramLogFile, f.Name()); err != nil {
-		fileLog.Fatalf("failed to print %s param: %v", paramLogFile, err)
+
+	logger.Printf("Done!")
+}
+
+func tempFile() (*os.File, error) {
+	b := make([]byte, 5)
+	if _, err := rand.Read(b); err != nil {
+		return nil, err
 	}
-	fileLog.Printf("Done!")
+	name := filepath.Join(os.TempDir(), fmt.Sprintf("skyconf-%d-%d.log", os.Getpid(), time.Now().Unix()))
+	return os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0644)
+}
+
+func makeLogger() (*log.Logger, *os.File) {
+	logger := log.New(os.Stderr, "[skyconf] ", log.LstdFlags)
+	f, err := tempFile()
+	if err != nil {
+		logger.Printf("failed to create temp log file: %v", err)
+		return logger, nil
+	}
+	logger = log.New(io.MultiWriter(os.Stderr, f), "[skyconf] ", log.LstdFlags)
+	return logger, f
 }
