@@ -102,9 +102,10 @@ func generateVisorConfig(_ Config, bp boot.Params) (interface{}, error) {
 		PubKey: pk,
 		SecKey: sk,
 	}
-	if out.STCP, err = visor.DefaultSTCPConfig(); err != nil {
-		return nil, err
-	}
+	// TODO(evanlinjin): We need to handle STCP properly.
+	//if out.STCP, err = visor.DefaultSTCPConfig(); err != nil {
+	//	return nil, err
+	//}
 	out.Dmsg = visor.DefaultDmsgConfig()
 	out.DmsgPty = visor.DefaultDmsgPtyConfig()
 	out.DmsgPty.AuthFile = "/var/skywire-visor/dsmgpty/whitelist.json"
