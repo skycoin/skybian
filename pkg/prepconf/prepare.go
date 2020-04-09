@@ -37,7 +37,7 @@ func Prepare(logger *log.Logger, conf Config, bp boot.Params) error {
 	ensureExists := func(name string, genConfig genFn) error {
 		//// Do nothing if file exists.
 		if _, err := os.Stat(name); err == nil {
-			conf, err := ioutil.ReadFile(name)
+			conf, err := ioutil.ReadFile(name) //nolint:gosec
 			if err == nil {
 				logger.Printf("Contents of %q: %q", name, string(conf))
 			}
@@ -171,8 +171,7 @@ func generateHypervisorConfig(conf Config, bp boot.Params) (interface{}, error) 
 	out.DmsgDiscovery = skyenv.DefaultDmsgDiscAddr
 	out.DmsgPort = skyenv.DmsgHypervisorPort
 	out.HTTPAddr = ":8000"
-	out.EnableTLS = true
-	// TODO(evanlinjin): Pass filenames as cli args in 'skyconf'.
+	out.EnableTLS = false // TODO(evanlinjin): TLS is disabled due to a bug in the skyminer Router.
 	out.TLSCertFile = conf.TLSCert
 	out.TLSKeyFile = conf.TLSKey
 	err = GenCert(out.TLSCertFile, out.TLSKeyFile)

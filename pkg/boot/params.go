@@ -199,9 +199,10 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 		if err := PrintEnv(w, LocalPKENV, pk.String()); err != nil {
 			return err
 		}
-		if err := PrintEnv(w, LocalSKENV, bp.LocalSK.String()); err != nil {
-			return err
-		}
+		// TODO(evanlinjin): We may need to re-enable this in the future.
+		//if err := PrintEnv(w, LocalSKENV, bp.LocalSK.String()); err != nil {
+		//	return err
+		//}
 	}
 	if len(bp.HypervisorPKs) > 0 {
 		list := "("

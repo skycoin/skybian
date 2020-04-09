@@ -100,7 +100,7 @@ func tempFile() (*os.File, error) {
 		return nil, err
 	}
 	name := filepath.Join(os.TempDir(), fmt.Sprintf("skyconf-%d-%d.log", os.Getpid(), time.Now().Unix()))
-	return os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0644)
+	return os.OpenFile(name, os.O_WRONLY|os.O_CREATE, 0644) //nolint:gosec
 }
 
 func makeLogger() (*log.Logger, *os.File) {
