@@ -1,0 +1,98 @@
+#!/bin/bash
+# Developer: @evanlinjin of the Rudi Team.
+
+# TODO(evanlinjin): Write documentation for the following:
+# - Where we are placing the boot params.
+# - Values of the boot params.
+
+DEV_FILE=/dev/mmcblk0
+VISOR_CONF=/etc/skywire-visor.json
+HYPERVISOR_CONF=/etc/skywire-hypervisor.json
+NET_NAME="skynet"
+
+TLS_KEY=/etc/skywire-hypervisor/key.pem
+TLS_CERT=/etc/skywire-hypervisor/cert.pem
+
+# 'setup_skywire' extracts boot parameters.
+# These parameters are stored in the MBR (Master Boot Record) Bootstrap code
+# area of the boot device. This starts at position +0E0(hex) and has 216 bytes.
+setup_skywire()
+{
+  if ! readonly BOOT_PARAMS=$(/usr/bin/skyconf -if=$DEV_FILE -vf=$VISOR_CONF -hvf=$HYPERVISOR_CONF -keyf=$TLS_KEY -certf=$TLS_CERT); then
+    echo "Failed to setup skywire environment."
+    return 1
+  fi
+
+  # Obtains the following ENVs from boot params:
+  # MD IP GW PK SK HVS SS SUCCESS LOGFILE
+  echo "-----BEGIN BOOT PARAMS-----"
+  echo "$BOOT_PARAMS"
+  echo "-----END BOOT PARAMS-----"
+  if ! eval "$BOOT_PARAMS"; then
+    echo "Failed to eval boot params."
+    return 1
+  fi
+
+  # Print 'skyconf' logs.
+  if [[ -n "$LOGFILE" ]] ; then
+    echo "-----BEGIN SKYCONF LOGS-----"
+    $(command -v cat) - < "$LOGFILE" | while IFS= read -r line; do
+      echo "$line"
+    done
+    echo "-----END SKYCONF LOGS-----"
+  else
+    echo "Cannot access 'skyconf' logs."
+  fi
+}
+
+# 'setup_network' sets up networking for Skybian.
+# It uses the IP (local IP address) and GW (Gateway IP address) of the boot
+# params. If these are not defined, or the network is already set up, nothing
+# will be done.
+setup_network()
+{
+  # If IP and GW are both empty, do nothing.
+  if [[ -z "$IP" && -z "$GW" ]]; then
+    echo "ENVs (IP, GW) are both empty, skipping network setup."
+    return 0
+  fi
+
+  CURRENT_IP=$(nmcli c show "$NET_NAME" | grep ipv4.addresses | awk '{print $2}')
+  echo "Current IP address for connection $NET_NAME: $CURRENT_IP"
+
+  # If network is already setup_skywire, do nothing.
+  if [[ "$CURRENT_IP" == "$IP/24" ]]; then
+    echo "Connection $NET_NAME already set, skipping network setup."
+    return 0
+  fi
+
+  # Delete all nm connections.
+  echo "Deleting all nm connections..."
+  TEMP_FILE=$(mktemp)
+  nmcli -f NAME -t c > "$TEMP_FILE"
+  while read -r line; do nmcli c delete "$line"; done < "$TEMP_FILE"
+  rm "$TEMP_FILE"
+
+  # Recreate connections.
+  echo "Setting up nm connection $NET_NAME..."
+  nmcli con add con-name "$NET_NAME" ifname eth0 type ethernet ip4 "$IP"/24 gw4 "$GW"
+  nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+}
+
+# This is where the magic happens.
+setup_skywire || exit 1
+setup_network || exit 1
+case $MD in
+  "VISOR")
+    echo "Starting 'skywire-visor'..."
+    /usr/bin/skywire-visor "$VISOR_CONF" &
+    ;;
+  "HYPERVISOR")
+    echo "Starting 'skywire-hypervisor'..."
+    /usr/bin/skywire-hypervisor -c "$HYPERVISOR_CONF" &
+    ;;
+  *)
+    exit 1
+esac
+
+export CHILD_PID=$!

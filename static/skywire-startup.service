@@ -1,0 +1,15 @@
+[Unit]
+Description=Skywire Startup
+After=network.target
+
+[Service]
+Type=forking
+User=root
+Group=root
+ExecStart=/usr/bin/skywire-startup
+Restart=always
+RestartSec=20
+TimeoutSec=30
+
+[Install]
+WantedBy=multi-user.target
