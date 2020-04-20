@@ -18,6 +18,12 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
+## [0.1.1] - 2020-04-20
+
+### Fixed
+
+- ` NetworkManager.service` should be running before the `skywire-startup.service` ([#23](https://github.com/SkycoinProject/skybian/pull/23)).
+
 ## [0.1.0] - 2020-04-09
 
 ### Added
