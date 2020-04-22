@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
+if [ "$#" -ne 1 ]; then
+    printf "Usage:\n\t%s version\n" "$0"
+    exit 1
+fi
+
 OS="linux"
 ARCH="arm"
-VERSION=v0.2.2-test-ba0b6a42
+VERSION=$1
 BASE_NAME="skywire-${VERSION}-${OS}-${ARCH}"
 FOLDER_NAME="${BASE_NAME}"
 ARCHIVE_NAME="${BASE_NAME}.tar.gz"
@@ -10,7 +15,7 @@ SKYWIRE_URL="https://github.com/SkycoinProject/skywire-mainnet/releases/download
 BINARY_NAMES="skywire-visor hypervisor"
 
 rm -f "./${ARCHIVE_NAME}"
-wget -O $ARCHIVE_NAME "$SKYWIRE_URL"
+wget -O "$ARCHIVE_NAME" "$SKYWIRE_URL"
 rm -rf "./${FOLDER_NAME}"
 
 mkdir "./${FOLDER_NAME}"
