@@ -22,9 +22,8 @@ locale-gen en_US.UTF-8
 
 # apt-get commands (install/remove/purge)
 # modify and un-comment
-info "Updating apt..."
 export DEBIAN_FRONTEND=noninteractive
-apt-get -y update
+
 # keep this on the very end of this block
 info "Cleaning apt cache..."
 apt-get clean
@@ -39,4 +38,4 @@ mkdir -p /var/skywire-hypervisor || 0
 
 # Enable systemd units.
 info "Enabling systemd units..."
-systemctl enable skywire-startup.service
+systemctl enable skybian-firstrun.service || exit 1

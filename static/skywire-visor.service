@@ -1,14 +1,13 @@
 [Unit]
-Description=Skywire Startup
+Description=Skywire Visor
 After=network.target
-After=NetworkManager.service
 
 [Service]
-Type=forking
+Type=simple
 User=root
 Group=root
-ExecStart=/usr/bin/skywire-startup
-Restart=always
+ExecStart=/usr/bin/skywire-visor /etc/skywire-visor.json
+Restart=on-failure
 RestartSec=20
 TimeoutSec=30
 

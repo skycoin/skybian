@@ -1,0 +1,15 @@
+[Unit]
+Description=Skybian Firstboot
+After=network.target
+After=NetworkManager.service
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/skybian-firstrun
+ExecStartPost=/sbin/reboot
+
+[Install]
+WantedBy=multi-user.target
