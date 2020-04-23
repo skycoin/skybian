@@ -5,9 +5,9 @@ go 1.13
 
 require (
 	fyne.io/fyne v1.2.3
-	github.com/SkycoinProject/dmsg v0.1.0
+	github.com/SkycoinProject/dmsg v0.2.0
 	github.com/SkycoinProject/skycoin v0.27.0
-	github.com/SkycoinProject/skywire-mainnet v0.1.2
+	github.com/SkycoinProject/skywire-mainnet v0.2.3
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible
