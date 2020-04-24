@@ -22,10 +22,13 @@ locale-gen en_US.UTF-8
 
 # apt-get commands (install/remove/purge)
 # modify and un-comment
+info "Updating your system via APT"
 export DEBIAN_FRONTEND=noninteractive
-
+apt-get -y update
+#apt-get -y install [your_pkgs_here]
+#apt-get -y remove --purge [your_pkgs_here]
 # keep this on the very end of this block
-info "Cleaning apt cache..."
+info "Cleaning the APT cache to make a smaller image"
 apt-get clean
 
 # forge a time on the system to avoid fs dates are in the future

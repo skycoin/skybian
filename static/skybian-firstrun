@@ -75,18 +75,29 @@ setup_network()
 }
 setup_network || exit 1
 
-# TODO: Complete this.
+for file in /etc/ssh/ssh_host* ; do
+    echo "[skybian-firstrun] Checking $file:"
+    cat "$file"
+  done
+
+# Enable associated service.
 case $MD in
   "VISOR")
     echo "Enabling 'skywire-visor.service'."
     systemctl enable skywire-visor.service
+    sleep 2
+    systemctl start skywire-visor.service
     ;;
   "HYPERVISOR")
     echo "Enabling 'skywire-hypervisor.service'."
     systemctl enable skywire-hypervisor.service
+    sleep 2
+    systemctl start skywire-hypervisor.service
     ;;
   *)
     exit 1
+    ;;
 esac
 
 systemctl disable skybian-firstrun.service
+exit 0
