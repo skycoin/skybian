@@ -41,7 +41,7 @@ const (
 const (
 	SkychatName = "skychat"
 	SkychatPort = uint16(1)
-	SkychatAddr = ":8000"
+	SkychatAddr = ":8001"
 
 	SkysocksName = "skysocks"
 	SkysocksPort = uint16(3)
