@@ -20,6 +20,10 @@ Dates must be YEAR-MONTH-DAY
 
 ## [0.1.2] - 2020-04-20
 
+### Changed
+
+- Updated Skywire to `v0.2.3`.
+
 ### Fixed
 
 - ` NetworkManager.service` should be running before the `skywire-startup.service` ([#23](https://github.com/SkycoinProject/skybian/pull/23)).
