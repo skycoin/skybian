@@ -1,31 +1,34 @@
 os: linux
 dist: bionic
 sudo: required
-language: bash
-
-before_script:
-- sudo apt update
-- sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
-
+language: go
+go:
+  - 1.13.x
+install:
+  - sudo apt update
+  - sudo apt-get install gcc libgl1-mesa-dev xorg-dev
+  - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+  - go get -u github.com/FiloSottile/vendorcheck
+  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $GOPATH/bin v1.22.2
 script:
-- bash build.sh
-
-notifications:
-  email:
-  - false
-  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify
-
+  - make test # Can be 'make check' once that is working.
+  - make integration
+  - make build-skybian-img
+  - make build-skyimager-gui
 before_deploy:
-- bash build.sh -p
-
+  - bash build.sh -p
 deploy:
   provider: releases
-  api_key:
-    secure: L82XzmWZt40Fz2A+rx0lsAWQq+AO9KhA0YKJdRhlTlAMWPeCY27wlmNmmHCnP0VXo++7Pq7ZlX9lZclgrirnl2OvSZgKJQj+aFCIIXgBytkCX6lyoKgye+9ggLojOIFqLp1Ddf4W2R0QzSXZw64qN44VP+F4nIOsbIXn16JzK5u1ZNY3o+rT2aNXskCGCbW0Xxudzu6A3lh5DHK3N+aRnNzwK0rapzhvbZ6aHrFloBCeM769CG6QedRcgqreA44wwvOYl4vRIUlIqRatl1plxaPvWxS6S3mHELU4xUOlckgusjlqvyvnVw8/QvwcnikDuqW+nLWTamgkafeA81VaQjOATMNe7dtCIQaf3+TheghrNHpU7PUmvnpHvHL8wlZOKijCSrwYq05knmdKsvHCUVjA1dff/NmnTT42C6j1pq8WuV60dZTaI1UJ7LMOQGj/FKeYcgmWfg7y+GBwuN197w2Af40oWHth4i/ar/rKXXMCexpVQdGKcOGeP9+0MbQhcjWfy06oEEnVmjcy8x9kUzthLZ6HIvm/xty7H+2iwOYPtoB637uaL8ztbleZRJGlKXbOa1/BRgevHGI3+JbCjyrGEtf+83/94bSfbnQxNe111yfbX4fWBmLPNLUzoQ2McGoOxhgrY9NWFy67BAz6GdqthTKIPu1ibmlU731R+2I=
   file_glob: true
-  file: "output/final/*.xz"
+  file:
+  - output/final/*.tar.xz
+  - fyne-cross/bin/*.tar.xz
   draft: true
+  prerelease: true
   skip_cleanup: true
+  overwrite: true
   on:
     all_branches: true
-    condition: "$TRAVIS_BRANCH =~ ^master$|^release-.*$"
+    tags: true
+  api-key:
+    secure: dufg623WCt05Ge96u2haQlP92Nd0Qsxkvv/uxe67oY/Q5Q7Rhig4yCEZ/DkK6nYPwaK7hl2vF3W1Cww2Fzq4sVHtBMZcDVvRhPZ2TTo43MlYuVvJg9Cct4g8zg8J8oLVvO2fGxRwLDG1zTjlW/k5y6dnTfcdOGKDfZ4NsPDy2GAHtlqpBRX/091Uj2h1jnsx8jYy15ezalBEEhuOUah+w/udloXjnR9HhcyQ+0WbqPX6LMpWqXG8wz/fGy1bH0ZhqyfHUBgP5oaGoN42LcZQ1TOWvPcrDqp31AWlZUMQDjW8qf2KYMs5+99Or9GkEX0BN4YdLqj2IRK4OSX02pEH8rtHK781TIlXwhAS+mH6tMhFZ4jsAfji3o3CuzQi5EBgvAP9l7VjoEF+EiLynzw63Ma0oAxmGolRAYdKMieAoeB/ii4K6PMOJfNfoPvqwZ6HZxEwsaZFjhk3DMAK1gTRZEHBfEC8VAFOF5m72oafotFbUGRxhdY71PsNbF+eb5oze9xw12cmUeRVfdIgFi0yWzpICXql/yVe34NutfmQz34xX5zFZlNiKiewm5EGjKRtP9DSEeiuFPWHWvPk3ypZ3ctEGUrzjoDTTPUwKZWpSn0zKV+yENitgrWf/BAsf2/ax7eCneaFUhfJd8H7mG7aDp7xF82yQOVK5CGfszETtd8=

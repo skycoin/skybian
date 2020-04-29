@@ -18,12 +18,36 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
+## [0.1.2] - 2020-04-20
+
+### Changed
+
+- Updated Skywire to `v0.2.3`.
+
+### Fixed
+
+- ` NetworkManager.service` should be running before the `skywire-startup.service` ([#23](https://github.com/SkycoinProject/skybian/pull/23)).
+- Fixed various boot errors ([e300f94eb1b22d30dd86a024e07f89a65ba0a12e](https://github.com/SkycoinProject/skybian/pull/29/commits/e300f94eb1b22d30dd86a024e07f89a65ba0a12e)).
+
+## [0.1.0] - 2020-04-09
+
+### Added
+
+- Introduced [`skyconf`](cmd/skyconf) to help orchestrate initial boot of Skybian.
+- Introduced [`skyimager`](cmd/skyimager-gui) as a replacement for [`skyflash`](https://github.com/SkycoinProject/skyflash) and added [`build-skyimager.sh`](build-skyimager.sh) to orchestrate cross compiling of `skyimager`.
+
+### Changed
+
+- Updated Skywire to `v0.2.0`.
+- Various changes and simplifications to files within [`static`](static), as well as to [`build.conf`](build.conf) and [`build.sh`](build.sh), in order to accommodate integration of Skywire `v0.2.0`.
+
+
 ## [0.0.5] - 2019-11-04
 
 ### Added
 
-- added new managerUI code
-- updated the discovery address
+- Added new managerUI code.
+- Updated the discovery address.
 
 ## [0.0.4] - 2019-04-18
 
