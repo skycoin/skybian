@@ -18,6 +18,17 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
+## [0.1.2] - 2020-04-20
+
+### Changed
+
+- Updated Skywire to `v0.2.3`.
+
+### Fixed
+
+- ` NetworkManager.service` should be running before the `skywire-startup.service` ([#23](https://github.com/SkycoinProject/skybian/pull/23)).
+- Fixed various boot errors ([e300f94eb1b22d30dd86a024e07f89a65ba0a12e](https://github.com/SkycoinProject/skybian/pull/29/commits/e300f94eb1b22d30dd86a024e07f89a65ba0a12e)).
+
 ## [0.1.0] - 2020-04-09
 
 ### Added
