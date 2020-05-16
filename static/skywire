@@ -1,0 +1,56 @@
+#!/bin/bash
+#maintainer: Moses Narrow
+
+#this script configures visors and hypervisors
+#requires skywire mainnet binaries, dpkg, and reprepro
+
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must run as root" 1>&2
+   exit 100
+fi
+
+cd ~/
+# detect visor-config.json
+if [ ! -f /etc/skywire-visor.json ]; then
+  #check if the hypervisorinfo.txt file exists - provided by hypervisorkey package
+  if [ -f /usr/lib/skycoin/skywire/hypervisor.txt ]; then
+    # create skywire-config.json and set hvisor key
+    skywire-cli visor gen-config -ro /etc/skywire-visor.json
+    #TODO - allow setting multile hypervisor keys
+    hvisorkey=$(cat /usr/lib/skycoin/skywire/hypervisor*.txt)
+  else
+    #hypervisor.txt is not provided, set up hypervisor
+    #generate configs if needed and parse hvisorkey
+    [ ! -f /etc/skywire-hypervisor.json ] && skywire-hypervisor gen-config -rto /etc/skywire-hypervisor.json
+    hvisorkey=$(cat /etc/skywire-hypervisor.json | grep "public_key" | awk '{print substr($2,2,66)}')
+    skywire-cli visor gen-config -ro /etc/skywire-visor.json
+    ##CREATE THE DEBIAN PACKAGE WITH THE HYPERVISOR KEY TEXT FILE
+    debpkgpath="/root/.cache/dpkg"
+    packagename=hypervisorkey
+    #this should increment
+    packageversion=1
+    #package architecture should not be other than the architectures in conf/distributions used by reprepro
+    #"architecture: all" is not recomended
+    packagearchitecture=$(dpkg --print-architecture)
+    debpkgdir="${packagename}-${packageversion}"
+    mkdir -p "${debpkgpath}/${debpkgdir}/DEBIAN" "${debpkgpath}/${debpkgdir}/usr/lib/skycoin/skywire-mainnet/hypervisorconfig"
+    echo "Package: $packagename" > ${debpkgpath}/${debpkgdir}/DEBIAN/control
+    echo "Version: $packageversion" >> ${debpkgpath}/${debpkgdir}/DEBIAN/control
+    echo "Priority: optional" >> ${debpkgpath}/${debpkgdir}/DEBIAN/control
+    echo "Section: web" >> ${debpkgpath}/${debpkgdir}/DEBIAN/control
+    echo "Architecture: $packagearchitecture" >> ${debpkgpath}/${debpkgdir}/DEBIAN/control
+    echo "Maintainer: Hypervisor" >> ${debpkgpath}/${debpkgdir}/DEBIAN/control
+    echo "Description: Hypervisor configuration" >> ${debpkgpath}/${debpkgdir}/DEBIAN/control
+    echo ${hvisorkey} > ${debpkgpath}/${debpkgdir}/usr/lib/skycoin/skywire/hypervisor.txt
+    #build the debian package
+    cd ${debpkgpath}
+    dpkg-deb --build ${debpkgdir}
+    rm -rf ${debpkgdir}
+    cd ~/
+    #create package repository on the hypervisor and include all packages at /root/.cache/dpkg
+    local-deb-repo
+  fi
+fi
+
+#create new visor-config.json from pared info
+[[ $(cat ~/skywire-config.json | grep '"hypervisors": \[\],') = *'"hypervisors": [],'* ]] && sudo sed -i 's/"hypervisors".*/"hypervisors": [{"public_key": "'"${hvisorkey}"'"}],/' /etc/skywire-visor.json

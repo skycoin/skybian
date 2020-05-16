@@ -3,8 +3,8 @@
 # This is the main script to build the Skybian OS for Skycoin miners.
 #
 # Author: evanlinjin@github.com, @evanlinjin in telegram
+# Contributor: Moses Narrow t.me/moe_narrow
 # Skycoin / Rudi team
-#
 
 # load env variables.
 # shellcheck source=./build.conf
@@ -14,7 +14,7 @@ source "$(pwd)/build.conf"
 
 # Needed tools to run this script, space separated
 # On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
-NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go"
+NEEDED_TOOLS="sudo rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go"
 
 # Output directory.
 PARTS_DIR=${ROOT}/output/parts
@@ -27,8 +27,6 @@ BASE_IMG=${IMAGE_DIR}/base_image
 
 # Download directories.
 PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
-PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
 # Image related variables.
 ARMBIAN_IMG_7z=""
@@ -129,48 +127,25 @@ create_folders()
     info "Creating output folder structure..."
     mkdir -p "$FINAL_IMG_DIR"
     mkdir -p "$FS_MNT_POINT"
-    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
+    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" #"$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
     mkdir -p "$IMAGE_DIR"
 
     info "Done!"
 }
 
-get_tools()
-{
-  local _src="$ROOT/cmd/skyconf/skyconf.go"
-  local _out="$PARTS_TOOLS_DIR/skyconf"
+#get_tools()
+#{
+#  local _src="$ROOT/cmd/skyconf/skyconf.go"
+#  local _out="$PARTS_TOOLS_DIR/skyconf"
+#
+#  info "Building skyconf..."
+#  info "_src=$_src"
+#  info "_out=$_out"
+#  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
+#
+#  info "Done!"
+#}
 
-  info "Building skyconf..."
-  info "_src=$_src"
-  info "_out=$_out"
-  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
-
-  info "Done!"
-}
-
-get_skywire()
-{
-  local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
-
-  if [ ! -f "${_DST}" ] ; then
-      notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
-      wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" || return 1
-  else
-      info "Reusing package in ${_DST}"
-  fi
-
-  info "Extracting package..."
-  mkdir "${PARTS_SKYWIRE_DIR}/bin"
-  tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
-
-  info "Renaming 'hypervisor' to 'skywire-hypervisor'..."
-  mv "${PARTS_SKYWIRE_DIR}/bin/hypervisor" "${PARTS_SKYWIRE_DIR}/bin/skywire-hypervisor" || 0
-
-  info "Cleaning..."
-  rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
-
-  info "Done!"
-}
 
 download_armbian()
 {
@@ -250,8 +225,8 @@ get_armbian()
 get_all()
 {
   get_armbian || return 1
-  get_skywire || return 1
-  get_tools || return 1
+  #get_skywire || return 1
+  #get_tools || return 1
 }
 
 
@@ -323,35 +298,6 @@ prepare_base_image()
 
   info "Mounting root fs to ${FS_MNT_POINT}..."
   sudo mount -t auto "${IMG_LOOP}" "${FS_MNT_POINT}" -o loop,rw
-
-  info "Done!"
-}
-
-copy_to_img()
-{
-  # Copy skywire bins
-  info "Copying skywire bins..."
-  sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
-
-  # Copy skywire tools
-  info "Copying skywire tools..."
-  sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
-
-  # Copy scripts
-  info "Copying disable user creation script..."
-  sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-  info "Copying headers (so OS presents itself as Skybian)..."
-  sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
-  sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
-
-  # Copy systemd units
-  info "Copying systemd unit services..."
-  local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-  sudo cp -f "${ROOT}"/static/*.service "${SYSTEMD_DIR}" || return 1
 
   info "Done!"
 }
@@ -441,7 +387,7 @@ clean_output_dir()
 {
   # Clean parts.
   cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
-  cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  #cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.xz' -delete
 
   # Rm base image.

@@ -1,0 +1,69 @@
+#!/bin/bash
+#make a debian package repo of all created packages and offer to serve it on the LAN
+#maintainer: Moses Narrow t.me/moe_narrow github.com/0pcom
+#based on the readonly-cache package in the Arch User Repo:
+#https://aur.archlinux.org/cgit/aur.git/tree/aur-local.sh?h=readonly-cache
+#NOTE: most of this script should be replaced by proper packaging
+
+if [[ $EUID -ne 0 ]]; then
+  echo "This script must run as root" 1>&2
+  exit 100
+fi
+
+#we are going to make a package repo including any locally created .deb packages
+#and the packages in the apt cache so it's a good idea to update here
+apt -y update
+apt -y upgrade
+
+#for the repository hosted on github:
+#packagearchitecture="amd64 arm64 armhf armel i386 mips mipsel mips64el ppc64el riscv64 s390x"
+
+#for a local package repository we use same architecture as the host:
+packagearchitecture=$(dpkg --print-architecture)
+
+#keep script compatable with non-debian distros!
+default_debian_codename=(sid) #e.g. jessie, stretch, buster, sid
+#get debian version codename
+checkremove="VERSION_CODENAME="
+if [[ "$(cat /etc/os-release | grep $checkremove)" == $checkremove ]]; then
+debian_codename=$(cat /etc/os-release | grep $checkremove)
+debian_codename=${debian_codename#"$checkremove"}
+else
+debian_codename=$default_debian_codename
+fi
+
+#this DIR SHOULD ALREADY EXIST in the package providing this script
+repodirectory=/var/cache/apt/repo
+mkdir -p $repodirectory
+cd $repodirectory
+[ ! -d "$repodirectory/conf" ] && mkdir conf
+if [ ! -f conf/distributions ]; then
+  echo "creating repo configuration file"
+  echo "Origin: localhost" > conf/distributions
+  echo "Label: localhost" >> conf/distributions
+  echo "Codename: $debian_codename" >> conf/distributions
+  echo "Architectures: $packagearchitecture" >> conf/distributions
+  echo "Components: main" >> conf/distributions
+  echo "Description: a local debian package repo" >> conf/distributions
+fi
+
+#symlink any previously created packages from the dpkg cache in root
+ln -f /root/.cache/dpkg/*.deb /var/cache/apt/archives
+
+#create the repo; add all packages in the package cache
+cd /var/cache/apt/archives
+reprepro --basedir /var/cache/apt/repo includedeb $debian_codename *.deb
+
+#serve the repo directory on localhost:8079
+readonlycache
+
+#NOTES
+
+#test repo creation with .deb package and conf/distributions in $(pwd)
+#reprepro --basedir $(pwd) includedeb stretch *.deb
+
+#https://serverfault.com/questions/279153/why-does-reprepro-complain-about-the-all-architecture
+#If you specify your .deb (control file) as Architecture: all, then don't put anything into the reprepro distributions file
+#other than the arch's that you want it to get put into.
+#Architectures: amd64 arm64 armhf armel i386 mips mipsel mips64el ppc64el riscv64 s390x
+#The all packages are then available in all the architectures defined in conf/distributions

@@ -24,7 +24,17 @@ locale-gen en_US.UTF-8
 # modify and un-comment
 info "Updating your system via APT"
 export DEBIAN_FRONTEND=noninteractive
-apt-get -y update
+apt-get -y update && apt-get -y install software-properties-common
+#TESTING REPOSITORY ; SHOULD BE CHANGED TO ONE IN SKYCOINPROJECT
+add-apt-repository 'deb http://skyfleet.github.io/sky-update stretch main'
+#add repository signing key
+curl -L http://skyfleet.github.io/sky-update/KEY.asc | apt-key add -
+#sync package database
+apt -y update
+#Install the package
+apt-get -yf install skywire skybian-skywire skybian
+#Synth said he wants golang in the images ; installing golang
+apt -y install golang
 #apt-get -y install [your_pkgs_here]
 #apt-get -y remove --purge [your_pkgs_here]
 # keep this on the very end of this block
@@ -36,8 +46,8 @@ info "Setting the chroot clock to now to avoid bugs with the date..."
 /sbin/fake-hwclock save force
 
 # Mkdir
-mkdir -p /etc/skywire-hypervisor || 0
-mkdir -p /var/skywire-hypervisor || 0
+#mkdir -p /etc/skywire-hypervisor || 0
+#mkdir -p /var/skywire-hypervisor || 0
 
 # Enable systemd units.
 info "Enabling systemd units..."
