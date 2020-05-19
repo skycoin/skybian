@@ -364,6 +364,11 @@ chroot_actions()
   sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
   sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
 
+  # copy host's resolve.conf to root fs
+  info "Copying resolve.conf from host to chroot"
+  sudo mv ${FS_MNT_POINT}/etc/resolv.conf ${FS_MNT_POINT}/etc/resolv.conf.bak || return 1
+  sudo cp "/etc/resolv.conf" "${FS_MNT_POINT}/etc/resolv.conf" || return 1
+
   # enable chroot
   info "Seting up chroot jail..."
   sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
@@ -374,7 +379,7 @@ chroot_actions()
 
   # Executing chroot script
   info "Executing chroot script..."
-  sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
+  sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh  || return 1
 
   # disable chroot
   info "Disabling the chroot jail..."
@@ -387,7 +392,8 @@ chroot_actions()
   # clean /tmp in root fs
   info "Cleaning..."
   sudo rm -rf "$FS_MNT_POINT"/tmp/* > /dev/null || true
-
+  #replace original resolv.conf
+  sudo mv ${FS_MNT_POINT}/etc/resolv.conf.bak ${FS_MNT_POINT}/etc/resolv.conf
   info "Done!"
 }
 
