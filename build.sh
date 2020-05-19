@@ -259,7 +259,7 @@ get_all()
 setup_loop()
 {
   # find free loop device
-  IMG_LOOP=$(losetup -f)
+  IMG_LOOP=$(sudo losetup -f)
 
   # find image sector size (if not user-defined)
   [[ -z $IMG_SECTOR ]] &&
