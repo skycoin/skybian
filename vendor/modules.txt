@@ -18,7 +18,7 @@ fyne.io/fyne/layout
 fyne.io/fyne/test
 fyne.io/fyne/theme
 fyne.io/fyne/widget
-# github.com/SkycoinProject/dmsg v0.1.0
+# github.com/SkycoinProject/dmsg v0.2.0
 github.com/SkycoinProject/dmsg
 github.com/SkycoinProject/dmsg/cipher
 github.com/SkycoinProject/dmsg/disc
@@ -34,7 +34,7 @@ github.com/SkycoinProject/skycoin/src/cipher/ripemd160
 github.com/SkycoinProject/skycoin/src/cipher/secp256k1-go
 github.com/SkycoinProject/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/SkycoinProject/skycoin/src/util/logging
-# github.com/SkycoinProject/skywire-mainnet v0.1.2
+# github.com/SkycoinProject/skywire-mainnet v0.2.3
 github.com/SkycoinProject/skywire-mainnet/internal/httpauth
 github.com/SkycoinProject/skywire-mainnet/pkg/app
 github.com/SkycoinProject/skywire-mainnet/pkg/app/appcommon
@@ -56,6 +56,7 @@ github.com/SkycoinProject/skywire-mainnet/pkg/transport-discovery/client
 github.com/SkycoinProject/skywire-mainnet/pkg/util/buildinfo
 github.com/SkycoinProject/skywire-mainnet/pkg/util/deadline
 github.com/SkycoinProject/skywire-mainnet/pkg/util/pathutil
+github.com/SkycoinProject/skywire-mainnet/pkg/util/rename
 github.com/SkycoinProject/skywire-mainnet/pkg/util/rpcutil
 github.com/SkycoinProject/skywire-mainnet/pkg/util/updater
 github.com/SkycoinProject/skywire-mainnet/pkg/visor
