@@ -11,7 +11,6 @@ function info() {
 # inside the chroot, for example to install/remove additional pkgs
 # or execute some bash commands
 
-
 # change root password to the default of: skybian
 info "Setting default root password to 'skybian'..."
 printf "skybian\nskybian\n" | passwd root
@@ -24,15 +23,15 @@ locale-gen en_US.UTF-8
 # modify and un-comment
 info "Updating your system via APT"
 export DEBIAN_FRONTEND=noninteractive
+set +e
 apt-get -y update && apt-get -y install software-properties-common
-#TESTING REPOSITORY ; SHOULD BE CHANGED TO ONE IN SKYCOINPROJECT
-add-apt-repository 'deb http://skyfleet.github.io/sky-update stretch main'
+set -e
 #add repository signing key
-curl -L http://skyfleet.github.io/sky-update/KEY.asc | apt-key add -
+apt-key add /root/KEY.asc
 #sync package database
-apt -y update
+#apt -y update
 #Install the package
-apt-get -yf install skywire skybian-skywire skybian
+dpkg --force-overwrite -i /tmp/*.deb
 #Synth said he wants golang in the images ; installing golang
 apt -y install golang
 #apt-get -y install [your_pkgs_here]
@@ -52,3 +51,10 @@ mkdir -p /var/skywire-hypervisor || 0
 # Enable systemd units.
 info "Enabling systemd units..."
 systemctl enable skybian-firstrun.service || exit 1
+
+#reset /etc/apt/sources.list which was changed outsidethe chroot
+mv /etc/apt/sources.list.save /etc/apt/sources.list
+mv /etc/apt/sources.list.d/armbian.list.save /etc/apt/sources.list.d/armbian.list
+
+#TESTING REPOSITORY ; SHOULD BE CHANGED TO ONE IN SKYCOINPROJECT
+add-apt-repository 'deb http://skyfleet.github.io/sky-update sid main'

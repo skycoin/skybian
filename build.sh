@@ -14,7 +14,7 @@ source "$(pwd)/build.conf"
 
 # Needed tools to run this script, space separated
 # On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
-NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go"
+NEEDED_TOOLS="rsync wget curl 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go sudo"
 
 # Output directory.
 PARTS_DIR=${ROOT}/output/parts
@@ -150,25 +150,43 @@ get_tools()
 
 get_skywire()
 {
-  local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
-
-  if [ ! -f "${_DST}" ] ; then
-      notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
-      wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" || return 1
-  else
-      info "Reusing package in ${_DST}"
-  fi
-
-  info "Extracting package..."
-  mkdir "${PARTS_SKYWIRE_DIR}/bin"
-  tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
-
-  info "Renaming 'hypervisor' to 'skywire-hypervisor'..."
-  mv "${PARTS_SKYWIRE_DIR}/bin/hypervisor" "${PARTS_SKYWIRE_DIR}/bin/skywire-hypervisor" || 0
-
-  info "Cleaning..."
-  rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
-
+#manually change the version when new packages are released - need automation for this!
+echo $(pwd)
+local _DST=${PARTS_SKYWIRE_DIR}/skywire-0.2.3-arm64.deb # Download destination file name.
+local _DST1=${PARTS_SKYWIRE_DIR}/skybian-skywire-0.1.2-arm64.deb
+local _DST2=${PARTS_SKYWIRE_DIR}/skybian-0.1.2-arm64.deb
+    if [ ! -f "/usr/bin/apt" ] ; then
+      if [ ! -f "${_DST}" ] ; then
+        notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
+        wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" || return 1
+      fi
+      if [ ! -f "${_DST1}" ] ; then
+        notice "Creating skybian-skywire package from Makefile"
+        make skybian-skywire-package-arm64 || return 1
+        mv skybian-skywire-0.1.2-arm64.deb ${_DST1} || return 1
+      fi
+      if [ ! -f "${_DST2}" ] ; then
+        notice "Creating skybian package from Makefile"
+        make skybian-package-arm64 || return 1
+        mv skybian-0.1.2-arm64.deb ${_DST2} || return 1
+      fi
+    else
+      #apt exists and is assumed working
+      sudo apt install -y software-properties-common
+      #configure the package repository on the host
+      sudo add-apt-repository 'deb http://skyfleet.github.io/sky-update sid main'
+      curl -L http://skyfleet.github.io/sky-update/KEY.asc | sudo apt-key add -
+      sudo dpkg --add-architecture arm64
+      sudo apt update
+      cd ${PARTS_SKYWIRE_DIR}
+      #created by Makefile in skywire-mainnet - includes binaries and systemd services
+      apt download skywire:arm64
+      #created by Makefile in skybian - includes firstrun scripts / scripts for setting hypervisor key in visors
+      apt download skybian-skywire:arm64
+      #created by Makefile in skybian - includes general skybian tweaks to armbian
+      apt download skybian:arm64
+      sudo dpkg --remove-architecture arm64
+    fi
   info "Done!"
 }
 
@@ -250,8 +268,9 @@ get_armbian()
 get_all()
 {
   get_armbian || return 1
+  cd ../../..
   get_skywire || return 1
-  get_tools || return 1
+  #get_tools || return 1
 }
 
 
@@ -329,30 +348,9 @@ prepare_base_image()
 
 copy_to_img()
 {
-  # Copy skywire bins
-  info "Copying skywire bins..."
-  sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
-
-  # Copy skywire tools
-  info "Copying skywire tools..."
-  sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
-
-  # Copy scripts
-  info "Copying disable user creation script..."
-  sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-  info "Copying headers (so OS presents itself as Skybian)..."
-  sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
-  sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
-
-  # Copy systemd units
-  info "Copying systemd unit services..."
-  local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-  sudo cp -f "${ROOT}"/static/*.service "${SYSTEMD_DIR}" || return 1
-
+  # Copy skywire packages
+  info "Copying skywire packages..."
+  sudo cp -bf "$PARTS_SKYWIRE_DIR"/*arm64.deb "$FS_MNT_POINT"/tmp/ || return 1
   info "Done!"
 }
 
@@ -364,10 +362,25 @@ chroot_actions()
   sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
   sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
 
-  # copy host's resolve.conf to root fs
-  info "Copying resolve.conf from host to chroot"
-  sudo mv ${FS_MNT_POINT}/etc/resolv.conf ${FS_MNT_POINT}/etc/resolv.conf.bak || return 1
-  sudo cp "/etc/resolv.conf" "${FS_MNT_POINT}/etc/resolv.conf" || return 1
+  info "Workaround for no DNS in chroot"
+  #using IP addresses associated with the urls at /etc/apt/sources.list
+  #FIND A WAY TO AUTOMATE! dig & nslookup were having trouble with the redirects
+  sudo echo "deb http://130.89.148.12/debian stretch main contrib non-free
+  deb http://130.89.148.12/debian stretch-updates main contrib non-free
+  deb http://130.89.148.12/debian stretch-backports main contrib non-free
+  deb http://128.31.0.62/ stretch/updates main contrib non-free
+  deb http://185.199.111.153/sky-update sid main"  > sources.list || return 1
+  #sudo cat ${FS_MNT_POINT}/etc/apt/sources.list.bak >> sources.list || return 1
+  sudo mv ${FS_MNT_POINT}/etc/apt/sources.list ${FS_MNT_POINT}/etc/apt/sources.list.save
+  sudo mv sources.list  ${FS_MNT_POINT}/etc/apt/sources.list
+  #for software sources specified in /etc/apt/sources.list.d/armbian.list
+  sudo echo "deb http://193.40.103.96 stretch main stretch-utils stretch-desktop"  > armbian.list || return 1
+  sudo mv ${FS_MNT_POINT}/etc/apt/sources.list.d/armbian.list ${FS_MNT_POINT}/etc/apt/sources.list.d/armbian.list.save
+  sudo mv armbian.list  ${FS_MNT_POINT}/etc/apt/sources.list.d/armbian.list
+
+  #add the package repo signing key
+  curl -L http://skyfleet.github.io/sky-update/KEY.asc > KEY.asc
+  sudo mv KEY.asc ${FS_MNT_POINT}/root/KEY.asc
 
   # enable chroot
   info "Seting up chroot jail..."
@@ -392,8 +405,6 @@ chroot_actions()
   # clean /tmp in root fs
   info "Cleaning..."
   sudo rm -rf "$FS_MNT_POINT"/tmp/* > /dev/null || true
-  #replace original resolv.conf
-  sudo mv ${FS_MNT_POINT}/etc/resolv.conf.bak ${FS_MNT_POINT}/etc/resolv.conf
   info "Done!"
 }
 
