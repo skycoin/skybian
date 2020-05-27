@@ -28,7 +28,6 @@ BASE_IMG=${IMAGE_DIR}/base_image
 # Download directories.
 PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
 PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
 # Image related variables.
 ARMBIAN_IMG_7z=""
@@ -129,23 +128,10 @@ create_folders()
     info "Creating output folder structure..."
     mkdir -p "$FINAL_IMG_DIR"
     mkdir -p "$FS_MNT_POINT"
-    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
+    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR"
     mkdir -p "$IMAGE_DIR"
 
     info "Done!"
-}
-
-get_tools()
-{
-  local _src="$ROOT/cmd/skyconf/skyconf.go"
-  local _out="$PARTS_TOOLS_DIR/skyconf"
-
-  info "Building skyconf..."
-  info "_src=$_src"
-  info "_out=$_out"
-  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
-
-  info "Done!"
 }
 
 get_skywire()
@@ -270,7 +256,6 @@ get_all()
   get_armbian || return 1
   cd ../../..
   get_skywire || return 1
-  #get_tools || return 1
 }
 
 
