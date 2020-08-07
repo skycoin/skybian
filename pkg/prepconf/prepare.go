@@ -6,15 +6,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/SkycoinProject/dmsg/cipher"
-	"github.com/SkycoinProject/skywire-mainnet/pkg/app/appcommon"
-	"github.com/SkycoinProject/skywire-mainnet/pkg/hypervisor"
-	"github.com/SkycoinProject/skywire-mainnet/pkg/restart"
-	"github.com/SkycoinProject/skywire-mainnet/pkg/routing"
-	"github.com/SkycoinProject/skywire-mainnet/pkg/skyenv"
-	"github.com/SkycoinProject/skywire-mainnet/pkg/visor"
+	"github.com/skycoin/dmsg/cipher"
+	"github.com/skycoin/skywire/pkg/app/appcommon"
+	"github.com/skycoin/skywire/pkg/hypervisor"
+	"github.com/skycoin/skywire/pkg/restart"
+	"github.com/skycoin/skywire/pkg/routing"
+	"github.com/skycoin/skywire/pkg/skyenv"
+	"github.com/skycoin/skywire/pkg/visor"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/boot"
 )
 
 // Config configures how hypervisor and visor images are to be generated.

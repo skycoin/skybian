@@ -6,11 +6,11 @@ import (
 	"os"
 
 	"fyne.io/fyne"
-	"github.com/SkycoinProject/skycoin/src/util/logging"
 	"github.com/rakyll/statik/fs"
+	"github.com/skycoin/skycoin/src/util/logging"
 
-	_ "github.com/SkycoinProject/skybian/cmd/skyimager-gui/statik"
-	"github.com/SkycoinProject/skybian/pkg/imager"
+	_ "github.com/skycoin/skybian/cmd/skyimager-gui/statik"
+	"github.com/skycoin/skybian/pkg/imager"
 )
 
 var log = logging.MustGetLogger("skyimager")

@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-PROJECT_BASE := github.com/SkycoinProject/skybian
+PROJECT_BASE := github.com/skycoin/skybian
 OPTS?=GO111MODULE=on GOBIN=$(PWD)/bin
 
 TEST_OPTS_BASE:=-cover -timeout=5m

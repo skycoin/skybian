@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
-	"github.com/SkycoinProject/skybian/pkg/prepconf"
+	"github.com/skycoin/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/prepconf"
 )
 
 var filename string
