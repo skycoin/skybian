@@ -16,11 +16,11 @@ import (
 	"fyne.io/fyne/dialog"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/widget"
-	"github.com/SkycoinProject/dmsg/cipher"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/skycoin/dmsg/cipher"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/boot"
 )
 
 // DefaultVisors is the default number of visor boot parameters to generate.

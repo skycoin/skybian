@@ -15,9 +15,9 @@ import (
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
-	"github.com/SkycoinProject/dmsg/cipher"
+	"github.com/skycoin/dmsg/cipher"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/boot"
 )
 
 // Page1 returns the canvas that draws page 1 of the Fyne interface.
