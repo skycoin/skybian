@@ -1,6 +1,6 @@
 # Skybian
 
-[![Build Status](https://travis-ci.com/SkycoinProject/skybian.svg?branch=master)](https://travis-ci.com/SkycoinProject/skybian)
+[![Build Status](https://travis-ci.com/skycoin/skybian.svg?branch=master)](https://travis-ci.com/skycoin/skybian)
 
 Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin's Skywire software and it's dependencies.
 
@@ -13,7 +13,7 @@ This repository has two main components. The first is a script for building a ba
 At the time of writing, only building on Linux is supported.
 
 Golang 1.13+ is requred.
-- [Installation/Setup for Golang 1.14](https://github.com/SkycoinProject/skycoin/blob/develop/INSTALLATION.md).
+- [Installation/Setup for Golang 1.14](https://github.com/skycoin/skycoin/blob/develop/INSTALLATION.md).
 
 **Additional dependencies for building Skybian base image:**
 
@@ -66,7 +66,7 @@ Running the script will create a folder named `output` containing:
 2. Update [`CHANGELOG`](CHANGELOG.md) as required.
 3. Change `VERSION` variable within [`build.conf`](build.conf).
 4. Do `git add . && git commit -m "<your-commit-msg>"`.
-5. Run `make tag`. Travis will prepare a release draft at https://github.com/SkycoinProject/skybian/releases
+5. Run `make tag`. Travis will prepare a release draft at https://github.com/skycoin/skybian/releases
 6. Edit the draft and publish.
 
 ## FAQ

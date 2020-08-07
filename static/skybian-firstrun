@@ -1,0 +1,103 @@
+#!/bin/bash
+# Created by @evanlinjin
+
+# TODO(evanlinjin): Write documentation for the following:
+# - Where we are placing the boot params.
+# - Values of the boot params.
+
+DEV_FILE=/dev/mmcblk0
+VISOR_CONF=/etc/skywire-visor.json
+HYPERVISOR_CONF=/etc/skywire-hypervisor.json
+
+TLS_KEY=/etc/skywire-hypervisor/key.pem
+TLS_CERT=/etc/skywire-hypervisor/cert.pem
+
+NET_NAME="Wired connection 1"
+
+# Stop here if config files are already generated.
+if [[ -f "$VISOR_CONF" || -f "$HYPERVISOR_CONF" ]]; then
+  echo "Nothing to be done here."
+  systemctl disable skybian-firstrun.service
+  exit 0
+fi
+
+# 'setup_skywire' extracts boot parameters.
+# These parameters are stored in the MBR (Master Boot Record) Bootstrap code
+# area of the boot device. This starts at position +0E0(hex) and has 216 bytes.
+setup_skywire()
+{
+  if ! readonly BOOT_PARAMS=$(/usr/bin/skyconf -if=$DEV_FILE -vf=$VISOR_CONF -hvf=$HYPERVISOR_CONF -keyf=$TLS_KEY -certf=$TLS_CERT); then
+    echo "Failed to setup skywire environment."
+    return 1
+  fi
+
+  # Obtains the following ENVs from boot params:
+  # MD IP GW PK SK HVS SS SUCCESS LOGFILE
+  echo "-----BEGIN BOOT PARAMS-----"
+  echo "$BOOT_PARAMS"
+  echo "-----END BOOT PARAMS-----"
+  if ! eval "$BOOT_PARAMS"; then
+    echo "Failed to eval boot params."
+    return 1
+  fi
+
+  # Print 'skyconf' logs.
+  if [[ -n "$LOGFILE" ]] ; then
+    echo "-----BEGIN SKYCONF LOGS-----"
+    $(command -v cat) - < "$LOGFILE" | while IFS= read -r line; do
+      echo "$line"
+    done
+    echo "-----END SKYCONF LOGS-----"
+  else
+    echo "Cannot access 'skyconf' logs."
+  fi
+}
+setup_skywire || exit 1
+
+# 'setup_network' sets up networking for Skybian.
+# It uses the IP (local IP address) and GW (Gateway IP address) of the boot
+# params. If these are not defined, defaults will be kept.
+setup_network()
+{
+  echo "Setting up network $NET_NAME..."
+
+  if [[ -n "$IP" ]]; then
+    echo "Setting manual IP to $IP for $NET_NAME."
+    nmcli con mod "$NET_NAME" ipv4.addresses "$IP" ipv4.method "manual"
+  fi
+
+  if [[ -n "$GW" ]]; then
+    echo "Setting manual Gateway IP to $GW for $NET_NAME."
+    nmcli con mod "$NET_NAME" ipv4.gateway "$GW"
+  fi
+
+  nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+}
+setup_network || exit 1
+
+for file in /etc/ssh/ssh_host* ; do
+    echo "[skybian-firstrun] Checking $file:"
+    cat "$file"
+  done
+
+# Enable associated service.
+case $MD in
+  "VISOR")
+    echo "Enabling 'skywire-visor.service'."
+    systemctl enable skywire-visor.service
+    sleep 2
+    systemctl start skywire-visor.service
+    ;;
+  "HYPERVISOR")
+    echo "Enabling 'skywire-hypervisor.service'."
+    systemctl enable skywire-hypervisor.service
+    sleep 2
+    systemctl start skywire-hypervisor.service
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+
+systemctl disable skybian-firstrun.service
+exit 0

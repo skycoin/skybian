@@ -14,7 +14,7 @@ import (
 	"github.com/mholt/archiver"
 	"github.com/sirupsen/logrus"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/boot"
 )
 
 // File extensions which we expect to see in the archive.

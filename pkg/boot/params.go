@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/SkycoinProject/dmsg/cipher"
+	"github.com/skycoin/dmsg/cipher"
 )
 
 // Offset and size of boot parameters.

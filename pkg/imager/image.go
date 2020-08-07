@@ -10,7 +10,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/boot"
 )
 
 // BaseImage represents a base image file extracted from the downloaded archive.

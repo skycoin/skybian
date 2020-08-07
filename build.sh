@@ -68,7 +68,7 @@ No parameters means image creation without checksum and packing
 To know more about the script work, please refers to the file
 called Building_Skybian.md on this folder.
 
-Latest code can be found on https://github.com/SkycoinProject/skybian
+Latest code can be found on https://github.com/skycoin/skybian
 
 EOF
 
@@ -295,34 +295,36 @@ rootfs_check()
 # - Mount loop device
 prepare_base_image()
 {
-    # Armbian image is tight packed, and we need room for adding our
-    # bins, apps & configs, so we will make it bigger
+  # Armbian image is tight packed, and we need room for adding our
+  # bins, apps & configs, so we will make it bigger
 
-    # clean
-    info "Cleaning..."
-    rm -rf "${IMAGE_DIR:?}/*" &> /dev/null || true
+  # clean
+  info "Cleaning..."
+  rm -rf "${IMAGE_DIR:?}/*" &> /dev/null || true
 
-    # copy armbian image to base image location
-    info "Copying base image..."
-    cp "${PARTS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}" || return 1
+  # copy armbian image to base image location
+  info "Copying base image..."
+  cp "${PARTS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}" || return 1
 
-    # Add space to base image
+  # Add space to base image
+  if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
     info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
     truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
     echo ", +" | sfdisk -N1 "${BASE_IMG}" # add free space to the part 1 (sfdisk way)
+  fi
 
-    info "Setting up loop device..."
-    setup_loop || return 1
-    rootfs_check || return 1
+  info "Setting up loop device..."
+  setup_loop || return 1
+  rootfs_check || return 1
 
-    info "Resizing root fs..."
-    sudo resize2fs "${IMG_LOOP}" || return 1
-    rootfs_check || return 1
+  info "Resizing root fs..."
+  sudo resize2fs "${IMG_LOOP}" || return 1
+  rootfs_check || return 1
 
-    info "Mounting root fs to ${FS_MNT_POINT}..."
-    sudo mount -t auto "${IMG_LOOP}" "${FS_MNT_POINT}" -o loop,rw
+  info "Mounting root fs to ${FS_MNT_POINT}..."
+  sudo mount -t auto "${IMG_LOOP}" "${FS_MNT_POINT}" -o loop,rw
 
-    info "Done!"
+  info "Done!"
 }
 
 copy_to_img()
@@ -330,8 +332,8 @@ copy_to_img()
   # Copy skywire bins
   info "Copying skywire bins..."
   sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo cp "$ROOT"/static/skywire-startup "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skywire-startup || return 1
+  sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
+  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
   # Copy skywire tools
   info "Copying skywire tools..."
@@ -349,12 +351,12 @@ copy_to_img()
   # Copy systemd units
   info "Copying systemd unit services..."
   local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-  sudo cp -f "${ROOT}/static/skywire-startup.service" "${SYSTEMD_DIR}" || return 1
+  sudo cp -f "${ROOT}"/static/*.service "${SYSTEMD_DIR}" || return 1
 
   info "Done!"
 }
 
-# fix some defaults on armian to skywire defaults
+# fix some defaults on armbian to skywire defaults
 chroot_actions()
 {
   # copy chroot scripts to root fs
@@ -392,47 +394,47 @@ chroot_actions()
 # calculate md5, sha1 and compress
 calc_sums_compress()
 {
-    # change to final dest
-    cd "${FINAL_IMG_DIR}" ||
-      (error "Failed to cd." && return 1)
+  # change to final dest
+  cd "${FINAL_IMG_DIR}" ||
+    (error "Failed to cd." && return 1)
 
-    # info
-    info "Calculating the md5sum for the image, this may take a while"
+  # info
+  info "Calculating the md5sum for the image, this may take a while"
 
-    # cycle for each one
-    for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
-        # MD5
-        info "MD5 Sum for image: $img"
-        md5sum -b "${img}" > "${img}.md5"
+  # cycle for each one
+  for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
+    # MD5
+    info "MD5 Sum for image: $img"
+    md5sum -b "${img}" > "${img}.md5"
 
-        # sha1
-        info "SHA1 Sum for image: $img"
-        sha1sum -b "${img}" > "${img}.sha1"
+    # sha1
+    info "SHA1 Sum for image: $img"
+    sha1sum -b "${img}" > "${img}.sha1"
 
-        # compress
-        info "Compressing, this will take a while..."
-        name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
-        tar -cvf "${name}.tar" "${img}"*
-        xz -vzT0 "${name}.tar"
-    done
+    # compress
+    info "Compressing, this will take a while..."
+    name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
+    tar -cvf "${name}.tar" "${img}"*
+    xz -vzT0 "${name}.tar"
+  done
 
-    cd "${ROOT}" || return 1
-    info "Done!"
+  cd "${ROOT}" || return 1
+  info "Done!"
 }
 
 clean_image()
 {
-    sudo umount "${FS_MNT_POINT}/sys"
-    sudo umount "${FS_MNT_POINT}/proc"
-    sudo umount "${FS_MNT_POINT}/dev/pts"
-    sudo umount "${FS_MNT_POINT}/dev"
+  sudo umount "${FS_MNT_POINT}/sys"
+  sudo umount "${FS_MNT_POINT}/proc"
+  sudo umount "${FS_MNT_POINT}/dev/pts"
+  sudo umount "${FS_MNT_POINT}/dev"
 
-    sudo sync
-    sudo umount "${FS_MNT_POINT}"
+  sudo sync
+  sudo umount "${FS_MNT_POINT}"
 
-    sudo sync
-    # only do so if IMG_LOOP is set
-    [[ -n "${IMG_LOOP}" ]] && sudo losetup -d "${IMG_LOOP}"
+  sudo sync
+  # only do so if IMG_LOOP is set
+  [[ -n "${IMG_LOOP}" ]] && sudo losetup -d "${IMG_LOOP}"
 }
 
 clean_output_dir()
@@ -452,46 +454,46 @@ clean_output_dir()
 # build disk
 build_disk()
 {
-    # move to correct dir
-    cd "${IMAGE_DIR}" || return 1
+  # move to correct dir
+  cd "${IMAGE_DIR}" || return 1
 
-    # final name
-    local NAME="Skybian-${VERSION}"
+  # final name
+  local NAME="Skybian-${VERSION}"
 
-    # info
-    info "Building image for ${NAME}"
+  # info
+  info "Building image for ${NAME}"
 
-    # force a FS sync
-    info "Forcing a fs rsync to umount the real fs"
-    sudo sync
+  # force a FS sync
+  info "Forcing a fs rsync to umount the real fs"
+  sudo sync
 
-    # umount the base image
-    info "Umount the fs"
-    sudo umount "${FS_MNT_POINT}"
+  # umount the base image
+  info "Umount the fs"
+  sudo umount "${FS_MNT_POINT}"
 
-    # check integrity & fix minor errors
-    rootfs_check
+  # check integrity & fix minor errors
+  rootfs_check
 
-    # TODO [TEST]
-    # shrink the partition to a minimum size
-    # sudo resize2fs -M "${IMG_LOOP}"
-    #
-    # shrink the partition
+  # TODO [TEST]
+  # shrink the partition to a minimum size
+  # sudo resize2fs -M "${IMG_LOOP}"
+  #
+  # shrink the partition
 
-    # force a FS sync
-    info "Forcing a fs rsync to umount the loop device"
-    sudo sync
+  # force a FS sync
+  info "Forcing a fs rsync to umount the loop device"
+  sudo sync
 
-    # freeing the loop device
-    info "Freeing the loop device"
-    sudo losetup -d "${IMG_LOOP}"
+  # freeing the loop device
+  info "Freeing the loop device"
+  sudo losetup -d "${IMG_LOOP}"
 
-    # copy the image to final dir.
-    info "Copy the image to final dir"
-    cp "${BASE_IMG}" "${FINAL_IMG_DIR}/${NAME}.img"
+  # copy the image to final dir.
+  info "Copy the image to final dir"
+  cp "${BASE_IMG}" "${FINAL_IMG_DIR}/${NAME}.img"
 
-    # info
-    info "Image for ${NAME} ready"
+  # info
+  info "Image for ${NAME} ready"
 }
 
 # main build block

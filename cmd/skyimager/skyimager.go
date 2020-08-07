@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/SkycoinProject/skycoin/src/util/logging"
+	"github.com/skycoin/skycoin/src/util/logging"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
-	"github.com/SkycoinProject/skybian/pkg/imager"
+	"github.com/skycoin/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/imager"
 )
 
 // TODO

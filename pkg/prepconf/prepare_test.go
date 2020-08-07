@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/SkycoinProject/dmsg/cipher"
+	"github.com/skycoin/dmsg/cipher"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SkycoinProject/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/boot"
 )
 
 func TestPrepare(t *testing.T) {
