@@ -1,4 +1,4 @@
-module github.com/SkycoinProject/skybian
+module github.com/skycoin/skybian
 
 // go 1.14 presents problems for fyne so 1.13 is used.
 go 1.13
