@@ -151,6 +151,17 @@ func generateVisorConfig(_ Config, bp boot.Params) (interface{}, error) {
 			Port:      routing.Port(skyenv.SkysocksClientPort),
 			Args:      []string{"-addr", skyenv.SkysocksClientAddr},
 		},
+		// TODO(nkryuchkov): Update Skywire dependency version and use symbols from there.
+		{
+			App:       "vpn-server",
+			AutoStart: false,
+			Port:      routing.Port(44),
+		},
+		{
+			App:       "vpn-client",
+			AutoStart: false,
+			Port:      routing.Port(43),
+		},
 	}
 	return out, nil
 }
