@@ -25,8 +25,7 @@ TARGETS=("linux-amd64" "darwin-amd64" "windows-amd64")
 for target in "${TARGETS[@]}"; do
   cd "$FYNE" || exit 1
   dst="./skyimager-$target-$VERSION"
-  tar -czf "$dst.tar" "$target"/* || exit 1
-  xz -vzT0 "$dst.tar" || exit 1
+  tar -czf "$dst.tar.gz" "$target"/* || exit 1
 done
 
 cd "$(pwd)" || 0
