@@ -140,6 +140,16 @@ func generateVisorConfig(_ Config, bp boot.Params) (interface{}, error) {
 				Port:      routing.Port(skyenv.SkysocksClientPort),
 				Args:      []string{"-addr", skyenv.SkysocksClientAddr},
 			},
+			{
+				Name:      "vpn-server",
+				AutoStart: false,
+				Port:      routing.Port(44),
+			},
+			{
+				Name:      "vpn-client",
+				AutoStart: false,
+				Port:      routing.Port(43),
+			},
 		},
 		ServerAddr: skyenv.DefaultAppSrvAddr,
 		BinPath:    "/usr/bin/apps",
