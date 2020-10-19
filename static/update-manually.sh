@@ -23,9 +23,17 @@ tar -xf "./${ARCHIVE_NAME}" -C "./${FOLDER_NAME}"
 
 for BINARY_NAME in $BINARY_NAMES
 do
-  rm -f "./${BINARY_NAME}"
-  cp "./${FOLDER_NAME}/${BINARY_NAME}" "./${BINARY_NAME}"
+  if [ "$BINARY_NAME" == "hypervisor" ]; then
+    rm -f "/usr/bin/skywire-hypervisor"
+    cp "./${FOLDER_NAME}/${BINARY_NAME}" "/usr/bin/skywire-hypervisor"
+  else
+    rm -f "/usr/bin/${BINARY_NAME}"
+    cp "./${FOLDER_NAME}/${BINARY_NAME}" "/usr/bin/${BINARY_NAME}"
+  fi
 done
+
+rm -rf "/usr/bin/apps"
+cp -r "./${FOLDER_NAME}/apps" "/usr/bin/apps/"
 
 rm -rf "./${FOLDER_NAME}"
 rm -f "./${ARCHIVE_NAME}"
