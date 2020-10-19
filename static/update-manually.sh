@@ -32,6 +32,9 @@ do
   fi
 done
 
+rm -rf "/usr/bin/apps"
+cp -r "./${FOLDER_NAME}/apps" "/usr/bin/apps/"
+
 rm -rf "./${FOLDER_NAME}"
 rm -f "./${ARCHIVE_NAME}"
 
