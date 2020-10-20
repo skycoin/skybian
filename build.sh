@@ -414,8 +414,7 @@ calc_sums_compress()
     # compress
     info "Compressing, this will take a while..."
     name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
-    tar -cvf "${name}.tar" "${img}"*
-    xz -vzT0 "${name}.tar"
+    tar -cvzf "${name}.tar.gz" "${img}"*
   done
 
   cd "${ROOT}" || return 1
