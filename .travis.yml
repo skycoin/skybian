@@ -21,8 +21,8 @@ deploy:
   provider: releases
   file_glob: true
   file:
-  - output/final/*.tar.xz
-  - fyne-cross/bin/*.tar.xz
+  - output/final/*.tar.gz
+  - fyne-cross/bin/*.tar.gz
   draft: true
   prerelease: true
   skip_cleanup: true

@@ -441,7 +441,7 @@ clean_output_dir()
   # Clean parts.
   cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.xz' -delete
+  cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
 
   # Rm base image.
   rm -v "${IMAGE_DIR}/base_image"
