@@ -20,7 +20,7 @@ import (
 // File extensions which we expect to see in the archive.
 const (
 	ExtTmp   = ".tmp"
-	ExtTarXz = ".tar.xz"
+	ExtTarGz = ".tar.gz"
 	ExtImg   = ".img"
 	ExtMD5   = ".img.md5"
 	ExtSHA1  = ".img.sha1"
@@ -71,7 +71,7 @@ func NewBuilder(log logrus.FieldLogger, root string) (*Builder, error) {
 
 // DownloadPath returns the path to the download file.
 func (b *Builder) DownloadPath() string {
-	return filepath.Join(b.baseDir, "download"+ExtTarXz)
+	return filepath.Join(b.baseDir, "download"+ExtTarGz)
 }
 
 // DownloadTotal is a thread-safe function that returns the total download size.
@@ -103,15 +103,15 @@ func (b *Builder) ExtractArchive() (err error) {
 	pkgFile := b.DownloadPath()
 	log.WithField("archive_file", pkgFile).Info("Extracting...")
 
-	tarXz := archiver.NewTarXz()
+	tarGz := archiver.NewTarGz()
 	defer func() {
-		if err := tarXz.Close(); err != nil {
+		if err := tarGz.Close(); err != nil {
 			log.WithError(err).Error("Failed to close archiver.")
 		}
 	}()
 
 	walkFn := func(f archiver.File) error {
-		if _, ok := hasExtension(f.Name(), ExtTarXz); ok || f.IsDir() {
+		if _, ok := hasExtension(f.Name(), ExtTarGz); ok || f.IsDir() {
 			log.WithField("file_name", f.Name()).
 				Debug("Skipping...")
 			return nil
@@ -160,7 +160,7 @@ func (b *Builder) ExtractArchive() (err error) {
 		return nil
 	}
 
-	if err = tarXz.Walk(pkgFile, walkFn); err != nil {
+	if err = tarGz.Walk(pkgFile, walkFn); err != nil {
 		return err
 	}
 
