@@ -120,7 +120,9 @@ func generateVisorConfig(_ Config, bp boot.Params) (interface{}, error) {
 	out.ShutdownTimeout = visorconfig.DefaultTimeout
 	out.RestartCheckDelay = restart.DefaultCheckDelay.String()
 	out.Launcher = &visorconfig.V1Launcher{
-		Discovery: &visorconfig.V1AppDisc{ServiceDisc: skyenv.DefaultServiceDiscAddr, UpdateInterval: visorconfig.Duration(skyenv.AppDiscUpdateInterval)},
+		Discovery: &visorconfig.V1AppDisc{
+			ServiceDisc:    skyenv.DefaultServiceDiscAddr,
+			UpdateInterval: visorconfig.Duration(skyenv.AppDiscUpdateInterval)},
 		Apps: []launcher.AppConfig{
 			{
 				Name:      skyenv.SkychatName,
