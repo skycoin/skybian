@@ -162,14 +162,20 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			if !checkPage2Inputs(fg, visors.Text) {
 				return
 			}
-			confirmPage2Continue(fg, fg.wkDir, func() {
+			proceed := func() {
+				os.Mkdir(fg.wkDir, os.FileMode(0755))
 				bpsStr, err := fg.generateBPS()
 				if err != nil {
 					dialog.ShowError(err, fg.w)
 					return
 				}
 				fg.w.SetContent(fg.Page3(bpsStr))
-			})
+			}
+			if _, err := os.Stat(fg.wkDir); err == nil {
+				clearWorkDirDialog(fg, fg.wkDir, proceed)
+			} else {
+				proceed()
+			}
 		},
 	}
 	return makePage(conf,
@@ -223,7 +229,7 @@ func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
 	return true
 }
 
-func confirmPage2Continue(fg *FyneUI, wkDir string, next func()) {
+func clearWorkDirDialog(fg *FyneUI, wkDir string, next func()) {
 	cTitle := "Work Directory Already Exists"
 	cMsg := fmt.Sprintf("Directory %s already exists.\nDelete everything and continue?", wkDir)
 	dialog.ShowConfirm(cTitle, cMsg, func(b bool) {
