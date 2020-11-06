@@ -94,7 +94,6 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 
 	if err != nil {
 		var message string
-		fg.log.Errorf("Error fetching latest releases: %s", err.Error())
 		if errors.Is(err, ErrNetworkConn) {
 			message = "Network connection error"
 		} else {
