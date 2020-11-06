@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -95,11 +96,18 @@ func releaseStrings(releases []Release) (rs []string) {
 	return rs
 }
 
+// ErrNetworkConn is returned when it's impossible to make a request do to the network failure
+var ErrNetworkConn = errors.New("Network connection error")
+
 // ListReleases obtains a list of base image releases.
 // The output 'latest' is non-nil when a latest release is found.
 func ListReleases(ctx context.Context, log logrus.FieldLogger) (rs []Release, latest *Release, err error) {
 	gh := github.NewClient(nil)
 	ghRs, _, err := gh.Repositories.ListReleases(ctx, ghOwner, ghRepo, nil)
+	var dnsErr *net.DNSError
+	if ok := errors.As(err, &dnsErr); ok {
+		return nil, nil, ErrNetworkConn
+	}
 	if err != nil {
 		return nil, nil, err
 	}
