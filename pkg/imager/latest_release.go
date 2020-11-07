@@ -97,7 +97,7 @@ func releaseStrings(releases []Release) (rs []string) {
 	return rs
 }
 
-// ErrNetworkConn is returned when it's impossible to make a request do to the network failure
+// ErrNetworkConn is returned when it's impossible to make a request due to the network failure
 var ErrNetworkConn = errors.New("Network connection error")
 
 // ListReleases obtains a list of base image releases.

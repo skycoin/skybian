@@ -95,7 +95,7 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 	if err != nil {
 		var message string
 		if errors.Is(err, ErrNetworkConn) {
-			message = "Network connection error"
+			message = "Network connection error. Please ensure that you are connected to the internet correctly."
 		} else {
 			message = err.Error()
 		}
