@@ -93,7 +93,13 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 	d.Hide()
 
 	if err != nil {
-		dialog.ShowError(err, fg.w)
+		var message string
+		if errors.Is(err, ErrNetworkConn) {
+			message = "Network connection error. Please ensure that you are connected to the internet correctly."
+		} else {
+			message = err.Error()
+		}
+		showDialogErrMessage(message, fg.w)
 		return nil, ""
 	}
 

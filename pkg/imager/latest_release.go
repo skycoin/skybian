@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -13,8 +14,9 @@ import (
 )
 
 const (
-	ghOwner = "skycoin"
-	ghRepo  = "skybian"
+	ghOwner            = "skycoin"
+	ghRepo             = "skybian"
+	repoRequestTimeout = 5 * time.Second
 )
 
 func expectedBaseImgAssetName(tag string) string {
@@ -95,11 +97,25 @@ func releaseStrings(releases []Release) (rs []string) {
 	return rs
 }
 
+// ErrNetworkConn is returned when it's impossible to make a request due to the network failure
+var ErrNetworkConn = errors.New("Network connection error")
+
 // ListReleases obtains a list of base image releases.
 // The output 'latest' is non-nil when a latest release is found.
 func ListReleases(ctx context.Context, log logrus.FieldLogger) (rs []Release, latest *Release, err error) {
 	gh := github.NewClient(nil)
+	ctx, cancel := context.WithTimeout(ctx, repoRequestTimeout)
+	defer cancel()
 	ghRs, _, err := gh.Repositories.ListReleases(ctx, ghOwner, ghRepo, nil)
+	var dnsErr *net.DNSError
+	if ok := errors.As(err, &dnsErr); ok {
+		log.Error("Error fetching latest releases: can't resolve address")
+		return nil, nil, ErrNetworkConn
+	}
+	if ctx.Err() == context.DeadlineExceeded {
+		log.Error("Error fetching latest releases: network timeout")
+		return nil, nil, ErrNetworkConn
+	}
 	if err != nil {
 		return nil, nil, err
 	}

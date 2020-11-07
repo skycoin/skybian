@@ -1,6 +1,7 @@
 package imager
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -67,6 +68,10 @@ func showErr(fg *FyneUI, err ...error) bool {
 		dialog.ShowError(e, fg.w)
 	}
 	return false
+}
+
+func showDialogErrMessage(errMessage string, fw fyne.Window) {
+	dialog.ShowError(errors.New(errMessage), fw)
 }
 
 type pageConfig struct {
