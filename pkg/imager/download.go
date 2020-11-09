@@ -1,6 +1,7 @@
 package imager
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -8,9 +9,12 @@ import (
 	"sync/atomic"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
 )
 
-func Download(log logrus.FieldLogger, url, dst string, total, current *int64) error {
+var errDownloadCanceled = errors.New("Download canceled")
+
+func Download(ctx context.Context, log logrus.FieldLogger, url, dst string, total, current *int64) error {
 	log = log.WithField("func", "Download")
 
 	// Prepare temp destination file.
@@ -22,7 +26,13 @@ func Download(log logrus.FieldLogger, url, dst string, total, current *int64) er
 	defer closeF()
 
 	// Prepare download response.
-	resp, err := http.Get(url)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	client := &http.Client{}
+
+	resp, err := client.Do(request)
 	if err != nil {
 		return err
 	}
@@ -39,6 +49,10 @@ func Download(log logrus.FieldLogger, url, dst string, total, current *int64) er
 	// Also record progress in 'current' via writeCounter{}.
 	w := io.MultiWriter(f, &writeCounter{current: current})
 	if _, err := io.Copy(w, resp.Body); err != nil {
+		if errors.Is(err, context.Canceled) {
+			log.Info("Download process was canceled by user")
+			return errDownloadCanceled
+		}
 		log.WithError(err).Error("Failed to write file.")
 		return err
 	}

@@ -1,6 +1,7 @@
 package imager
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -33,7 +34,7 @@ func CLIBuild(log logrus.FieldLogger, root, dlURL string, bpsSlice []boot.Params
 	dlErr := make(chan error, 1)
 	dlT := time.NewTicker(time.Second * 1)
 	go func() {
-		dlErr <- builder.Download(dlURL)
+		dlErr <- builder.Download(context.Background(), dlURL)
 		close(dlErr)
 	}()
 

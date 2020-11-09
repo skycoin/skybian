@@ -13,6 +13,7 @@ import (
 
 	"github.com/mholt/archiver"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
 
 	"github.com/skycoin/skybian/pkg/boot"
 )
@@ -86,11 +87,11 @@ func (b *Builder) DownloadCurrent() int64 {
 }
 
 // Download starts downloading from the given URL.
-func (b *Builder) Download(url string) error {
+func (b *Builder) Download(ctx context.Context, url string) error {
 	b.mx.Lock()
 	defer b.mx.Unlock()
 
-	return Download(b.log, url, b.DownloadPath(), &b.dlTotal, &b.dlCurrent)
+	return Download(ctx, b.log, url, b.DownloadPath(), &b.dlTotal, &b.dlCurrent)
 }
 
 // ExtractArchive extracts the downloaded archive.

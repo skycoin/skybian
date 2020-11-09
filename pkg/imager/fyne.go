@@ -21,6 +21,7 @@ import (
 	"github.com/skycoin/dmsg/cipher"
 
 	"github.com/skycoin/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
 // DefaultVisors is the default number of visor boot parameters to generate.
@@ -157,11 +158,16 @@ func (fg *FyneUI) build() {
 
 	switch fg.imgLoc {
 	case fg.locations[0]:
-
-		// Download section.
+		ctx, cancelF := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
-		dlDialog := dialog.NewProgress(dlTitle, dlMsg, fg.w)
+		dlDialog := widgets.NewProgress(dlTitle, dlMsg, fg.w, cancelF, "Cancel")
+
+		dlDialog.Show()
+
+		// Download section.
+
+		// dlDialog := dialog.NewProgress(dlTitle, dlMsg, fg.w)
 		dlDialog.Show()
 		dlDone := make(chan struct{})
 		go func() {
@@ -179,11 +185,13 @@ func (fg *FyneUI) build() {
 				}
 			}
 		}()
-		err = builder.Download(baseURL)
+		err = builder.Download(ctx, baseURL)
 		close(dlDone)
 		dlDialog.Hide()
 		if err != nil {
-			dialog.ShowError(err, fg.w)
+			if !errors.Is(err, errDownloadCanceled) {
+				dialog.ShowError(err, fg.w)
+			}
 			return
 		}
 
