@@ -10,6 +10,14 @@ import (
 	"fyne.io/fyne/widget"
 )
 
+// This package has been mostly copied from fyne/dialog
+// The reason of this was that fyne/dialog doesn't provide any easy
+// way to extend its widgets and to add custom content
+
+// Another solution would be to write our own widget from scratch,
+// but there isn't much point in it since fyne/dialog implementation
+// covers the basic functionality of showing/hiding a window already
+
 const (
 	padWidth  = 32
 	padHeight = 16
@@ -138,7 +146,7 @@ func (d *skydialog) SetDismissText(label string) {
 	widget.Refresh(d.win)
 }
 
-// ShowCustom shows a skydialog over the specified application using custom
+// ShowCustom shows a dialog over the specified application using custom
 // content. The button will have the dismiss text set.
 // The MinSize() of the CanvasObject passed will be used to set the size of the window.
 func ShowCustom(title, dismiss string, content fyne.CanvasObject, parent fyne.Window) {
@@ -155,7 +163,7 @@ func ShowCustom(title, dismiss string, content fyne.CanvasObject, parent fyne.Wi
 	d.Show()
 }
 
-// ShowCustomConfirm shows a skydialog over the specified application using custom
+// ShowCustomConfirm shows a dialog over the specified application using custom
 // content. The cancel button will have the dismiss text set and the "OK" will use
 // the confirm text. The response callback is called on user action.
 // The MinSize() of the CanvasObject passed will be used to set the size of the window.
@@ -180,7 +188,7 @@ func ShowCustomConfirm(title, confirm, dismiss string, content fyne.CanvasObject
 	d.Show()
 }
 
-// ProgressDialog is a simple skydialog window that displays text and a progress bar.
+// ProgressDialog is a simple dialog window that displays text and a progress bar.
 type ProgressDialog struct {
 	*skydialog
 
@@ -192,8 +200,10 @@ func (p *ProgressDialog) SetValue(v float64) {
 	p.bar.SetValue(v)
 }
 
-// NewProgress creates a progress skydialog and returns the handle.
-// Using the returned type you should call Show() and then set its value through SetValue().
+// NewProgress creates a progress dialog and returns the handle.
+// Using the returned type you should call Show() and then set its value through SetValue()
+// cancelF will be called upon pressing the cancel button
+// cancelText will be shown on the cancel button
 func NewProgress(title, message string, parent fyne.Window, cancelF func(), cancelText string) *ProgressDialog {
 	d := newDialog(title, message, theme.InfoIcon(), nil /*cancel?*/, parent)
 	bar := widget.NewProgressBar()
