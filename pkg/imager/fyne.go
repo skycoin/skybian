@@ -189,6 +189,8 @@ func (fg *FyneUI) build() {
 			if !errors.Is(err, errDownloadCanceled) {
 				fg.log.Errorf("Error when downloading image %v", err)
 				dialog.ShowError(err, fg.w)
+			} else {
+				fg.log.Info("Download canceled by user")
 			}
 			return
 		}

@@ -1,7 +1,6 @@
 package imager
 
 import (
-	"errors"
 	"io"
 	"net/http"
 	"os"
@@ -11,8 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 )
-
-var errDownloadCanceled = errors.New("download canceled")
 
 func Download(ctx context.Context, log logrus.FieldLogger, url, dst string, total, current *int64) error {
 	log = log.WithField("func", "Download")
@@ -48,10 +45,6 @@ func Download(ctx context.Context, log logrus.FieldLogger, url, dst string, tota
 	// Also record progress in 'current' via writeCounter{}.
 	w := io.MultiWriter(f, &writeCounter{current: current})
 	if _, err := io.Copy(w, resp.Body); err != nil {
-		if errors.Is(err, context.Canceled) {
-			log.Info("Download process was canceled by user")
-			return errDownloadCanceled
-		}
 		log.WithError(err).Error("Failed to write file.")
 		return err
 	}
