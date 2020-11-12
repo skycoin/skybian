@@ -166,9 +166,6 @@ func (fg *FyneUI) build() {
 		dlDialog.Show()
 
 		// Download section.
-
-		// dlDialog := dialog.NewProgress(dlTitle, dlMsg, fg.w)
-		dlDialog.Show()
 		dlDone := make(chan struct{})
 		go func() {
 			t := time.NewTicker(time.Second)
