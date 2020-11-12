@@ -158,10 +158,10 @@ func (fg *FyneUI) build() {
 
 	switch fg.imgLoc {
 	case fg.locations[0]:
-		ctx, cancelF := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
-		dlDialog := widgets.NewProgress(dlTitle, dlMsg, fg.w, cancelF, "Cancel")
+		dlDialog := widgets.NewProgress(dlTitle, dlMsg, fg.w, cancel, "Cancel")
 
 		dlDialog.Show()
 
@@ -187,6 +187,7 @@ func (fg *FyneUI) build() {
 		dlDialog.Hide()
 		if err != nil {
 			if !errors.Is(err, errDownloadCanceled) {
+				fg.log.Errorf("Error when downloading image %v", err)
 				dialog.ShowError(err, fg.w)
 			}
 			return

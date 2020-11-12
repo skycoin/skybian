@@ -12,7 +12,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-var errDownloadCanceled = errors.New("Download canceled")
+var errDownloadCanceled = errors.New("download canceled")
 
 func Download(ctx context.Context, log logrus.FieldLogger, url, dst string, total, current *int64) error {
 	log = log.WithField("func", "Download")
@@ -30,9 +30,8 @@ func Download(ctx context.Context, log logrus.FieldLogger, url, dst string, tota
 	if err != nil {
 		return err
 	}
-	client := &http.Client{}
 
-	resp, err := client.Do(request)
+	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return err
 	}
