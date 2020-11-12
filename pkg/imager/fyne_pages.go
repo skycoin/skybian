@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"fyne.io/fyne"
+	"fyne.io/fyne/container"
 	"fyne.io/fyne/dialog"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
@@ -39,6 +40,33 @@ func (fg *FyneUI) Page1() fyne.CanvasObject {
 		widget.NewLabelWithStyle(body, fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})))
 }
 
+func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
+	fsImg := widget.NewEntry()
+	fsImg.SetPlaceHolder("path to .img file")
+	fsImg.OnChanged = func(s string) {
+		fg.fsImg = s
+		fg.log.Debugf("Set: fg.fsImg = %v", s)
+	}
+	fsImg.SetText(fg.fsImg)
+	d := dialog.NewFileOpen(func(f fyne.URIReadCloser, err error) {
+		if err != nil {
+			fg.log.Error(err)
+			return
+		}
+		if f == nil {
+			return
+		}
+		uri := f.URI().String()
+		// URI includes file:// scheme, and there is no other way to retrieve full file path
+		filePath := strings.TrimPrefix(uri, "file://")
+		fg.fsImg = filePath
+		fsImg.SetText(filePath)
+	}, fg.w)
+	btn := widget.NewButton("Open", d.Show)
+	box := container.NewHBox(btn, fsImg)
+	return box
+}
+
 // Page2 returns the canvas that draws page 2 of the Fyne interface.
 func (fg *FyneUI) Page2() fyne.CanvasObject {
 	wkDir := newLinkedEntry(&fg.wkDir)
@@ -53,26 +81,20 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	remImg.Hide()
 
-	fsImg := widget.NewEntry()
-	fsImg.SetPlaceHolder("path to .img file")
-	fsImg.OnChanged = func(s string) {
-		fg.fsImg = s
-		fg.log.Debugf("Set: fg.fsImg = %v", s)
-	}
-	fsImg.SetText(fg.fsImg)
-	fsImg.Hide()
+	fsImgPicker := fg.makeFilePicker()
+	fsImgPicker.Hide()
 
 	imgLoc := widget.NewRadio(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
 			remImg.Show()
-			fsImg.Hide()
+			fsImgPicker.Hide()
 		case fg.locations[1]:
 			remImg.Hide()
-			fsImg.Show()
+			fsImgPicker.Show()
 		default:
 			remImg.Hide()
-			fsImg.Hide()
+			fsImgPicker.Hide()
 		}
 	})
 	imgLoc.SetSelected(fg.imgLoc)
@@ -180,7 +202,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImg,
+		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImgPicker,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
 		widget.NewLabel("Number of Visor Images:"), visors,
