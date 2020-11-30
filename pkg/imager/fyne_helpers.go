@@ -1,6 +1,7 @@
 package imager
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -70,8 +71,21 @@ func showErr(fg *FyneUI, err ...error) bool {
 	return false
 }
 
+func insertNth(s string, n int) string {
+	var buffer bytes.Buffer
+	var n_1 = n - 1
+	var l_1 = len(s) - 1
+	for i, rune := range s {
+		buffer.WriteRune(rune)
+		if i%n == n_1 && i != l_1 {
+			buffer.WriteRune('\n')
+		}
+	}
+	return buffer.String()
+}
+
 func showDialogErrMessage(errMessage string, fw fyne.Window) {
-	dialog.ShowError(errors.New(errMessage), fw)
+	dialog.ShowError(errors.New(insertNth(errMessage, 80)), fw)
 }
 
 type pageConfig struct {
