@@ -83,11 +83,13 @@ func (m *Mode) UnmarshalText(text []byte) (err error) {
 
 // Params are the boot parameters for a given node.
 type Params struct {
-	Mode      Mode          `json:"mode"`
-	LocalIP   net.IP        `json:"local_ip"`
-	GatewayIP net.IP        `json:"gateway_ip"`
-	LocalPK   cipher.PubKey `json:"local_pk"` // Not actually encoded to bps.
-	LocalSK   cipher.SecKey `json:"local_sk"`
+	Mode             Mode          `json:"mode"`
+	LocalIP          net.IP        `json:"local_ip"`
+	GatewayIP        net.IP        `json:"gateway_ip"`
+	WifiEndpointName string        `json:"wifi_name,omitempty"`
+	WifiEndpointPass string        `json:"wifi_pass,omitempty"`
+	LocalPK          cipher.PubKey `json:"local_pk"` // Not actually encoded to bps.
+	LocalSK          cipher.SecKey `json:"local_sk"`
 
 	// only valid if mode == "0x00" (hypervisor)
 	HypervisorPKs    cipher.PubKeys `json:"hypervisor_pks,omitempty"`
@@ -95,7 +97,7 @@ type Params struct {
 }
 
 // MakeHypervisorParams is a convenience function for creating boot parameters for a hypervisor.
-func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
+func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass string) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -111,12 +113,17 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
 		LocalPK:   pk,
 		LocalSK:   sk,
 	}
+	if wifiName != "" || wifiPass != "" {
+		params.WifiEndpointName = wifiName
+		params.WifiEndpointPass = wifiPass
+	}
 	_, err = params.Encode()
 	return params, err
 }
 
 // MakeVisorParams is a convenience function for creating boot parameters for a visor.
-func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey, socksPC string) (Params, error) {
+func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey,
+	socksPC string, wifiName, wifiPass string) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -133,6 +140,10 @@ func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []ciphe
 		LocalSK:          sk,
 		HypervisorPKs:    hvPKs,
 		SkysocksPasscode: socksPC,
+	}
+	if wifiName != "" || wifiPass != "" {
+		params.WifiEndpointName = wifiName
+		params.WifiEndpointPass = wifiPass
 	}
 	_, err = params.Encode()
 	return params, err

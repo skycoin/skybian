@@ -114,7 +114,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 	hvPKs := fg.hvPKs
 	if fg.hvImg {
 		hvPK, hvSK := cipher.GenerateKeyPair()
-		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK)
+		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK, "test", "test_pass")
 		if err != nil {
 			return "", fmt.Errorf("boot_params[%d]: failed to generate for hypervisor: %v", len(bpsSlice), err)
 		}
@@ -124,7 +124,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 	}
 	for i := 0; i < fg.visors; i++ {
 		_, vSK := cipher.GenerateKeyPair()
-		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC)
+		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC, "test", "test_pass")
 		if err != nil {
 			return "", fmt.Errorf("boot_params[%d]: failed to generate for visor: %v", len(bpsSlice), err)
 		}
