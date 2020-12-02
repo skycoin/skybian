@@ -35,6 +35,8 @@ const (
 	LocalSKENV       = "SK"
 	HypervisorPKsENV = "HVS"
 	SocksPassEnv     = "SS"
+	WifiNameEnv      = "WFN"
+	WifiPassEnv      = "WFP"
 )
 
 // Modes.
@@ -227,6 +229,14 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 	}
 	if len(bp.SkysocksPasscode) > 0 {
 		if err := PrintEnv(w, SocksPassEnv, bp.SkysocksPasscode); err != nil {
+			return err
+		}
+	}
+	if len(bp.WifiEndpointName) > 0 && len(bp.WifiEndpointPass) > 0 {
+		if err := PrintEnv(w, WifiNameEnv, bp.WifiEndpointName); err != nil {
+			return err
+		}
+		if err := PrintEnv(w, WifiPassEnv, bp.WifiEndpointPass); err != nil {
 			return err
 		}
 	}
