@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"os"
 	"strings"
@@ -243,13 +244,23 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 	return nil
 }
 
+// todo: encode/decode as it is now is infested with magical numbers and manually assembling data
+// if boot parameters get more complexe, consider using something
+// like encoding/gob or protobuf for better readability/maintainability
+//
+
 // Encode encodes the boot parameters in a concise format to be wrote to the MBR.
 func (bp Params) Encode() ([]byte, error) {
 	keys := bp.LocalSK[:]
 	for _, hvPK := range bp.HypervisorPKs {
 		keys = append(keys, hvPK[:]...)
 	}
-	raw := bytes.Join([][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode), keys}, []byte{sep})
+	toEncode := [][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode), keys}
+	if bp.WifiEndpointName != "" && bp.WifiEndpointPass != "" {
+		toEncode = append(toEncode, []byte(bp.WifiEndpointName))
+		toEncode = append(toEncode, []byte(bp.WifiEndpointPass))
+	}
+	raw := bytes.Join(toEncode, []byte{sep})
 	if len(raw) > size {
 		return nil, ErrParamsTooLarge
 	}
@@ -261,8 +272,10 @@ func (bp Params) Encode() ([]byte, error) {
 
 // Decode decodes the boot parameters from the given raw bytes.
 func (bp *Params) Decode(raw []byte) error {
-	split := bytes.SplitN(raw, []byte{sep}, 5)
-	if len(split) != 5 {
+	split := bytes.SplitN(raw, []byte{sep}, 7)
+	// 5 for a regular config, 7 for wifi-enabled config
+	if len(split) != 5 && len(split) != 7 {
+		log.Printf("len: %d", len(split))
 		return ErrCannotReadParams
 	}
 
@@ -277,6 +290,10 @@ func (bp *Params) Decode(raw []byte) error {
 			break
 		}
 		bp.HypervisorPKs = append(bp.HypervisorPKs, pk)
+	}
+	if len(split) == 7 {
+		bp.WifiEndpointName = string(split[5])
+		bp.WifiEndpointPass = string(split[6])
 	}
 	return nil
 }
