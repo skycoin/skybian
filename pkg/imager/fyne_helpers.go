@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sync"
+	"unicode"
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/dialog"
@@ -71,21 +72,79 @@ func showErr(fg *FyneUI, err ...error) bool {
 	return false
 }
 
-func insertNth(s string, n int) string {
-	var buffer bytes.Buffer
-	var n_1 = n - 1
-	var l_1 = len(s) - 1
-	for i, rune := range s {
-		buffer.WriteRune(rune)
-		if i%n == n_1 && i != l_1 {
-			buffer.WriteRune('\n')
+const nbsp = 0xA0
+
+func wrapLines(s string, lim uint) string {
+	// Initialize a buffer with a slightly larger size to account for breaks
+	init := make([]byte, 0, len(s))
+	buf := bytes.NewBuffer(init)
+
+	var current uint
+	var wordBuf, spaceBuf bytes.Buffer
+	var wordBufLen, spaceBufLen uint
+
+	for _, char := range s {
+		if char == '\n' {
+			if wordBuf.Len() == 0 {
+				if current+spaceBufLen > lim {
+					current = 0
+				} else {
+					current += spaceBufLen
+					spaceBuf.WriteTo(buf)
+				}
+				spaceBuf.Reset()
+				spaceBufLen = 0
+			} else {
+				current += spaceBufLen + wordBufLen
+				spaceBuf.WriteTo(buf)
+				spaceBuf.Reset()
+				spaceBufLen = 0
+				wordBuf.WriteTo(buf)
+				wordBuf.Reset()
+				wordBufLen = 0
+			}
+			buf.WriteRune(char)
+			current = 0
+		} else if unicode.IsSpace(char) && char != nbsp {
+			if spaceBuf.Len() == 0 || wordBuf.Len() > 0 {
+				current += spaceBufLen + wordBufLen
+				spaceBuf.WriteTo(buf)
+				spaceBuf.Reset()
+				spaceBufLen = 0
+				wordBuf.WriteTo(buf)
+				wordBuf.Reset()
+				wordBufLen = 0
+			}
+
+			spaceBuf.WriteRune(char)
+			spaceBufLen++
+		} else {
+			wordBuf.WriteRune(char)
+			wordBufLen++
+
+			if current+wordBufLen+spaceBufLen > lim && wordBufLen < lim {
+				buf.WriteRune('\n')
+				current = 0
+				spaceBuf.Reset()
+				spaceBufLen = 0
+			}
 		}
 	}
-	return buffer.String()
+
+	if wordBuf.Len() == 0 {
+		if current+spaceBufLen <= lim {
+			spaceBuf.WriteTo(buf)
+		}
+	} else {
+		spaceBuf.WriteTo(buf)
+		wordBuf.WriteTo(buf)
+	}
+
+	return buf.String()
 }
 
 func showDialogErrMessage(errMessage string, fw fyne.Window) {
-	dialog.ShowError(errors.New(insertNth(errMessage, 80)), fw)
+	dialog.ShowError(errors.New(wrapLines(errMessage, 80)), fw)
 }
 
 type pageConfig struct {
