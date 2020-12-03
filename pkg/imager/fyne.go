@@ -39,16 +39,18 @@ type FyneUI struct {
 	releases  []Release
 	locations []string
 
-	wkDir   string
-	imgLoc  string
-	remImg  string
-	fsImg   string
-	gwIP    net.IP
-	socksPC string
-	visors  int
-	hvImg   bool
-	hvPKs   []cipher.PubKey
-	bps     []boot.Params
+	wkDir    string
+	imgLoc   string
+	remImg   string
+	fsImg    string
+	gwIP     net.IP
+	wifiName string
+	wifiPass string
+	socksPC  string
+	visors   int
+	hvImg    bool
+	hvPKs    []cipher.PubKey
+	bps      []boot.Params
 }
 
 // NewFyneUI creates a new Fyne UI.
@@ -114,7 +116,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 	hvPKs := fg.hvPKs
 	if fg.hvImg {
 		hvPK, hvSK := cipher.GenerateKeyPair()
-		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK, "test", "test_pass")
+		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK, fg.wifiName, fg.wifiPass)
 		if err != nil {
 			return "", fmt.Errorf("boot_params[%d]: failed to generate for hypervisor: %v", len(bpsSlice), err)
 		}
@@ -124,7 +126,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 	}
 	for i := 0; i < fg.visors; i++ {
 		_, vSK := cipher.GenerateKeyPair()
-		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC, "test", "test_pass")
+		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC, fg.wifiName, fg.wifiPass)
 		if err != nil {
 			return "", fmt.Errorf("boot_params[%d]: failed to generate for visor: %v", len(bpsSlice), err)
 		}
