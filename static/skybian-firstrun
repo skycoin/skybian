@@ -80,9 +80,9 @@ setup_wifi()
 {
   if [[ -n "$WFN" ]]; then
     echo "Setting up wifi connection $WIFI_NAME..."
-    nmcli c add type wifi con-name $WIFI_NAME ifname wlan0 ssid $WFN
+    nmcli c add type wifi con-name "$WIFI_NAME" ifname wlan0 ssid $WFN
     if [[ -n "$WFP" ]]; then
-      nmcli c modify $WIFI_NAME wifi-sec.key-mgmt wpa-psk wifi-sec.psk $WFP
+      nmcli c modify "$WIFI_NAME" wifi-sec.key-mgmt wpa-psk wifi-sec.psk $WFP
     fi
 
     if [[ -n "$IP" && -n "$GW" ]]; then
