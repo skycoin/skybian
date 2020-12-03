@@ -251,11 +251,8 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 // Encode encodes the boot parameters in a concise format to be wrote to the MBR.
 func (bp Params) Encode() ([]byte, error) {
 	keys := bp.LocalSK[:]
-	toEncode := [][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode)}
-	if bp.WifiEndpointName != "" && bp.WifiEndpointPass != "" {
-		toEncode = append(toEncode, []byte(bp.WifiEndpointName))
-		toEncode = append(toEncode, []byte(bp.WifiEndpointPass))
-	}
+	toEncode := [][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP,
+		[]byte(bp.SkysocksPasscode), []byte(bp.WifiEndpointName), []byte(bp.WifiEndpointPass)}
 	for _, hvPK := range bp.HypervisorPKs {
 		keys = append(keys, hvPK[:]...)
 	}
@@ -274,7 +271,7 @@ func (bp Params) Encode() ([]byte, error) {
 func (bp *Params) Decode(raw []byte) error {
 	split := bytes.SplitN(raw, []byte{sep}, 7)
 	// 5 for a regular config, 7 for wifi-enabled config
-	if len(split) != 5 && len(split) != 7 {
+	if len(split) != 7 {
 		return ErrCannotReadParams
 	}
 
