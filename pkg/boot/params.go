@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"strings"
@@ -252,14 +251,15 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 // Encode encodes the boot parameters in a concise format to be wrote to the MBR.
 func (bp Params) Encode() ([]byte, error) {
 	keys := bp.LocalSK[:]
-	for _, hvPK := range bp.HypervisorPKs {
-		keys = append(keys, hvPK[:]...)
-	}
-	toEncode := [][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode), keys}
+	toEncode := [][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode)}
 	if bp.WifiEndpointName != "" && bp.WifiEndpointPass != "" {
 		toEncode = append(toEncode, []byte(bp.WifiEndpointName))
 		toEncode = append(toEncode, []byte(bp.WifiEndpointPass))
 	}
+	for _, hvPK := range bp.HypervisorPKs {
+		keys = append(keys, hvPK[:]...)
+	}
+	toEncode = append(toEncode, keys)
 	raw := bytes.Join(toEncode, []byte{sep})
 	if len(raw) > size {
 		return nil, ErrParamsTooLarge
@@ -275,14 +275,18 @@ func (bp *Params) Decode(raw []byte) error {
 	split := bytes.SplitN(raw, []byte{sep}, 7)
 	// 5 for a regular config, 7 for wifi-enabled config
 	if len(split) != 5 && len(split) != 7 {
-		log.Printf("len: %d", len(split))
 		return ErrCannotReadParams
 	}
 
 	bp.Mode, bp.LocalIP, bp.GatewayIP, bp.SkysocksPasscode =
 		Mode(split[0][0]), split[1], split[2], string(split[3])
 
-	keys := split[4]
+	if len(split) == 7 {
+		bp.WifiEndpointName = string(split[4])
+		bp.WifiEndpointPass = string(split[5])
+	}
+
+	keys := split[6]
 	keys = keys[copy(bp.LocalSK[:], keys):]
 	for {
 		var pk cipher.PubKey
@@ -291,10 +295,7 @@ func (bp *Params) Decode(raw []byte) error {
 		}
 		bp.HypervisorPKs = append(bp.HypervisorPKs, pk)
 	}
-	if len(split) == 7 {
-		bp.WifiEndpointName = string(split[5])
-		bp.WifiEndpointPass = string(split[6])
-	}
+
 	return nil
 }
 
