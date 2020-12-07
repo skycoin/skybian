@@ -115,7 +115,7 @@ install_ntp()
     #   is crippled. Switch off that setting with:
     timedatectl set-local-rtc 0
     timedatectl set-ntp on
-    apt install -y ntp
+    apt update && apt install -y ntp
 
     # Set hardware clock to UTC (which doesn't have daylight savings):
     hwclock -w
