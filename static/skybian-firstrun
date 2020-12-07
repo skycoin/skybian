@@ -99,5 +99,28 @@ case $MD in
     ;;
 esac
 
+install_ntp()
+{
+    # (courtesy of https://github.com/some4/skywire-install-bash/blob/master/install.sh)
+    # Stop timesyncd:
+    systemctl stop systemd-timesyncd.service
+
+    # Backup (but don't overwrite an existing) config. If not, sed will keep
+    #   appending file:
+    cp -n /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.orig
+    # Use fresh copy in case installer used on existing system:
+    cp /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
+
+    # When system is set to sync with RTC the time can't be updated and NTP
+    #   is crippled. Switch off that setting with:
+    timedatectl set-local-rtc 0
+    timedatectl set-ntp on
+    apt install -y ntp
+
+    # Set hardware clock to UTC (which doesn't have daylight savings):
+    hwclock -w
+}
+install_ntp || logger "Failed to setup ntp service"
+
 systemctl disable skybian-firstrun.service
 exit 0
