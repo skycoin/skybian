@@ -199,6 +199,9 @@ get_armbian()
   # test if we have a file in there
   if [ -r "${ARMBIAN_IMG_XZ}" ] ; then
 
+      # todo: doesn't seem to work, always downloads the image
+      # todo: download checksum separately, and use it to validate local copy
+
       # use already downloaded image file
       notice "Reusing already downloaded file"
   else
