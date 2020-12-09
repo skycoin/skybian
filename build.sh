@@ -163,9 +163,6 @@ get_skywire()
   mkdir "${PARTS_SKYWIRE_DIR}/bin"
   tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
 
-  info "Renaming 'hypervisor' to 'skywire-hypervisor'..."
-  mv "${PARTS_SKYWIRE_DIR}/bin/hypervisor" "${PARTS_SKYWIRE_DIR}/bin/skywire-hypervisor" || 0
-
   info "Cleaning..."
   rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
