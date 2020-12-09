@@ -18,3 +18,7 @@ require (
 	golang.org/x/mobile v0.0.0-20190719004257-d2bd2a29d028 // indirect
 	nhooyr.io/websocket v1.8.4 // indirect
 )
+
+// Uncomment it for tests with alternative branches and run `make dep`
+
+replace github.com/skycoin/skywire => ../skywire
