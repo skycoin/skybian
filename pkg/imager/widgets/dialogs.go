@@ -19,8 +19,9 @@ import (
 // covers the basic functionality of showing/hiding a window already
 
 const (
-	padWidth  = 32
-	padHeight = 16
+	padWidth    = 32
+	padHeight   = 16
+	dialogWidth = 400
 )
 
 type skydialog struct {
@@ -74,6 +75,9 @@ func (d *skydialog) setButtons(buttons fyne.CanvasObject) {
 	}
 
 	d.win = widget.NewModalPopUp(content, d.parent.Canvas())
+	// fixed width is required to make word-wrapping work correctly
+	// if needed, add new method to set dialog width programmatically, for now it's a constant
+	d.win.Resize(fyne.NewSize(dialogWidth, d.win.MinSize().Height))
 	d.applyTheme()
 }
 
@@ -92,6 +96,10 @@ func (d *skydialog) Layout(obj []fyne.CanvasObject, size fyne.Size) {
 	// content (text)
 	obj[2].Move(fyne.NewPos(size.Width/2-(textMin.Width/2), size.Height-padHeight-btnMin.Height-textMin.Height-theme.Padding()))
 	obj[2].Resize(fyne.NewSize(textMin.Width, textMin.Height))
+	if d.win != nil {
+		obj[2].Move(fyne.NewPos(theme.Padding(), size.Height-padHeight-btnMin.Height-textMin.Height-theme.Padding()))
+		obj[2].Resize(fyne.NewSize(size.Width, size.Height+theme.Padding()))
+	}
 
 	// buttons
 	obj[3].Resize(btnMin)
@@ -159,8 +167,15 @@ func ShowCustom(title, dismiss string, content fyne.CanvasObject, parent fyne.Wi
 		},
 	}
 	d.setButtons(widget.NewHBox(layout.NewSpacer(), d.dismiss, layout.NewSpacer()))
-
 	d.Show()
+}
+
+// ShowError displays an error dialog with a single OK button, that displays given text
+// The text is word wrapped
+func ShowError(text string, parent fyne.Window) {
+	label := widget.NewLabelWithStyle(text, fyne.TextAlignLeading, fyne.TextStyle{})
+	label.Wrapping = fyne.TextWrapWord
+	ShowCustom("Error blyat", "Ok", label, parent)
 }
 
 // ShowCustomConfirm shows a dialog over the specified application using custom
