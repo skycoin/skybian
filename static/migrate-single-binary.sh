@@ -10,58 +10,73 @@ BACKUP_BIN=$MIGRATION_BACKUP/bin
 BACKUP_CONF=$MIGRATION_BACKUP/conf
 SYSTEMD_DIR="/etc/systemd/system/"
 
-echo "Preparing..."
-apt update && apt install -y jq
+main() {
+	prepare
+	update_binaries
+	update_configs
+	finalize
+}
 
-mkdir -p $BACKUP_SERVICE $BACKUP_CONF $BACKUP_BIN $MIGRATION_DIR $MIGRATION_BIN
+prepare() {
+	echo "Preparing..."
+	apt update && apt install -y jq
 
-echo "Downloading release..."
-cd $MIGRATION_BIN
-rm -rf *
-wget $RELEASE_ARCHIVE
-tar xf $RELEASE_ARCHIVE
+	mkdir -p $BACKUP_SERVICE $BACKUP_CONF $BACKUP_BIN $MIGRATION_DIR $MIGRATION_BIN
 
-# stop service
-echo "stopping and disabling services..."
-systemctl stop skywire-visor.service
-sleep 2
-systemctl disable skywire-visor.service
-systemctl stop skywire-hypervisor.service
-sleep 2
-systemctl disable skywire-hypervisor.service
+	echo "Downloading release..."
+	cd $MIGRATION_BIN
+	rm -rf *
+	wget $RELEASE_ARCHIVE
+	tar xf $RELEASE_ARCHIVE
 
-echo "removing old binaries and service definitions..."
-mv $SYSTEM_DIR/skybian-firstrun.service $MIGRATION_BACKUP
-cp $SYSTEM_DIR/skywire-visor.service $MIGRATION_BACKUP
-mv $SYSTEM_DIR/skywire-hypervisor.service $MIGRATION_BACKUP
-mv /usr/bin/skybian-firstrun $MIGRATION_BACKUP
-mv /usr/bin/skywire-hypervisor $MIGRATION_BACKUP
-mv /usr/bin/skywire-visor $MIGRATION_BACKUP
-mv /usr/bin/apps/ $MIGRATION_BACKUP
+	# stop service
+	echo "stopping and disabling services..."
+	systemctl stop skywire-visor.service
+	sleep 2
+	systemctl disable skywire-visor.service
+	systemctl stop skywire-hypervisor.service
+	sleep 2
+	systemctl disable skywire-hypervisor.service
+}
 
-echo "removing old configs..."
+update_binaries() {
+	echo "Removing old binaries..."
+	mv $SYSTEM_DIR/skybian-firstrun.service $MIGRATION_BACKUP
+	cp $SYSTEM_DIR/skywire-visor.service $MIGRATION_BACKUP
+	mv $SYSTEM_DIR/skywire-hypervisor.service $MIGRATION_BACKUP
+	mv /usr/bin/skybian-firstrun $MIGRATION_BACKUP
+	mv /usr/bin/skywire-hypervisor $MIGRATION_BACKUP
+	mv /usr/bin/skywire-visor $MIGRATION_BACKUP
+	mv /usr/bin/apps/ $MIGRATION_BACKUP
 
-mv /etc/skywire-visor.json $MIGRATION_BACKUP 2> /dev/null
-mv /etc/skywire-hypervisor.json $MIGRATION_BACKUP 2> /dev/null
+	echo "Setting up new binaries..."
+	mv "${MIGRATION_BIN}/skywire-visor" /usr/bin/
+	mv "${MIGRATION_BIN}/apps/" /usr/bin/
+}
 
-echo "setting up new binaries and services"
-# todo: download and extract
-mv "${MIGRATION_BIN}/skywire-visor" /usr/bin/
-mv "${MIGRATION_BIN}/apps/" /usr/bin/
+update_configs() {
+	echo "Removing old configs..."
+	# move existing configs
+	mv /etc/skywire-visor.json $MIGRATION_BACKUP 2> /dev/null
+	mv /etc/skywire-hypervisor.json $MIGRATION_BACKUP 2> /dev/null
 
-# change skywire-visor service to support new binary
-sed -i 's#ExecStart.*#ExecStart=/usr/bin/skywire-visor -c /etc/skywire-config.json#' $SYSTEM_DIR/skywire-visor.service
+	# change skywire-visor service to support new binary
+	sed -i 's#ExecStart.*#ExecStart=/usr/bin/skywire-visor -c /etc/skywire-config.json#' $SYSTEM_DIR/skywire-visor.service
+	# reload systemd service definitions
+}
 
-# todo: generate config file
+finalize() {
+	systemctl daemon-reload
+	systemctl start skywire-visor.service
+}
 
-# endconf
+gen_hypervisor_config() {
 
+}
 
-# reload systemd service definitions
-systemctl daemon-reload
+gen_visor_config() {
 
-systemctl start skywire-visor.service
-
+}
 
 HV_CONF_OLD='
 {
@@ -186,3 +201,5 @@ HV_CONF_NEW='
 	}
 }
 '
+
+main "$@"
