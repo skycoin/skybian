@@ -5,7 +5,6 @@ MIGRATION_BIN="${MIGRATION_DIR}/bin/"
 RELEASE_ARCHIVE="https://github.com/i-hate-nicknames/skywire/releases/download/v0.3.1-experimental/skywire-v0.3.1-experimental-linux-arm64.tar.gz"
 
 MIGRATION_BACKUP="/var/skywire/backup/migration/"
-BACKUP_SERVICE=$MIGRATION_BACKUP/service
 BACKUP_BIN=$MIGRATION_BACKUP/bin
 BACKUP_CONF=$MIGRATION_BACKUP/conf
 SYSTEMD_DIR="/etc/systemd/system/"
@@ -21,7 +20,7 @@ prepare() {
 	echo "Preparing..."
 	apt update && apt install -y jq
 
-	mkdir -p $BACKUP_SERVICE $BACKUP_CONF $BACKUP_BIN $MIGRATION_DIR $MIGRATION_BIN
+	mkdir -p $BACKUP_CONF $BACKUP_BIN $MIGRATION_DIR $MIGRATION_BIN
 
 	echo "Downloading release..."
 	cd $MIGRATION_BIN
@@ -57,50 +56,68 @@ update_binaries() {
 update_configs() {
 	echo "Removing old configs..."
 	# move existing configs
-	mv /etc/skywire-visor.json $MIGRATION_BACKUP 2> /dev/null
-	mv /etc/skywire-hypervisor.json $MIGRATION_BACKUP 2> /dev/null
+	mv /etc/skywire-visor.json $BACKUP_CONF 2> /dev/null
+	mv /etc/skywire-hypervisor.json $BACKUP_CONF 2> /dev/null
 
 	# change skywire-visor service to support new binary
 	sed -i 's#ExecStart.*#ExecStart=/usr/bin/skywire-visor -c /etc/skywire-config.json#' $SYSTEM_DIR/skywire-visor.service
-	# reload systemd service definitions
+	if [ -f "${$BACKUP_CONF}/skywire-visor.json" ] ; then
+		gen_visor_config
+	fi
+
+	if [ -f "${$BACKUP_CONF}/skywire-hypervisor.json" ] ; then
+		gen_hypervisor_config
+	fi
 }
 
 finalize() {
+	# reload systemd service definitions
 	systemctl daemon-reload
 	systemctl start skywire-visor.service
 }
 
-gen_hypervisor_config() {
-
-}
-
 gen_visor_config() {
-
+	echo "Generating visor config..."
+	# todo: update transport log location?
+	cp "${$BACKUP_CONF}/skywire-visor.json" /etc/skywire-visor.json
 }
 
-HV_CONF_OLD='
-{
-	"public_key": "03510100850eaa87370fb91071a5c5e27e5fb632dd7546aab4ce45e2ff04aa637e",
-	"secret_key": "1b74960570450a991728cbe1d71f34b1cae041ce08bbad8acc10a50e7e9dbf06",
-	"db_path": "/var/skywire-hypervisor/users.db",
-	"enable_auth": true,
-	"cookies": {
-		"hash_key": "6ecbe9acc0d6bdb13a86c0cfdba626992edba6b3c750eef96fee76f856d276085a4502e7ac0ea972517dd34efc4c3ae9d65cc323abf8e4d650f4afd1e629cbaa",
-		"block_key": "05fa5c049a19cbfb87f99786df2259752bd096de642f9cb7d54b0350fb6970a4",
-		"expires_duration": 43200000000000,
-		"path": "/",
-		"domain": ""
-	},
-	"dmsg_discovery": "http://dmsg.discovery.skywire.skycoin.com",
-	"dmsg_port": 46,
-	"http_addr": ":8000",
-	"enable_tls": false,
-	"tls_cert_file": "/etc/skywire-hypervisor/cert.pem",
-	"tls_key_file": "/etc/skywire-hypervisor/key.pem"
-}
-'
+gen_hypervisor_config() {
+	local SRC="${BACKUP_CONF}/skywire-hypervisor.json"
+	local RESULT="${BACKUP_CONF}/skywire-visor.json"
+	local PK=$(jq '.public_key' $SRC)
+	local SK=$(jq '.secret_key' $SRC)
 
-HV_CONF_NEW='
+    # add hypervisor key
+	echo "$HV_CONF_TPL" | jq '.hypervisor={}' > $RESULT
+
+	update_hv_key $SRC ".public_key" ".pk" $RESULT
+	update_hv_key $SRC ".secret_key" ".sk" $RESULT
+    update_hv_key $SRC ".db_path" ".hypervisor.db_path" $RESULT
+    update_hv_key $SRC ".enable_auth" ".hypervisor.enable_auth" $RESULT
+    update_hv_key $SRC ".cookies" ".hypervisor.cookies" $RESULT
+    update_hv_key $SRC ".dmsg_port" ".hypervisor.dmsg_port" $RESULT
+    update_hv_key $SRC ".http_addr" ".hypervisor.http_addr" $RESULT
+    update_hv_key $SRC ".enable_tls" ".hypervisor.enable_tls" $RESULT
+    update_hv_key $SRC ".tls_cert_file" ".hypervisor.tls_cert_file" $RESULT
+    update_hv_key $SRC ".tls_key_file" ".hypervisor.tls_key_file" $RESULT
+	
+}
+
+# accept 4 arguments: source, key, target key and target
+# look for the key under source, and put it into the target
+# under target key
+update_hv_key() {
+	local SRC=${1:?Need source from which to update}
+	local KEY=${2:?Need key to update}
+	local TARGET_KEY=${3:?Need target key}
+	local TARGET=${4:?Need json file as a target}
+	local VAL=$(cat $SRC | jq "$KEY")    
+    local RES=$(jq "$TARGET_KEY=$VAL" "$TARGET")
+    echo "$RES" > $TARGET
+}
+
+HV_CONF_TPL='
 {
 	"version": "v1.0.0",
 	"sk": "3291b0af73b2ac7287188ddb5e03fb49c8ac445e2efa2d4aa4dbb0e5162ab9e2",
