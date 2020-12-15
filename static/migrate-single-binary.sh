@@ -88,6 +88,10 @@ gen_hypervisor_config() {
 	local PK=$(jq '.public_key' $SRC)
 	local SK=$(jq '.secret_key' $SRC)
 
+	if [ -f "${$BACKUP_CONF}/skywire-visor.json" ] ; then
+		HV_CONF_TPL=$(cat "${$BACKUP_CONF}/skywire-visor.json")
+	fi
+
     # add hypervisor key
 	echo "$HV_CONF_TPL" | jq '.hypervisor={}' > $RESULT
 
