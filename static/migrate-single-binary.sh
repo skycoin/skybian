@@ -95,23 +95,23 @@ gen_hypervisor_config() {
     # add hypervisor key
 	echo "$HV_CONF_TPL" | jq '.hypervisor={}' > $RESULT
 
-	update_hv_key $SRC ".public_key" ".pk" $RESULT
-	update_hv_key $SRC ".secret_key" ".sk" $RESULT
-    update_hv_key $SRC ".db_path" ".hypervisor.db_path" $RESULT
-    update_hv_key $SRC ".enable_auth" ".hypervisor.enable_auth" $RESULT
-    update_hv_key $SRC ".cookies" ".hypervisor.cookies" $RESULT
-    update_hv_key $SRC ".dmsg_port" ".hypervisor.dmsg_port" $RESULT
-    update_hv_key $SRC ".http_addr" ".hypervisor.http_addr" $RESULT
-    update_hv_key $SRC ".enable_tls" ".hypervisor.enable_tls" $RESULT
-    update_hv_key $SRC ".tls_cert_file" ".hypervisor.tls_cert_file" $RESULT
-    update_hv_key $SRC ".tls_key_file" ".hypervisor.tls_key_file" $RESULT
+    update_key $SRC ".public_key" ".pk" $RESULT
+    update_key $SRC ".secret_key" ".sk" $RESULT
+    update_key $SRC ".db_path" ".hypervisor.db_path" $RESULT
+    update_key $SRC ".enable_auth" ".hypervisor.enable_auth" $RESULT
+    update_key $SRC ".cookies" ".hypervisor.cookies" $RESULT
+    update_key $SRC ".dmsg_port" ".hypervisor.dmsg_port" $RESULT
+    update_key $SRC ".http_addr" ".hypervisor.http_addr" $RESULT
+    update_key $SRC ".enable_tls" ".hypervisor.enable_tls" $RESULT
+    update_key $SRC ".tls_cert_file" ".hypervisor.tls_cert_file" $RESULT
+    update_key $SRC ".tls_key_file" ".hypervisor.tls_key_file" $RESULT
 	
 }
 
 # accept 4 arguments: source, key, target key and target
 # look for the key under source, and put it into the target
 # under target key
-update_hv_key() {
+update_key() {
 	local SRC=${1:?Need source from which to update}
 	local KEY=${2:?Need key to update}
 	local TARGET_KEY=${3:?Need target key}
