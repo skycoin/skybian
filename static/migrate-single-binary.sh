@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 
-MIGRATION_DIR="/var/skywire/migration"
-MIGRATION_BIN="${MIGRATION_DIR}/bin/"
-RELEASE_ARCHIVE="https://github.com/i-hate-nicknames/skywire/releases/download/v0.3.1-experimental/skywire-v0.3.1-experimental-linux-arm64.tar.gz"
+ARCHIVE_NAME="skywire-v0.3.1-experimental-linux-arm64.tar.gz"
+RELEASE_URL="https://github.com/i-hate-nicknames/skywire/releases/download/v0.3.1-experimental/$ARCHIVE_NAME"
 
-MIGRATION_BACKUP="/var/skywire/backup/migration/"
+MIGRATION_DIR="/var/skywire/migration"
+MIGRATION_BIN="${MIGRATION_DIR}/bin"
+MIGRATION_BACKUP="/var/skywire/backup/migration"
 BACKUP_BIN=$MIGRATION_BACKUP/bin
 BACKUP_CONF=$MIGRATION_BACKUP/conf
-SYSTEMD_DIR="/etc/systemd/system/"
+SYSTEMD_DIR="/etc/systemd/system"
 
 main() {
 	prepare
@@ -19,15 +20,17 @@ main() {
 prepare() {
 	echo "Preparing..."
 	# install jq to merge json configurations
-	apt update && apt install -y jq
+
+	# update doesn't seem to work for now
+	#apt update
+	apt install -y jq
 
 	mkdir -p $BACKUP_CONF $BACKUP_BIN $MIGRATION_DIR $MIGRATION_BIN
 
 	echo "Downloading release..."
-	cd $MIGRATION_BIN
-	rm -rf *
-	wget $RELEASE_ARCHIVE
-	tar xf $RELEASE_ARCHIVE
+	
+	wget -c $RELEASE_URL -O "${MIGRATION_BIN}/${ARCHIVE_NAME}"
+	tar xfzv "${MIGRATION_BIN}/${ARCHIVE_NAME}" -C $MIGRATION_BIN
 
 	# stop service
 	echo "stopping and disabling services..."
@@ -41,17 +44,17 @@ prepare() {
 
 update_binaries() {
 	echo "Removing old binaries..."
-	mv $SYSTEM_DIR/skybian-firstrun.service $MIGRATION_BACKUP
-	cp $SYSTEM_DIR/skywire-visor.service $MIGRATION_BACKUP
-	mv $SYSTEM_DIR/skywire-hypervisor.service $MIGRATION_BACKUP
+	mv $SYSTEMD_DIR/skybian-firstrun.service $MIGRATION_BACKUP
+	cp $SYSTEMD_DIR/skywire-visor.service $MIGRATION_BACKUP
+	mv $SYSTEMD_DIR/skywire-hypervisor.service $MIGRATION_BACKUP
 	mv /usr/bin/skybian-firstrun $MIGRATION_BACKUP
 	mv /usr/bin/skywire-hypervisor $MIGRATION_BACKUP
 	mv /usr/bin/skywire-visor $MIGRATION_BACKUP
-	mv /usr/bin/apps/ $MIGRATION_BACKUP
+	cp -r /usr/bin/apps/ $BACKUP_BIN
 
 	echo "Setting up new binaries..."
 	mv "${MIGRATION_BIN}/skywire-visor" /usr/bin/
-	mv "${MIGRATION_BIN}/apps/" /usr/bin/
+	cp "${MIGRATION_BIN}/apps/*" /usr/bin/apps/
 }
 
 update_configs() {
@@ -61,12 +64,12 @@ update_configs() {
 	mv /etc/skywire-hypervisor.json $BACKUP_CONF 2> /dev/null
 
 	# change skywire-visor service to support new binary
-	sed -i 's#ExecStart.*#ExecStart=/usr/bin/skywire-visor -c /etc/skywire-config.json#' $SYSTEM_DIR/skywire-visor.service
-	if [ -f "${$BACKUP_CONF}/skywire-visor.json" ] ; then
+	sed -i 's#ExecStart.*#ExecStart=/usr/bin/skywire-visor -c /etc/skywire-config.json#' $SYSTEMD_DIR/skywire-visor.service
+	if [ -f "${BACKUP_CONF}/skywire-visor.json" ] ; then
 		gen_visor_config
 	fi
 
-	if [ -f "${$BACKUP_CONF}/skywire-hypervisor.json" ] ; then
+	if [ -f "${BACKUP_CONF}/skywire-hypervisor.json" ] ; then
 		gen_hypervisor_config
 	fi
 }
@@ -75,6 +78,7 @@ finalize() {
 	# reload systemd service definitions
 	systemctl daemon-reload
 	systemctl start skywire-visor.service
+	rm -rf $MIGRATION_BIN/*
 }
 
 # looks like merged visor/hypervisor config format is compatible
@@ -89,7 +93,7 @@ gen_hypervisor_config() {
 	echo "Generating hypervisor config..."
 
 	local SRC="${BACKUP_CONF}/skywire-hypervisor.json"
-	local RESULT="${BACKUP_CONF}/skywire-visor.json"
+	local RESULT="${BACKUP_CONF}/skywire-config.json"
 	local PK=$(jq '.public_key' $SRC)
 	local SK=$(jq '.secret_key' $SRC)
 
@@ -112,7 +116,7 @@ gen_hypervisor_config() {
     update_key $SRC ".enable_tls" ".hypervisor.enable_tls" $RESULT
     update_key $SRC ".tls_cert_file" ".hypervisor.tls_cert_file" $RESULT
     update_key $SRC ".tls_key_file" ".hypervisor.tls_key_file" $RESULT
-	
+	mv $RESULT /etc/skywire-config.json
 }
 
 # accept 4 arguments: source, key, target key and target
