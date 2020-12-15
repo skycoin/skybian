@@ -18,6 +18,7 @@ main() {
 
 prepare() {
 	echo "Preparing..."
+	# install jq to merge json configurations
 	apt update && apt install -y jq
 
 	mkdir -p $BACKUP_CONF $BACKUP_BIN $MIGRATION_DIR $MIGRATION_BIN
@@ -76,6 +77,8 @@ finalize() {
 	systemctl start skywire-visor.service
 }
 
+# looks like merged visor/hypervisor config format is compatible
+# with old visor, so no chages required
 gen_visor_config() {
 	echo "Generating visor config..."
 	# todo: update transport log location?
@@ -83,11 +86,15 @@ gen_visor_config() {
 }
 
 gen_hypervisor_config() {
+	echo "Generating hypervisor config..."
+
 	local SRC="${BACKUP_CONF}/skywire-hypervisor.json"
 	local RESULT="${BACKUP_CONF}/skywire-visor.json"
 	local PK=$(jq '.public_key' $SRC)
 	local SK=$(jq '.secret_key' $SRC)
 
+	# if someone is running both visor and hypervisor, use existing visor config
+	# as a template
 	if [ -f "${$BACKUP_CONF}/skywire-visor.json" ] ; then
 		HV_CONF_TPL=$(cat "${$BACKUP_CONF}/skywire-visor.json")
 	fi
@@ -203,23 +210,7 @@ HV_CONF_TPL='
 	"cli_addr": "localhost:3435",
 	"log_level": "info",
 	"shutdown_timeout": "10s",
-	"restart_check_delay": "1s",
-	"hypervisor": {
-		"db_path": "/home/nvm/work/sky/skywire/users.db",
-		"enable_auth": false,
-		"cookies": {
-			"hash_key": "ddbfd2c875b159294fb8c0be7ea37db85d16e258befec2894f5991afd787a07e4854bbb79c7597364f3f1a955af6365b51ece6cafb0f781d8b19d17079fb21ab",
-			"block_key": "b1881cd1b4cb0a732bc4ad8d0c1d56f3fe8d54e4aea55dd4f19e52a55ccaa8ba",
-			"expires_duration": 43200000000000,
-			"path": "/",
-			"domain": ""
-		},
-		"dmsg_port": 46,
-		"http_addr": ":8000",
-		"enable_tls": false,
-		"tls_cert_file": "./ssl/cert.pem",
-		"tls_key_file": "./ssl/key.pem"
-	}
+	"restart_check_delay": "1s"
 }
 '
 
