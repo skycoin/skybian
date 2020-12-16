@@ -94,7 +94,7 @@ finalize() {
 gen_visor_config() {
 	echo "Generating visor config..."
 	# todo: update transport log location?
-	cp "${BACKUP_CONF}/skywire-visor.json" /etc/skywire-visor.json
+	cp "${BACKUP_CONF}/skywire-visor.json" /etc/skywire-config.json
 }
 
 gen_hypervisor_config() {
