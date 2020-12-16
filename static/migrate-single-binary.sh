@@ -45,16 +45,24 @@ prepare() {
 update_binaries() {
 	echo "Removing old binaries..."
 	mv $SYSTEMD_DIR/skybian-firstrun.service $MIGRATION_BACKUP
-	cp $SYSTEMD_DIR/skywire-visor.service $MIGRATION_BACKUP
-	mv $SYSTEMD_DIR/skywire-hypervisor.service $MIGRATION_BACKUP
+	cp $SYSTEMD_DIR/skywire-visor.service $MIGRATION_BACKUP 2> /dev/null
+	mv $SYSTEMD_DIR/skywire-hypervisor.service $MIGRATION_BACKUP 2> /dev/null
 	mv /usr/bin/skybian-firstrun $MIGRATION_BACKUP
-	mv /usr/bin/skywire-hypervisor $MIGRATION_BACKUP
-	mv /usr/bin/skywire-visor $MIGRATION_BACKUP
-	cp -r /usr/bin/apps/ $BACKUP_BIN
+	mv /usr/bin/skywire-hypervisor $MIGRATION_BACKUP 2> /dev/null
+	mv /usr/bin/skywire-visor $MIGRATION_BACKUP 2> /dev/null
+	mv /usr/bin/apps/skychat $BACKUP_BIN
+	mv /usr/bin/apps/skysocks $BACKUP_BIN
+	mv /usr/bin/apps/skysocks-client $BACKUP_BIN
+	mv /usr/bin/apps/vpn-client $BACKUP_BIN
+	mv /usr/bin/apps/vpn-server $BACKUP_BIN
 
 	echo "Setting up new binaries..."
 	mv "${MIGRATION_BIN}/skywire-visor" /usr/bin/
-	cp "${MIGRATION_BIN}/apps/*" /usr/bin/apps/
+	mv "${MIGRATION_BIN}/apps/skychat" /usr/bin/apps/
+	mv "${MIGRATION_BIN}/apps/skysocks" /usr/bin/apps/
+	mv "${MIGRATION_BIN}/apps/skysocks-client" /usr/bin/apps/
+	mv "${MIGRATION_BIN}/apps/vpn-client" /usr/bin/apps/
+	mv "${MIGRATION_BIN}/apps/vpn-server" /usr/bin/apps/
 }
 
 update_configs() {
@@ -86,7 +94,7 @@ finalize() {
 gen_visor_config() {
 	echo "Generating visor config..."
 	# todo: update transport log location?
-	cp "${$BACKUP_CONF}/skywire-visor.json" /etc/skywire-visor.json
+	cp "${BACKUP_CONF}/skywire-visor.json" /etc/skywire-visor.json
 }
 
 gen_hypervisor_config() {
@@ -99,8 +107,8 @@ gen_hypervisor_config() {
 
 	# if someone is running both visor and hypervisor, use existing visor config
 	# as a template
-	if [ -f "${$BACKUP_CONF}/skywire-visor.json" ] ; then
-		HV_CONF_TPL=$(cat "${$BACKUP_CONF}/skywire-visor.json")
+	if [ -f "${BACKUP_CONF}/skywire-visor.json" ] ; then
+		HV_CONF_TPL=$(cat "${BACKUP_CONF}/skywire-visor.json")
 	fi
 
     # add hypervisor key
