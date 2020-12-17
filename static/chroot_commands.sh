@@ -25,30 +25,8 @@ locale-gen en_US.UTF-8
 info "Updating your system via APT"
 export DEBIAN_FRONTEND=noninteractive
 apt-get -y update
-
-info "Installing ntp"
-# (courtesy of https://github.com/some4/skywire-install-bash/blob/master/install.sh)
-# Stop timesyncd:
-systemctl stop systemd-timesyncd.service
-
-info "Setting up ntp"
-# Backup (but don't overwrite an existing) config. If not, sed will keep
-#   appending file:
-cp -n /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.orig
-# Use fresh copy in case installer used on existing system:
-cp /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
-
-# When system is set to sync with RTC the time can't be updated and NTP
-#   is crippled. Switch off that setting with:
-timedatectl set-local-rtc 0
-timedatectl set-ntp on
-apt install -y ntp
-
-systemctl disable systemd-timesyncd.service
-
-info "Restarting NTP..."
-systemctl restart ntp.service
-
+#apt-get -y install [your_pkgs_here]
+#apt-get -y remove --purge [your_pkgs_here]
 # keep this on the very end of this block
 info "Cleaning the APT cache to make a smaller image"
 apt-get clean
