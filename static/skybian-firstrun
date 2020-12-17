@@ -63,7 +63,7 @@ setup_network()
 
   if [[ -n "$IP" ]]; then
     echo "Setting manual IP to $IP for $NET_NAME."
-    nmcli con mod "$NET_NAME" ipv4.addresses "$IP"/24 ipv4.method "manual"
+    nmcli con mod "$NET_NAME" ipv4.addresses "$IP/24" ipv4.method "manual"
   fi
 
   if [[ -n "$GW" ]]; then
