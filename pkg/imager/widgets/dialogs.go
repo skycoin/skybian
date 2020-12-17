@@ -175,7 +175,7 @@ func ShowCustom(title, dismiss string, content fyne.CanvasObject, parent fyne.Wi
 func ShowError(text string, parent fyne.Window) {
 	label := widget.NewLabelWithStyle(text, fyne.TextAlignLeading, fyne.TextStyle{})
 	label.Wrapping = fyne.TextWrapWord
-	ShowCustom("Error blyat", "Ok", label, parent)
+	ShowCustom("Error", "Ok", label, parent)
 }
 
 // ShowCustomConfirm shows a dialog over the specified application using custom
