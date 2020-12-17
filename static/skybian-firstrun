@@ -117,6 +117,10 @@ install_ntp()
     timedatectl set-ntp on
     apt update && apt install -y ntp
 
+    systemctl disable systemd-timesyncd.service
+
+    info "Restarting NTP..."
+    systemctl restart ntp.service
     # Set hardware clock to UTC (which doesn't have daylight savings):
     hwclock -w
 }
