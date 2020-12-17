@@ -16,5 +16,6 @@ require (
 	github.com/skycoin/skywire v0.3.0
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/mobile v0.0.0-20190719004257-d2bd2a29d028 // indirect
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 	nhooyr.io/websocket v1.8.4 // indirect
 )

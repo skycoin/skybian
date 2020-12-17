@@ -100,7 +100,7 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 		} else {
 			message = err.Error()
 		}
-		showDialogErrMessage(message, fg.w)
+		widgets.ShowError(message, fg.w)
 		return nil, ""
 	}
 
