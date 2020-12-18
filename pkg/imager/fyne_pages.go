@@ -106,6 +106,32 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		fg.log.Debugf("Set: fg.gwIP = %v", s)
 	})
 
+	wifiName := newEntry(fg.wifiName, func(s string) {
+		fg.wifiName = s
+		fg.log.Debugf("Set: fg.gwIP = %v", s)
+	})
+	wifiPass := newEntry(fg.wifiPass, func(s string) {
+		fg.wifiPass = s
+		fg.log.Debugf("Set: fg.wifiPass = %v", s)
+	})
+
+	wifiWidgets := fyne.NewContainerWithLayout(layout.NewVBoxLayout(), widget.NewLabel("Wifi access point name:"),
+		wifiName, widget.NewLabel("Wifi passcode:"), wifiPass)
+	wifiWidgets.Hide()
+
+	enableWifi := widget.NewCheck("Generate wi-fi connection", func(b bool) {
+		if b {
+			fg.wifiName = wifiName.Text
+			fg.wifiPass = wifiPass.Text
+			wifiWidgets.Show()
+		} else {
+			fg.wifiName = ""
+			fg.wifiPass = ""
+			wifiWidgets.Hide()
+		}
+	})
+	enableWifi.SetChecked(false)
+
 	socksPC := newLinkedEntry(&fg.socksPC)
 	socksPC.SetPlaceHolder("passcode")
 
@@ -204,6 +230,8 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		widget.NewLabel("Work Directory:"), wkDir,
 		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImgPicker,
 		widget.NewLabel("Gateway IP:"), gwIP,
+		enableWifi,
+		wifiWidgets,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
 		widget.NewLabel("Number of Visor Images:"), visors,
 		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
