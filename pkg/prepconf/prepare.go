@@ -114,7 +114,7 @@ func generateVisorConfig(_ Config, bp boot.Params) (interface{}, error) {
 	out.Dmsgpty.AuthFile = "/var/skywire-visor/dsmgpty/whitelist.json"
 	out.Dmsgpty.CLIAddr = "/run/skywire-visor/dmsgpty/cli.sock"
 	out.Transport.LogStore.Type = "file"
-	out.Transport.LogStore.Location = "/var/skywire-visor/transports"
+	out.Transport.LogStore.Location = "/var/log/skywire-visor/transports"
 	out.Hypervisors = bp.HypervisorPKs
 	out.LogLevel = skyenv.DefaultLogLevel
 	out.ShutdownTimeout = visorconfig.DefaultTimeout
