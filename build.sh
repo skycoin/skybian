@@ -338,7 +338,9 @@ copy_to_img()
   info "Copying skywire bins..."
   sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
   sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
+  sudo cp "${ROOT}/static/skyvisor-rotate-transport" "${FS_MNT_POINT}/usr/bin" || return 1
   sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
+  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skyvisor-rotate-transport || return 1
 
   # Copy skywire tools
   info "Copying skywire tools..."
@@ -352,6 +354,7 @@ copy_to_img()
   sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
   sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
   sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
+  sudo cp "${ROOT}/static/skyvisor-transport" "${FS_MNT_POINT}/etc/logrotate.d" || return 1
 
   # Copy systemd units
   info "Copying systemd unit services..."
