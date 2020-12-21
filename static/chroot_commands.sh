@@ -42,3 +42,6 @@ mkdir -p /var/skywire-hypervisor || 0
 # Enable systemd units.
 info "Enabling systemd units..."
 systemctl enable skybian-firstrun.service || exit 1
+
+info "Setting up cron jobs..."
+crontab ./static/crontab.txt
