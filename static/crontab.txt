@@ -1,2 +1,1 @@
 0 0 * * * skyvisor-rotate-transport
-0 1 * * * logrotate /etc/logrotate.conf

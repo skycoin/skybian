@@ -10,19 +10,19 @@ LOG_DIR="/var/log/skywire-visor/"
 TRANSPORT_LOG_DIR="transports"
 TRANSPORT_LOG_TAR="transports.tar.gz"
 
-rotate_dir() {
+archive_dir() {
     cd $LOG_DIR
-    local tar_rotated=false
-    if [ ! -s $TRANSPORT_LOG_TAR ]; then
-        echo "rotated recently!"
-        tar_rotated=true
-    fi
-
     tar -czf $TRANSPORT_LOG_TAR $TRANSPORT_LOG_DIR
-    if [ "$tar_rotated" = true ] ; then
-        echo "removing"
+}
+
+cleanup_dir() {
+    cd $LOG_DIR
+    # empty archive file means that logrotate has performed a rotation
+    if [ ! -s $TRANSPORT_LOG_TAR ]; then
         find "${TRANSPORT_LOG_DIR}/" -type f -delete
     fi
 }
 
-rotate_dir
+archive_dir
+logrotate /etc/logrotate.d/skyvisor-transport
+cleanup_dir
