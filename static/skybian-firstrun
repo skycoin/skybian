@@ -12,6 +12,7 @@ TLS_KEY=/etc/skywire-hypervisor/key.pem
 TLS_CERT=/etc/skywire-hypervisor/cert.pem
 
 NET_NAME="Wired connection 1"
+WIFI_NAME="Wireless connection 1"
 
 # Stop here if config files are already generated.
 if [[ -f "$CONFIG_FILE" ]]; then
@@ -74,6 +75,33 @@ setup_network()
 }
 setup_network || exit 1
 
+setup_wifi()
+{
+  echo "Setting up wifi connection $WIFI_NAME..."
+  nmcli c add type wifi con-name "$WIFI_NAME" ifname wlan0 ssid $WFN
+  if [[ -n "$WFP" ]]; then
+    nmcli c modify "$WIFI_NAME" wifi-sec.key-mgmt wpa-psk wifi-sec.psk $WFP
+  fi
+
+  if [[ -n "$IP" && -n "$GW" ]]; then
+    echo "Setting manual IP to $IP for $WIFI_NAME."
+    nmcli con mod "$WIFI_NAME" ipv4.addresses "$IP/24" ipv4.method "manual"
+  fi
+
+  if [[ -n "$GW" ]]; then
+    echo "Setting manual Gateway IP to $GW for $WIFI_NAME."
+    nmcli con mod "$WIFI_NAME" ipv4.gateway "$GW"
+  fi
+  nmcli con mod "$WIFI_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+  nmcli con down "$WIFI_NAME"
+  sleep 3
+  nmcli con up "$WIFI_NAME"
+}
+
+if [[ -n "$WFN" ]]; then
+  setup_wifi || exit 1
+fi
+
 for file in /etc/ssh/ssh_host* ; do
   echo "[skybian-firstrun] Checking $file:"
   cat "$file"
@@ -83,6 +111,33 @@ echo "Enabling 'skywire-visor.service'."
 systemctl enable skywire-visor.service
 sleep 2
 systemctl start skywire-visor.service
+
+install_ntp()
+{
+    # (courtesy of https://github.com/some4/skywire-install-bash/blob/master/install.sh)
+    # Stop timesyncd:
+    systemctl stop systemd-timesyncd.service
+
+    # Backup (but don't overwrite an existing) config. If not, sed will keep
+    #   appending file:
+    cp -n /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.orig
+    # Use fresh copy in case installer used on existing system:
+    cp /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
+
+    # When system is set to sync with RTC the time can't be updated and NTP
+    #   is crippled. Switch off that setting with:
+    timedatectl set-local-rtc 0
+    timedatectl set-ntp on
+    apt update && apt install -y ntp
+
+    systemctl disable systemd-timesyncd.service
+
+    info "Restarting NTP..."
+    systemctl restart ntp.service
+    # Set hardware clock to UTC (which doesn't have daylight savings):
+    hwclock -w
+}
+install_ntp || logger "Failed to setup ntp service"
 
 systemctl disable skybian-firstrun.service
 exit 0
