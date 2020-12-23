@@ -22,4 +22,4 @@ require (
 
 // Uncomment it for tests with alternative branches and run `make dep`
 
-replace github.com/skycoin/skywire => ../skywire
+// replace github.com/skycoin/skywire => ../skywire
