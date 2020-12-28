@@ -3,7 +3,7 @@
 # This is the main script to build the Skyraspbian OS for Skycoin miners.
 #
 # Author: evanlinjin@github.com, @evanlinjin in telegram
-# Updated by: asxtree@github.com, @asxtree in telegram
+# Updated by: asxtree@github.com, @asxtree on telegram
 # Skycoin / Rudi team
 #
 
