@@ -250,7 +250,7 @@ get_raspbian()
 
 get_all()
 {
-  get_armbian || return 1
+  get_raspbian || return 1
   get_skywire || return 1
   get_tools || return 1
 }
