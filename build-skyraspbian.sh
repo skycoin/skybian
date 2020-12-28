@@ -3,7 +3,7 @@
 # This is the main script to build the Skyraspbian OS for Skycoin miners.
 #
 # Author: evanlinjin@github.com, @evanlinjin in telegram
-# Updated by: asxtree@github.com, @asxtree on telegram
+# Updated by: asxtree@github.com, @asxtree in telegram
 # Skycoin / Rudi team
 #
 
@@ -464,7 +464,7 @@ clean_image()
 clean_output_dir()
 {
   # Clean parts.
-  cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
+  cd "${PARTS_RASPBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
 
