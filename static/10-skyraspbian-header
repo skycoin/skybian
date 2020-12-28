@@ -1,0 +1,41 @@
+#!/bin/bash
+
+. /etc/os-release
+
+let upSeconds="$(/usr/bin/cut -d. -f1 /proc/uptime)"
+let secs=$((${upSeconds}%60))
+let mins=$((${upSeconds}/60%60))
+let hours=$((${upSeconds}/3600%24))
+let days=$((${upSeconds}/86400))
+UPTIME=`printf "%d days, %02dh%02dm%02ds" "$days" "$hours" "$mins" "$secs"`
+KERNELID=$(uname -r)
+CPUTemp=$(vcgencmd measure_temp | awk {'print substr($1,6,10)'})
+IP=$(hostname -I | awk {'print $1'})
+UPDATES=$(sudo apt-get update >/dev/null; sudo apt-get upgrade -u -s | grep -P "^Inst" | wc -l)
+MY_OUT=$(echo -e "[ \e[0;32m$UPDATES updates to install:\x1B[0m \e[0;31msudo apt-get upgrade\x1B[0m ]")
+CONFIG=$(echo -e "[ \e[0;32mGeneral system configuration:\x1B[0m \e[0;31msudo raspi-config\x1B[0m ]")
+
+# get the load averages
+read one five fifteen rest < /proc/loadavg
+
+toilet -f standard -F metal "     SkyRaspbian"
+
+echo -e "Welcome to SkyRaspbian, a custom image OS for Skycoin on the $(cat /proc/device-tree/model | tr -d '\0')"
+echo -e "Based on \e[0;91mRaspbian \x1B[0m$(if [[ $ID == raspbian ]]; then echo ${PRETTY_NAME^} |  sed -e 's/^.*Linux //' | sed "s/\/.*//"; else echo -n ${VERSION_CODENAME^};fi) with \e[0;91mLinux $KERNELID\x1B[0m\n"
+
+echo "$(tput setaf 2)
+`date +"%A, %e %B %Y, %r"`
+`uname -srmo`
+$(tput sgr0)
+
+Uptime:         `echo -e "\e[0;32m$UPTIME\x1B[0m"`
+Load Averages:  `echo -e "\e[0;32m$one, $five, $fifteen (1, 5, 15 min)\x1B[0m"`		
+Memory usage:   `cat /proc/meminfo | grep MemFree | awk {'print $2'}`kB (Free) / `cat /proc/meminfo | grep MemTotal | awk {'print $2'}`kB (Total)
+CPU temp:       `echo -e "\e[0;32m$CPUTemp\x1B[0m"`
+Usage of /:     `echo -e "\e[0;32m$(df -h | awk 'NR==2{print $5}')\x1B[0m of $(df -h | awk 'NR==2{print $2}')"`
+IP:             `echo -e "\e[0;32m$IP\x1B[0m"`
+
+$MY_OUT
+
+$CONFIG
+"

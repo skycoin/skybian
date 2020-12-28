@@ -54,6 +54,12 @@ build-skybian-img: ## builds skybian base image.
 	./build.sh
 	./build.sh -p
 
+build-skyraspbian-img: ## builds skyraspbian base image.
+	rm -rf ./output
+	./build-skyraspbian.sh -c 2>&1 /dev/null
+	./build-skyraspbian.sh
+	./build-skyraspbian.sh -p
+
 build-skyimager-gui: ## builds skyimager GUI
 	./build-skyimager.sh
 
