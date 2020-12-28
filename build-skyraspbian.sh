@@ -396,7 +396,7 @@ chroot_actions()
 
   # Executing chroot script
   info "Executing chroot script..."
-  sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
+  sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands_skyraspbian.sh
 
   # revert ld.so.preload fix
   sed -i 's/^#//g' "${FS_MNT_POINT}/etc/ld.so.preload"
