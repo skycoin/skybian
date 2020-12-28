@@ -14,9 +14,11 @@ script:
   - make test # Can be 'make check' once that is working.
   - make integration
   - make build-skybian-img
+  - make build-skyraspbian-img
   - make build-skyimager-gui
 before_deploy:
   - bash build.sh -p
+  - bash build-skyraspbian.sh -p
 deploy:
   provider: releases
   file_glob: true
