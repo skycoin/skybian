@@ -175,7 +175,7 @@ get_skywire()
 
 download_raspbian()
 {
-  local _DST=${PARTS_RASPBIAN_DIR}/raspbian.7z # Download destination file name.
+  local _DST=${PARTS_RASPBIAN_DIR} # Download destination file name.
 
   info "Downloading image from ${RASPBIAN_DOWNLOAD_URL} to ${_DST} ..."
   wget -c "${RASPBIAN_DOWNLOAD_URL}" -O "${_DST}" ||
@@ -189,7 +189,7 @@ download_raspbian()
 # Get the latest RASPBIAN image for Orange Pi Prime
 get_raspbian()
 {
-  local RASPBIAN_IMG_7z="raspbian.7z"
+  #local RASPBIAN_IMG_7z="raspbian.7z"
 
     # change to dest dir
     cd "${PARTS_RASPBIAN_DIR}" ||
@@ -199,17 +199,17 @@ get_raspbian()
     info "Getting Raspbian image, clearing dest dir first."
 
     # test if we have a file in there
-    if [ -r raspbian.7z ] ; then
+    #if [ -r raspbian.7z ] ; then
 
         # use already downloaded image file
-        notice "Reusing already downloaded file"
-    else
+    #    notice "Reusing already downloaded file"
+    #else
         # no image in there, must download
-        info "No cached image, downloading.."
+    #    info "No cached image, downloading.."
 
         # download it
         download_raspbian
-    fi
+    #fi
 
     local RASPBIAN_IMG_7z=$(ls *raspios*.zip || true)
 
