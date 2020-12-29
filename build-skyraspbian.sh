@@ -180,6 +180,10 @@ download_raspbian()
   info "Downloading image from ${RASPBIAN_DOWNLOAD_URL} to ${_DST} ..."
   wget -c "${RASPBIAN_DOWNLOAD_URL}" -O "${_DST}" ||
     (error "Download failed." && return 1)
+
+  info "Downloading checksum file from ${ARMBIAN_DOWNLOAD_SHA} to ${_DST} ..."
+  wget -c "${RASPBIAN_DOWNLOAD_SHA}" ||
+    (error "Download failed." && return 1)
 }
 
 # Get the latest RASPBIAN image for Orange Pi Prime
@@ -207,8 +211,18 @@ get_raspbian()
         download_raspbian
     fi
 
+    local RASPBIAN_IMG_7z=$(ls *raspios*.zip || true)
+
     # extract and check it's integrity
     info "Raspbian file to process is '${RASPBIAN_IMG_7z}'."
+
+    # check integrity
+    info "Testing image integrity..."
+    if ! $(command -v sha256sum) -c --status -- *.sha256 ; then
+        error "Integrity of the image is compromised, re-run the script to get it right."
+        rm -- *img *txt *sha *7z &> /dev/null || true
+        exit 1
+    fi
 
     # check if extracted image is in there to save time
     if [ -n "$(ls *rasp*.img || true)" ] ; then
@@ -236,7 +250,7 @@ get_raspbian()
     RASPBIAN_IMG=$(ls *rasp*.img || true)
 
     # imge integrity
-    #info "Image integrity assured via sha256sum."
+    info "Image integrity assured via sha256sum."
     notice "Final image file is ${RASPBIAN_IMG}"
 
     # get version & kernel version info
