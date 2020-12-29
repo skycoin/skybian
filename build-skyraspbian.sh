@@ -272,7 +272,7 @@ get_all()
 enable_ssh()
 {
 	info "Mounting /boot"
-	mount -o loop,offset=4194304 "${PARTS_DIR}/raspbian/${RASPBIAN_IMG}" "${FS_MNT_POINT}"
+	sudo mount -o loop,offset=4194304 "${PARTS_DIR}/raspbian/${RASPBIAN_IMG}" "${FS_MNT_POINT}"
  
 	info "Enabling UART"
 	sudo sed -i '/^#dtoverlay=vc4-fkms-v3d.*/a enable_uart=1' "${FS_MNT_POINT}/config.txt"
@@ -281,10 +281,10 @@ enable_ssh()
 	sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${FS_MNT_POINT}/config.txt"
  
 	info "Enabling SSH"
-	touch "${FS_MNT_POINT}/SSH.txt"
+	sudo touch "${FS_MNT_POINT}/SSH.txt"
  
 	info "Unmounting /boot"
-	umount "${FS_MNT_POINT}"
+	sudo umount "${FS_MNT_POINT}"
 }
 
 # setup the rootfs to a loop device
