@@ -178,7 +178,7 @@ download_raspbian()
   local _DST=${PARTS_RASPBIAN_DIR} # Download destination file name.
 
   info "Downloading image from ${RASPBIAN_DOWNLOAD_URL} to ${_DST} ..."
-  wget -c "${RASPBIAN_DOWNLOAD_URL}" -O "${_DST}" ||
+  wget -c "${RASPBIAN_DOWNLOAD_URL}" ||
     (error "Download failed." && return 1)
 
   info "Downloading checksum file from ${ARMBIAN_DOWNLOAD_SHA} to ${_DST} ..."
