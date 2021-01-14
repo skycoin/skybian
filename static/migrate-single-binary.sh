@@ -87,6 +87,7 @@ finalize() {
 	systemctl daemon-reload
 	systemctl start skywire-visor.service
 	rm -rf $MIGRATION_BIN/*
+	reboot
 }
 
 # looks like merged visor/hypervisor config format is compatible
