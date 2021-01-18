@@ -18,10 +18,10 @@ source "$(pwd)/build-skyraspbian.conf"
 NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go"
 
 # Output directory.
-PARTS_DIR=${ROOT}/output/parts
-IMAGE_DIR=${ROOT}/output/image
-FS_MNT_POINT=${ROOT}/output/mnt
-FINAL_IMG_DIR=${ROOT}/output/final
+PARTS_DIR=${ROOT}/output-skyraspbian/parts
+IMAGE_DIR=${ROOT}/output-skyraspbian/image
+FS_MNT_POINT=${ROOT}/output-skyraspbian/mnt
+FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
 
 # Base image location: we will work with partitions.
 BASE_IMG=${IMAGE_DIR}/base_image
@@ -146,6 +146,9 @@ get_tools()
   info "_out=$_out"
   env GOOS=linux GOARCH=arm GOARM=7 go build -o "$_out" -v "$_src" || return 1
 
+  # To build SkyRaspbian arm64 image uncomment the following line and comment the one above, also check build-skyraspbian.conf file:
+  #env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
+
   info "Done!"
 }
 
@@ -195,17 +198,19 @@ get_raspbian()
     cd "${PARTS_RASPBIAN_DIR}" ||
       (error "Failed to cd." && return 1)
 
+    local RASPBIAN_IMG_7z=$(ls *raspios*.zip || true)
+
     # user info
     info "Getting Raspbian image, clearing dest dir first."
 
     # test if we have a file in there
-    #if [ -r raspbian.7z ] ; then
+    if [ -r "${RASPBIAN_IMG_7z}" ] ; then
 
         # use already downloaded image file
-    #    notice "Reusing already downloaded file"
-    #else
+        notice "Reusing already downloaded file"
+    else
         # no image in there, must download
-    #    info "No cached image, downloading.."
+        info "No cached image, downloading.."
 
         # download it
         download_raspbian

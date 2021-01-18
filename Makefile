@@ -60,7 +60,7 @@ build-skybian-img: ## builds skybian base image.
 	./build.sh -p
 	
 build-skyraspbian-img: ## builds skybian base image.
-	rm -rf ./output
+	rm -rf ./output-skyraspbian
 	./build-skyraspbian.sh -c 2>&1 /dev/null
 	./build-skyraspbian.sh
 	./build-skyraspbian.sh -p
