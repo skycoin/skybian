@@ -18,18 +18,18 @@ printf "skybian\nskybian\n" | passwd pi
 
 # by default update the es_US locales
 info "Re-generating the locales info for en_US.UTF-8..."
-locale-gen en_US.UTF-8
+sudo locale-gen en_US.UTF-8
 
 # apt-get commands (install/remove/purge)
 # modify and un-comment
 info "Updating your system via APT"
 export DEBIAN_FRONTEND=noninteractive
-sudo apt-get -y update
-sudo apt-get -y install network-manager toilet figlet
+sudo apt -y update
+sudo apt -y install network-manager toilet figlet
 #apt-get -y remove --purge [your_pkgs_here]
 # keep this on the very end of this block
 info "Cleaning the APT cache to make a smaller image"
-sudo apt-get clean
+sudo apt clean
 
 # forge a time on the system to avoid fs dates are in the future
 #info "Setting the chroot clock to now to avoid bugs with the date..."

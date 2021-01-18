@@ -34,10 +34,10 @@ func main() {
 	switch mode {
 	case 0:
 		// Hypervisor
-		bp, err = boot.MakeHypervisorParams(gwIP, sk)
+		bp, err = boot.MakeHypervisorParams(gwIP, sk, "", "")
 	case 1:
 		// Visor.
-		bp, err = boot.MakeVisorParams(gwIP, gwIP, sk, makeHvPKs(), "123456")
+		bp, err = boot.MakeVisorParams(gwIP, gwIP, sk, makeHvPKs(), "123456", "", "")
 	default:
 		err = errors.New("invalid mode")
 	}

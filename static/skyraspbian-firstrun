@@ -94,27 +94,10 @@ for file in /etc/ssh/ssh_host* ; do
   done
 
 # Enable associated service.
-case $MD in
-  "VISOR")
-    echo "Enabling 'skywire-visor.service'."
-    systemctl daemon-reload
-    sleep 2
-    systemctl enable skywire-visor.service
-    sleep 2
-    systemctl start skywire-visor.service
-    ;;
-  "HYPERVISOR")
-    echo "Enabling 'skywire-hypervisor.service'."
-    systemctl daemon-reload
-    sleep 2
-    systemctl enable skywire-hypervisor.service
-    sleep 2
-    systemctl start skywire-hypervisor.service
-    ;;
-  *)
-    exit 1
-    ;;
-esac
+echo "Enabling 'skywire-visor.service'."
+systemctl enable skywire-visor.service
+sleep 2
+systemctl start skywire-visor.service
 
 # Change pi user password to skyraspbian
 #echo "Changing the pi user password to skyraspbian."

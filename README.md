@@ -4,9 +4,9 @@
 
 Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin's Skywire software and it's dependencies.
 
-Currently, only the [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/) and [Raspberry Pi](https://www.raspberrypi.org/products/) [Single Board Computers](https://en.wikipedia.org/wiki/Single-board_computer) are supported.
+Currently, only the [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/) [Single Board Computer](https://en.wikipedia.org/wiki/Single-board_computer) is supported.
 
-This repository has three main components. The first is a script for building a base Skybian image. The second is a script for building a base SkyRaspbian image. The third is a tool named `skyimager`, that downloads a base Skybian or SkyRaspbian image, and generates a number of final Skybian or SkyRaspbian images (based on the provided options by the user).
+This repository has two main components. The first is a script for building a base Skybian image. The second is a tool named `skyimager`, that downloads a base Skybian image, and generates a number of final Skybian images (based on the provided options by the user).
 
 ## Dependencies
 
@@ -34,16 +34,11 @@ The GUI uses the [Fyne](https://github.com/fyne-io) library. The prerequisites f
 
 ## Configure and build
 
-Both the script to build the Skybian base image, as well as the script to build `skyimager-gui` are configured via [`build.conf`](./build.conf). The script to build the SkyRaspbian base image is configured via [`build-skyraspbian.conf`](./build-skyraspbian.conf)
+Both the script to build the Skybian base image, as well as the script to build `skyimager-gui` are configured via [`build.conf`](./build.conf).
 
 To build the Skybian base image, run:
 ```bash
 $ make build-skybian-img
-```
-
-To build the SkyRaspbian base image, run:
-```bash
-$ make build-skyraspbian-img
 ```
 
 To build `skyimager-gui`, run:

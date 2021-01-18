@@ -8,9 +8,10 @@ import (
 	"sync/atomic"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
 )
 
-func Download(log logrus.FieldLogger, url, dst string, total, current *int64) error {
+func Download(ctx context.Context, log logrus.FieldLogger, url, dst string, total, current *int64) error {
 	log = log.WithField("func", "Download")
 
 	// Prepare temp destination file.
@@ -22,7 +23,12 @@ func Download(log logrus.FieldLogger, url, dst string, total, current *int64) er
 	defer closeF()
 
 	// Prepare download response.
-	resp, err := http.Get(url)
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return err
 	}

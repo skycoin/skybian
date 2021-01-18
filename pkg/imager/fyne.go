@@ -21,6 +21,7 @@ import (
 	"github.com/skycoin/dmsg/cipher"
 
 	"github.com/skycoin/skybian/pkg/boot"
+	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
 // DefaultVisors is the default number of visor boot parameters to generate.
@@ -38,16 +39,18 @@ type FyneUI struct {
 	releases  []Release
 	locations []string
 
-	wkDir   string
-	imgLoc  string
-	remImg  string
-	fsImg   string
-	gwIP    net.IP
-	socksPC string
-	visors  int
-	hvImg   bool
-	hvPKs   []cipher.PubKey
-	bps     []boot.Params
+	wkDir    string
+	imgLoc   string
+	remImg   string
+	fsImg    string
+	gwIP     net.IP
+	wifiName string
+	wifiPass string
+	socksPC  string
+	visors   int
+	hvImg    bool
+	hvPKs    []cipher.PubKey
+	bps      []boot.Params
 }
 
 // NewFyneUI creates a new Fyne UI.
@@ -93,7 +96,13 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 	d.Hide()
 
 	if err != nil {
-		dialog.ShowError(err, fg.w)
+		var message string
+		if errors.Is(err, ErrNetworkConn) {
+			message = "Network connection error. Please ensure that you are connected to the internet correctly."
+		} else {
+			message = err.Error()
+		}
+		widgets.ShowError(message, fg.w)
 		return nil, ""
 	}
 
@@ -107,7 +116,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 	hvPKs := fg.hvPKs
 	if fg.hvImg {
 		hvPK, hvSK := cipher.GenerateKeyPair()
-		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK)
+		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK, fg.wifiName, fg.wifiPass)
 		if err != nil {
 			return "", fmt.Errorf("boot_params[%d]: failed to generate for hypervisor: %v", len(bpsSlice), err)
 		}
@@ -117,7 +126,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 	}
 	for i := 0; i < fg.visors; i++ {
 		_, vSK := cipher.GenerateKeyPair()
-		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC)
+		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC, fg.wifiName, fg.wifiPass)
 		if err != nil {
 			return "", fmt.Errorf("boot_params[%d]: failed to generate for visor: %v", len(bpsSlice), err)
 		}
@@ -151,12 +160,14 @@ func (fg *FyneUI) build() {
 
 	switch fg.imgLoc {
 	case fg.locations[0]:
-
-		// Download section.
+		ctx, cancel := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
-		dlDialog := dialog.NewProgress(dlTitle, dlMsg, fg.w)
+		dlDialog := widgets.NewProgress(dlTitle, dlMsg, fg.w, cancel, "Cancel")
+
 		dlDialog.Show()
+
+		// Download section.
 		dlDone := make(chan struct{})
 		go func() {
 			t := time.NewTicker(time.Second)
@@ -173,11 +184,16 @@ func (fg *FyneUI) build() {
 				}
 			}
 		}()
-		err = builder.Download(baseURL)
+		err = builder.Download(ctx, baseURL)
 		close(dlDone)
 		dlDialog.Hide()
 		if err != nil {
-			dialog.ShowError(err, fg.w)
+			if !errors.Is(err, errDownloadCanceled) {
+				fg.log.Errorf("Error when downloading image %v", err)
+				dialog.ShowError(err, fg.w)
+			} else {
+				fg.log.Info("Download canceled by user")
+			}
 			return
 		}
 

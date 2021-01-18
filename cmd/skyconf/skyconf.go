@@ -21,18 +21,11 @@ func init() {
 	flag.StringVar(&filename, "if", filenameDefault, "input file to read from")
 }
 
-var hvName string
+var configFile string
 
 func init() {
-	const hvNameDefault = "/etc/skywire-hypervisor.json"
-	flag.StringVar(&hvName, "hvf", hvNameDefault, "hypervisor config output file")
-}
-
-var vName string
-
-func init() {
-	const vNameDefault = "/etc/skywire-visor.json"
-	flag.StringVar(&vName, "vf", vNameDefault, "visor config output file")
+	const configFileDefault = "/etc/skywire-config.json"
+	flag.StringVar(&configFile, "c", configFileDefault, "skywire config output file")
 }
 
 var keyFile string
@@ -76,12 +69,12 @@ func main() {
 		logger.Fatalf("failed to read params: %v", err)
 	}
 	conf := prepconf.Config{
-		VisorConf:      vName,
-		HypervisorConf: hvName,
-		TLSKey:         keyFile,
-		TLSCert:        certFile,
+		BootParams: params,
+		Filename:   configFile,
+		TLSKey:     keyFile,
+		TLSCert:    certFile,
 	}
-	if err := prepconf.Prepare(logger, conf, params); err != nil {
+	if err := prepconf.GenerateConfigFile(conf, logger); err != nil {
 		logger.Fatalf("failed to ensure config file: %v", err)
 	}
 	if err := params.PrintEnvs(os.Stdout); err != nil {
