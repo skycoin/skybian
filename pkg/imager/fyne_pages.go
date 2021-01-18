@@ -140,7 +140,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		fg.log.Debugf("Set: fg.visors = %v", s)
 	})
 
-	genHvImg := widget.NewCheck("Generate Hypervisor Image.", func(b bool) {
+	genHvImg := widget.NewCheck("Enable HypervisorUI on first visor", func(b bool) {
 		fg.hvImg = b
 		fg.log.Debugf("Set: fg.genHvImg = %v", b)
 	})
@@ -233,7 +233,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		enableWifi,
 		wifiWidgets,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
-		widget.NewLabel("Number of Visor Images:"), visors,
+		widget.NewLabel("Number of Visor Images to be built:"), visors,
 		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
 }
 

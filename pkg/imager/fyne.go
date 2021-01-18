@@ -25,7 +25,7 @@ import (
 )
 
 // DefaultVisors is the default number of visor boot parameters to generate.
-const DefaultVisors = 7
+const DefaultVisors = 8
 
 // FyneUI is a UI to handle the image creation process (using Fyne).
 type FyneUI struct {
