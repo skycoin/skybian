@@ -266,10 +266,11 @@ func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
 	}
 	switch fg.imgLoc {
 	case fg.locations[0]:
+	case fg.locations[1]:
 		if strings.TrimSpace(fg.remImg) == "" {
 			return showErr(fg, errors.New("invalid Base Image URL: cannot be empty"))
 		}
-	case fg.locations[1]:
+	case fg.locations[2]:
 		if !strings.HasSuffix(fg.fsImg, ".img") {
 			return showErr(fg, errors.New("invalid Base Image Path: file needs to have .img extension"))
 		}

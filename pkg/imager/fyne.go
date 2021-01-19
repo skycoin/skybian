@@ -177,6 +177,7 @@ func (fg *FyneUI) build() {
 
 	switch fg.imgLoc {
 	case fg.locations[0]:
+	case fg.locations[1]:
 		ctx, cancel := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
@@ -235,7 +236,7 @@ func (fg *FyneUI) build() {
 			return
 		}
 
-	case fg.locations[1]:
+	case fg.locations[2]:
 		// TODO(evanlinjin): The following is very hacky. Please fix.
 		f, err := os.Open(fg.fsImg)
 		if err != nil {
