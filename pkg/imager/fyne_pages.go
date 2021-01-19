@@ -67,34 +67,47 @@ func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
 	return box
 }
 
-// Page2 returns the canvas that draws page 2 of the Fyne interface.
-func (fg *FyneUI) Page2() fyne.CanvasObject {
-	wkDir := newLinkedEntry(&fg.wkDir)
-
-	remImgs, latestImg := fg.listBaseImgs()
+func (fg *FyneUI) makeRemoteImgsWidget(t imgType) *widget.Select {
+	remImgs, latestImg := fg.listBaseImgs(t)
+	fg.log.Debugf("type: %s, latest: %s", t, latestImg)
 	remImg := widget.NewSelect(remImgs, func(s string) {
 		fg.remImg = s
 		fg.log.Debugf("Set: fg.remImg = %v", s)
 	})
-	if remImg.Selected = fg.remImg; remImg.Selected == "" && len(remImg.Options) > 0 {
-		remImg.SetSelected(latestImg)
+	if len(remImg.Options) > 0 {
+		remImg.SetSelected(remImg.Options[0])
 	}
 	remImg.Hide()
+	return remImg
+}
+
+// Page2 returns the canvas that draws page 2 of the Fyne interface.
+func (fg *FyneUI) Page2() fyne.CanvasObject {
+	wkDir := newLinkedEntry(&fg.wkDir)
 
 	fsImgPicker := fg.makeFilePicker()
 	fsImgPicker.Hide()
+	remImgSky := fg.makeRemoteImgsWidget(typeSkybian)
+	remImgRasp := fg.makeRemoteImgsWidget(typeRaspbian)
 
 	imgLoc := widget.NewRadio(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
-			remImg.Show()
 			fsImgPicker.Hide()
+			remImgRasp.Hide()
+			remImgSky.Show()
 		case fg.locations[1]:
-			remImg.Hide()
+			remImgSky.Hide()
+			fsImgPicker.Hide()
+			remImgRasp.Show()
+		case fg.locations[2]:
+			remImgSky.Hide()
+			remImgRasp.Hide()
 			fsImgPicker.Show()
 		default:
-			remImg.Hide()
 			fsImgPicker.Hide()
+			remImgSky.Hide()
+			remImgRasp.Hide()
 		}
 	})
 	imgLoc.SetSelected(fg.imgLoc)
@@ -228,7 +241,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImgPicker,
+		widget.NewLabel("Base Image:"), imgLoc, remImgRasp, remImgSky, fsImgPicker,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		enableWifi,
 		wifiWidgets,

@@ -24,6 +24,21 @@ import (
 	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
+type imgType string
+
+const (
+	typeSkybian  imgType = "skybian"
+	typeRaspbian         = "raspbian"
+)
+
+type locType string
+
+const (
+	locSky   locType = "sky"
+	locRasp          = "rasp"
+	locLocal         = "local"
+)
+
 // DefaultVisors is the default number of visor boot parameters to generate.
 const DefaultVisors = 7
 
@@ -38,19 +53,20 @@ type FyneUI struct {
 
 	releases  []Release
 	locations []string
-
-	wkDir    string
-	imgLoc   string
-	remImg   string
-	fsImg    string
-	gwIP     net.IP
-	wifiName string
-	wifiPass string
-	socksPC  string
-	visors   int
-	hvImg    bool
-	hvPKs    []cipher.PubKey
-	bps      []boot.Params
+	imgTypes  []imgType
+	imgType   imgType
+	wkDir     string
+	imgLoc    string
+	remImg    string
+	fsImg     string
+	gwIP      net.IP
+	wifiName  string
+	wifiPass  string
+	socksPC   string
+	visors    int
+	hvImg     bool
+	hvPKs     []cipher.PubKey
+	bps       []boot.Params
 }
 
 // NewFyneUI creates a new Fyne UI.
@@ -60,8 +76,9 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	fg.assets = assets
 
 	fg.locations = []string{
-		"From remote server.",
-		"From local filesystem.",
+		"From remote server (skybian)",
+		"From remote server (raspbian)",
+		"From local filesystem",
 	}
 	fg.resetPage2Values()
 
@@ -83,7 +100,7 @@ func (fg *FyneUI) Run() {
 	fg.w.ShowAndRun()
 }
 
-func (fg *FyneUI) listBaseImgs() ([]string, string) {
+func (fg *FyneUI) listBaseImgs(t imgType) ([]string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -92,7 +109,7 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 	d := dialog.NewProgressInfinite(title, msg, fg.w)
 
 	d.Show()
-	rs, lr, err := ListReleases(ctx, fg.log)
+	rs, lr, err := ListReleases(ctx, t, fg.log)
 	d.Hide()
 
 	if err != nil {
