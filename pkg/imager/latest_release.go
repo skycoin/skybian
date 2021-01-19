@@ -23,7 +23,7 @@ func expectedBaseImgAssetName(t imgType, tag string) string {
 	var filename string
 	switch t {
 	case typeRaspbian:
-		filename = "Raspbian"
+		filename = "SkyRaspbian"
 	case typeSkybian:
 		filename = "Skybian"
 	default:
