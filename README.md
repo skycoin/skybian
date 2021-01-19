@@ -86,3 +86,44 @@ Values of the boot parameters are separated by `0x1F` characters. The values are
 
 These values can be written by the `skyimager-gui` (provided in this repo) with user-provided options.
 
+### Storage Paths
+
+#### Binaries
+- respectively located in `/usr/bin` are:
+  - `skyconf`
+  - `skybian-firstrun`
+  - `skywire-cli`
+  - `skywire-visor`
+  
+#### Systemd Service Files
+- Skywire visor systemd service file is located in `/etc/systemd/system/skywire-visor.service`
+
+#### Skywire Visor Config
+- Skywire visor file is located in `/etc/skywire-visor.config`
+- DMSGPTY
+  - `"authorization_file": "/var/skywire-visor/dsmgpty/whitelist.json",`
+  - `"cli_address": "/run/skywire-visor/dmsgpty/cli.sock"`
+- Transports
+  - ```
+  "log_store": {
+        "type": "file",
+        "location": "/var/skywire-visor/transports"
+      },
+   ```
+- Launcher
+  - `"bin_path": "/usr/bin/apps",`
+  - `"local_path": "/var/skywire-visor/apps"`
+
+#### Apps
+- Binaries are located in `/usr/bin/apps`:
+  - `skychat`
+  - `skysocks`
+  - `skysocks-client`
+  - `vpn-client`
+  - `vpn-server`
+- Logs are stored in `/var/skywire-visor/apps`:
+
+#### Networking
+- networking defaults are located in `/etc/NetworkManager/system-connections`:
+  - `Wired connection 1` (wrt. LAN)
+  - `Wireless connection 1` (wrt. WIFI)
