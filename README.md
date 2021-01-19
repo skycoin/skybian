@@ -104,12 +104,7 @@ These values can be written by the `skyimager-gui` (provided in this repo) with 
   - `"authorization_file": "/var/skywire-visor/dsmgpty/whitelist.json",`
   - `"cli_address": "/run/skywire-visor/dmsgpty/cli.sock"`
 - Transports
-  - ```
-  "log_store": {
-        "type": "file",
-        "location": "/var/skywire-visor/transports"
-      },
-   ```
+  - `"log_store": {"type": "file", "location": "/var/skywire-visor/transports" },`
 - Launcher
   - `"bin_path": "/usr/bin/apps",`
   - `"local_path": "/var/skywire-visor/apps"`
