@@ -24,11 +24,11 @@ import (
 	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
-type imgType string
+type ImgType string
 
 const (
-	typeSkybian  imgType = "skybian"
-	typeRaspbian         = "raspbian"
+	TypeSkybian  ImgType = "skybian"
+	TypeRaspbian         = "raspbian"
 )
 
 type locType string
@@ -53,8 +53,8 @@ type FyneUI struct {
 
 	releases  []Release
 	locations []string
-	imgTypes  []imgType
-	imgType   imgType
+	imgTypes  []ImgType
+	imgType   ImgType
 	wkDir     string
 	imgLoc    string
 	remImg    string
@@ -100,7 +100,7 @@ func (fg *FyneUI) Run() {
 	fg.w.ShowAndRun()
 }
 
-func (fg *FyneUI) listBaseImgs(t imgType) ([]string, string) {
+func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 

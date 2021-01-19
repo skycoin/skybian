@@ -19,12 +19,12 @@ const (
 	repoRequestTimeout = 5 * time.Second
 )
 
-func expectedBaseImgAssetName(t imgType, tag string) string {
+func expectedBaseImgAssetName(t ImgType, tag string) string {
 	var filename string
 	switch t {
-	case typeRaspbian:
+	case TypeRaspbian:
 		filename = "SkyRaspbian"
-	case typeSkybian:
+	case TypeSkybian:
 		filename = "Skybian"
 	default:
 		panic(fmt.Sprintf("unknown image type: %v", t))
@@ -33,7 +33,7 @@ func expectedBaseImgAssetName(t imgType, tag string) string {
 }
 
 // LatestBaseImgURL returns the latest stable base image download URL.
-func LatestBaseImgURL(ctx context.Context, t imgType, log logrus.FieldLogger) (string, error) {
+func LatestBaseImgURL(ctx context.Context, t ImgType, log logrus.FieldLogger) (string, error) {
 	gh := github.NewClient(nil)
 	release, _, err := gh.Repositories.GetLatestRelease(ctx, ghOwner, ghRepo)
 	if err != nil {
@@ -111,7 +111,7 @@ var ErrNetworkConn = errors.New("Network connection error")
 
 // ListReleases obtains a list of base image releases.
 // The output 'latest' is non-nil when a latest release is found.
-func ListReleases(ctx context.Context, t imgType, log logrus.FieldLogger) (rs []Release, latest *Release, err error) {
+func ListReleases(ctx context.Context, t ImgType, log logrus.FieldLogger) (rs []Release, latest *Release, err error) {
 	gh := github.NewClient(nil)
 	ctx, cancel := context.WithTimeout(ctx, repoRequestTimeout)
 	defer cancel()

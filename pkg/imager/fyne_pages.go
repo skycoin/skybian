@@ -67,7 +67,7 @@ func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
 	return box
 }
 
-func (fg *FyneUI) makeRemoteImgsWidget(t imgType) *widget.Select {
+func (fg *FyneUI) makeRemoteImgsWidget(t ImgType) *widget.Select {
 	remImgs, latestImg := fg.listBaseImgs(t)
 	fg.log.Debugf("type: %s, latest: %s", t, latestImg)
 	remImg := widget.NewSelect(remImgs, func(s string) {
@@ -87,8 +87,8 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 
 	fsImgPicker := fg.makeFilePicker()
 	fsImgPicker.Hide()
-	remImgSky := fg.makeRemoteImgsWidget(typeSkybian)
-	remImgRasp := fg.makeRemoteImgsWidget(typeRaspbian)
+	remImgSky := fg.makeRemoteImgsWidget(TypeSkybian)
+	remImgRasp := fg.makeRemoteImgsWidget(TypeRaspbian)
 
 	imgLoc := widget.NewRadio(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
