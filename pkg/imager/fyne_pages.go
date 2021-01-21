@@ -97,12 +97,12 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	fsImgPicker.Hide()
 	remImgSky := fg.makeRemoteImgsWidget(TypeSkybian)
 	remImgRasp := fg.makeRemoteImgsWidget(TypeRaspbian)
-	remImgRasp64 := fg.makeRemoteImgsWidget(TypeRaspbian64)
+	// remImgRasp64 := fg.makeRemoteImgsWidget(TypeRaspbian64)
 
 	imgTypes := []string{
 		"Skybian 64 bit (Orange Pi)",
 		"SkyRaspbian 32 bit (Raspberry Pi)",
-		"SkyRaspbian 64 bit (Raspberry Pi)",
+		// "SkyRaspbian 64 bit (Raspberry Pi)",
 	}
 	// todo: implement selecting a correct remote
 	remoteTypeSelect := widget.NewSelect(imgTypes, func(s string) {
@@ -110,15 +110,15 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		case imgTypes[0]:
 			fg.showRemoteSelect(remImgSky)
 			remImgRasp.Hide()
-			remImgRasp64.Hide()
+			// remImgRasp64.Hide()
 		case imgTypes[1]:
 			remImgSky.Hide()
 			fg.showRemoteSelect(remImgRasp)
-			remImgRasp64.Hide()
-		case imgTypes[2]:
-			remImgSky.Hide()
-			remImgRasp.Hide()
-			fg.showRemoteSelect(remImgRasp64)
+			// remImgRasp64.Hide()
+			// case imgTypes[2]:
+			// 	remImgSky.Hide()
+			// 	remImgRasp.Hide()
+			// 	fg.showRemoteSelect(remImgRasp64)
 		}
 	})
 	remoteTypeSelect.SetSelected(imgTypes[0])
@@ -128,13 +128,16 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			fsImgPicker.Hide()
 			remoteTypeSelect.Show()
 		case fg.locations[1]:
-			remoteTypeSelect.Hide()
 			fsImgPicker.Show()
+			remImgSky.Hide()
+			remImgRasp.Hide()
+			// remImgRasp64.Hide()
+			remoteTypeSelect.Hide()
 		default:
 			fsImgPicker.Hide()
 			remImgSky.Hide()
 			remImgRasp.Hide()
-			remImgRasp64.Hide()
+			// remImgRasp64.Hide()
 			remoteTypeSelect.Hide()
 		}
 	})
@@ -269,7 +272,8 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect, remImgSky, remImgRasp, remImgRasp64,
+		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect, remImgSky, remImgRasp,
+		// remImgRasp64,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		enableWifi,
 		wifiWidgets,
