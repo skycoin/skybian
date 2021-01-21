@@ -89,25 +89,45 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	fsImgPicker.Hide()
 	remImgSky := fg.makeRemoteImgsWidget(TypeSkybian)
 	remImgRasp := fg.makeRemoteImgsWidget(TypeRaspbian)
+	remImgRasp64 := fg.makeRemoteImgsWidget(TypeRaspbian64)
 
+	imgTypes := []string{
+		"Skybian 64 bit (Orange Pi)",
+		"SkyRaspbian 32 bit (Raspberry Pi)",
+		"SkyRaspbian 64 bit (Raspberry Pi)",
+	}
+	// todo: implement selecting a correct remote
+	remoteTypeSelect := widget.NewSelect(imgTypes, func(s string) {
+		switch s {
+		case imgTypes[0]:
+			remImgSky.Show()
+			remImgRasp.Hide()
+			remImgRasp64.Hide()
+		case imgTypes[1]:
+			remImgSky.Hide()
+			remImgRasp.Show()
+			remImgRasp64.Hide()
+		case imgTypes[2]:
+			remImgSky.Hide()
+			remImgRasp.Hide()
+			remImgRasp64.Show()
+		}
+	})
+	remoteTypeSelect.SetSelected(imgTypes[0])
 	imgLoc := widget.NewRadio(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
 			fsImgPicker.Hide()
-			remImgRasp.Hide()
-			remImgSky.Show()
+			remoteTypeSelect.Show()
 		case fg.locations[1]:
-			remImgSky.Hide()
-			fsImgPicker.Hide()
-			remImgRasp.Show()
-		case fg.locations[2]:
-			remImgSky.Hide()
-			remImgRasp.Hide()
+			remoteTypeSelect.Hide()
 			fsImgPicker.Show()
 		default:
 			fsImgPicker.Hide()
 			remImgSky.Hide()
 			remImgRasp.Hide()
+			remImgRasp64.Hide()
+			remoteTypeSelect.Hide()
 		}
 	})
 	imgLoc.SetSelected(fg.imgLoc)
@@ -241,7 +261,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, remImgRasp, remImgSky, fsImgPicker,
+		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect, remImgSky, remImgRasp, remImgRasp64,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		enableWifi,
 		wifiWidgets,
@@ -266,11 +286,10 @@ func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
 	}
 	switch fg.imgLoc {
 	case fg.locations[0]:
-	case fg.locations[1]:
 		if strings.TrimSpace(fg.remImg) == "" {
 			return showErr(fg, errors.New("invalid Base Image URL: cannot be empty"))
 		}
-	case fg.locations[2]:
+	case fg.locations[1]:
 		if !strings.HasSuffix(fg.fsImg, ".img") {
 			return showErr(fg, errors.New("invalid Base Image Path: file needs to have .img extension"))
 		}

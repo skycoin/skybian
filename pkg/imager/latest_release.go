@@ -26,6 +26,8 @@ func expectedBaseImgAssetName(t ImgType, tag string) string {
 		filename = "SkyRaspbian"
 	case TypeSkybian:
 		filename = "Skybian"
+	case TypeRaspbian64:
+		filename = "SkyRaspbian64"
 	default:
 		panic(fmt.Sprintf("unknown image type: %v", t))
 	}
@@ -81,7 +83,6 @@ func (r *Release) String() string {
 }
 
 func releaseURL(releases []Release, releaseStr string) (string, error) {
-
 	tag, err := bytes.NewBufferString(releaseStr).ReadString(' ')
 	if err != nil {
 		return "", err

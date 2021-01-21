@@ -27,8 +27,9 @@ import (
 type ImgType string
 
 const (
-	TypeSkybian  ImgType = "skybian"
-	TypeRaspbian         = "raspbian"
+	TypeSkybian    ImgType = "skybian"
+	TypeRaspbian           = "raspbian"
+	TypeRaspbian64         = "raspbian64"
 )
 
 type locType string
@@ -76,8 +77,7 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	fg.assets = assets
 
 	fg.locations = []string{
-		"From remote server (skybian)",
-		"From remote server (raspbian)",
+		"From remote server",
 		"From local filesystem",
 	}
 	fg.resetPage2Values()
@@ -123,7 +123,7 @@ func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 		return nil, ""
 	}
 
-	fg.releases = rs
+	fg.releases = append(fg.releases, rs...)
 	return releaseStrings(rs), lr.String()
 }
 
@@ -177,7 +177,6 @@ func (fg *FyneUI) build() {
 
 	switch fg.imgLoc {
 	case fg.locations[0]:
-	case fg.locations[1]:
 		ctx, cancel := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
@@ -236,7 +235,7 @@ func (fg *FyneUI) build() {
 			return
 		}
 
-	case fg.locations[2]:
+	case fg.locations[1]:
 		// TODO(evanlinjin): The following is very hacky. Please fix.
 		f, err := os.Open(fg.fsImg)
 		if err != nil {
