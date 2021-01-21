@@ -81,6 +81,14 @@ func (fg *FyneUI) makeRemoteImgsWidget(t ImgType) *widget.Select {
 	return remImg
 }
 
+// showRemoteSelect and update remote image value to the selected
+// value of the widget to be shown
+func (fg *FyneUI) showRemoteSelect(sel *widget.Select) {
+	sel.Show()
+	fg.remImg = sel.Selected
+	fg.log.Debugf("remImg = %s", fg.remImg)
+}
+
 // Page2 returns the canvas that draws page 2 of the Fyne interface.
 func (fg *FyneUI) Page2() fyne.CanvasObject {
 	wkDir := newLinkedEntry(&fg.wkDir)
@@ -100,17 +108,17 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	remoteTypeSelect := widget.NewSelect(imgTypes, func(s string) {
 		switch s {
 		case imgTypes[0]:
-			remImgSky.Show()
+			fg.showRemoteSelect(remImgSky)
 			remImgRasp.Hide()
 			remImgRasp64.Hide()
 		case imgTypes[1]:
 			remImgSky.Hide()
-			remImgRasp.Show()
+			fg.showRemoteSelect(remImgRasp)
 			remImgRasp64.Hide()
 		case imgTypes[2]:
 			remImgSky.Hide()
 			remImgRasp.Hide()
-			remImgRasp64.Show()
+			fg.showRemoteSelect(remImgRasp64)
 		}
 	})
 	remoteTypeSelect.SetSelected(imgTypes[0])
