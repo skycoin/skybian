@@ -74,7 +74,6 @@ setup_network()
 
   nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
 }
-setup_network || exit 1
 
 setup_wifi()
 {
@@ -99,8 +98,11 @@ setup_wifi()
   nmcli con up "$WIFI_NAME"
 }
 
+# assume wifi should be configured instead of ethernet when wifi name env var is set
 if [[ -n "$WFN" ]]; then
   setup_wifi || exit 1
+else
+  setup_network || exit 1
 fi
 
 for file in /etc/ssh/ssh_host* ; do
