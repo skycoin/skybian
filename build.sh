@@ -163,9 +163,6 @@ get_skywire()
   mkdir "${PARTS_SKYWIRE_DIR}/bin"
   tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
 
-  info "Renaming 'hypervisor' to 'skywire-hypervisor'..."
-  mv "${PARTS_SKYWIRE_DIR}/bin/hypervisor" "${PARTS_SKYWIRE_DIR}/bin/skywire-hypervisor" || 0
-
   info "Cleaning..."
   rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
@@ -198,6 +195,9 @@ get_armbian()
 
   # test if we have a file in there
   if [ -r "${ARMBIAN_IMG_XZ}" ] ; then
+
+      # todo: doesn't seem to work, always downloads the image
+      # todo: download checksum separately, and use it to validate local copy
 
       # use already downloaded image file
       notice "Reusing already downloaded file"
@@ -254,8 +254,8 @@ get_armbian()
 
 get_all()
 {
-  get_armbian || return 1
   get_skywire || return 1
+  get_armbian || return 1
   get_tools || return 1
 }
 
