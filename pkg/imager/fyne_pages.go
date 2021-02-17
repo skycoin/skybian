@@ -135,8 +135,8 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	socksPC := newLinkedEntry(&fg.socksPC)
 	socksPC.SetPlaceHolder("passcode")
 
-	visors := newEntry(strconv.Itoa(fg.visors), func(s string) {
-		fg.visors, _ = strconv.Atoi(s)
+	imgNumber := newEntry(strconv.Itoa(fg.imgNumber), func(s string) {
+		fg.imgNumber, _ = strconv.Atoi(s)
 		fg.log.Debugf("Set: fg.visors = %v", s)
 	})
 
@@ -207,7 +207,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		},
 		Prev: func() { fg.w.SetContent(fg.Page1()) },
 		Next: func() {
-			if !checkPage2Inputs(fg, visors.Text) {
+			if !checkPage2Inputs(fg, imgNumber.Text) {
 				return
 			}
 			proceed := func() {
@@ -233,7 +233,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		enableWifi,
 		wifiWidgets,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
-		widget.NewLabel("Number of Visor Images to be built:"), visors,
+		widget.NewLabel("Number of images:"), imgNumber,
 		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
 }
 
@@ -242,12 +242,12 @@ func (fg *FyneUI) resetPage2Values() {
 	fg.remImg = ""
 	fg.gwIP = net.ParseIP(boot.DefaultGatewayIP)
 	fg.socksPC = ""
-	fg.visors = DefaultVisors
+	fg.imgNumber = DefaultImgNumber
 	fg.hvImg = true
 	fg.hvPKs = nil
 }
 
-func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
+func checkPage2Inputs(fg *FyneUI, imgNumText string) bool {
 	if _, err := filepath.Abs(fg.wkDir); err != nil {
 		return showErr(fg, fmt.Errorf("invalid Work Directory: %v", err))
 	}
@@ -270,11 +270,9 @@ func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
 	if fg.gwIP == nil {
 		return showErr(fg, fmt.Errorf("invalid Gateway IP"))
 	}
-	if _, err := strconv.Atoi(visorsText); err != nil {
-		return showErr(fg, fmt.Errorf("invalid Number of Visor Images: %v", err))
-	}
-	if fg.visors < 0 {
-		return showErr(fg, fmt.Errorf("cannot create %d Visor Images", fg.visors))
+	if n, err := strconv.Atoi(imgNumText); err != nil || n <= 0 {
+		return showErr(fg, fmt.Errorf("Number of images should be a positive integer, got: %s",
+			imgNumText))
 	}
 	return true
 }
