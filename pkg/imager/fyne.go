@@ -24,8 +24,8 @@ import (
 	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
-// DefaultVisors is the default number of visor boot parameters to generate.
-const DefaultVisors = 8
+// DefaultImgNumber is the default number of visor boot parameters to generate.
+const DefaultImgNumber = 1
 
 // FyneUI is a UI to handle the image creation process (using Fyne).
 type FyneUI struct {
@@ -39,18 +39,18 @@ type FyneUI struct {
 	releases  []Release
 	locations []string
 
-	wkDir    string
-	imgLoc   string
-	remImg   string
-	fsImg    string
-	gwIP     net.IP
-	wifiName string
-	wifiPass string
-	socksPC  string
-	visors   int
-	hvImg    bool
-	hvPKs    []cipher.PubKey
-	bps      []boot.Params
+	wkDir     string
+	imgLoc    string
+	remImg    string
+	fsImg     string
+	gwIP      net.IP
+	wifiName  string
+	wifiPass  string
+	socksPC   string
+	imgNumber int
+	hvImg     bool
+	hvPKs     []cipher.PubKey
+	bps       []boot.Params
 }
 
 // NewFyneUI creates a new Fyne UI.
@@ -112,9 +112,11 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 
 func (fg *FyneUI) generateBPS() (string, error) {
 	prevIP := fg.gwIP
-	bpsSlice := make([]boot.Params, 0, fg.visors+1)
+	bpsSlice := make([]boot.Params, 0, fg.imgNumber)
 	hvPKs := fg.hvPKs
+	visorsNumber := fg.imgNumber
 	if fg.hvImg {
+		visorsNumber--
 		hvPK, hvSK := cipher.GenerateKeyPair()
 		hvBps, err := boot.MakeHypervisorParams(fg.gwIP, hvSK, fg.wifiName, fg.wifiPass)
 		if err != nil {
@@ -124,7 +126,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 		bpsSlice = append(bpsSlice, hvBps)
 		hvPKs = append(hvPKs, hvPK)
 	}
-	for i := 0; i < fg.visors; i++ {
+	for i := 0; i < visorsNumber; i++ {
 		_, vSK := cipher.GenerateKeyPair()
 		vBps, err := boot.MakeVisorParams(prevIP, fg.gwIP, vSK, hvPKs, fg.socksPC, fg.wifiName, fg.wifiPass)
 		if err != nil {

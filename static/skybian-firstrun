@@ -73,7 +73,6 @@ setup_network()
 
   nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
 }
-setup_network || exit 1
 
 setup_wifi()
 {
@@ -98,8 +97,11 @@ setup_wifi()
   nmcli con up "$WIFI_NAME"
 }
 
+# assume wifi should be configured instead of ethernet when wifi name env var is set
 if [[ -n "$WFN" ]]; then
   setup_wifi || exit 1
+else
+  setup_network || exit 1
 fi
 
 for file in /etc/ssh/ssh_host* ; do
@@ -111,33 +113,6 @@ echo "Enabling 'skywire-visor.service'."
 systemctl enable skywire-visor.service
 sleep 2
 systemctl start skywire-visor.service
-
-install_ntp()
-{
-    # (courtesy of https://github.com/some4/skywire-install-bash/blob/master/install.sh)
-    # Stop timesyncd:
-    systemctl stop systemd-timesyncd.service
-
-    # Backup (but don't overwrite an existing) config. If not, sed will keep
-    #   appending file:
-    cp -n /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.orig
-    # Use fresh copy in case installer used on existing system:
-    cp /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
-
-    # When system is set to sync with RTC the time can't be updated and NTP
-    #   is crippled. Switch off that setting with:
-    timedatectl set-local-rtc 0
-    timedatectl set-ntp on
-    apt update && apt install -y ntp
-
-    systemctl disable systemd-timesyncd.service
-
-    info "Restarting NTP..."
-    systemctl restart ntp.service
-    # Set hardware clock to UTC (which doesn't have daylight savings):
-    hwclock -w
-}
-install_ntp || logger "Failed to setup ntp service"
 
 install_ntp()
 {
