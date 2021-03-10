@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-ARCHIVE_NAME="skywire-v0.3.1-experimental-linux-arm64.tar.gz"
-RELEASE_URL="https://github.com/i-hate-nicknames/skywire/releases/download/v0.3.1-experimental/$ARCHIVE_NAME"
+ARCHIVE_NAME="skywire-v0.4.0-rc18-linux-arm64.tar.gz"
+RELEASE_URL="https://github.com/skycoin/skywire/releases/download/v0.4.0-rc18/$ARCHIVE_NAME"
 
 MIGRATION_DIR="/var/skywire/migration"
 MIGRATION_BIN="${MIGRATION_DIR}/bin"
