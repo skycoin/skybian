@@ -85,7 +85,7 @@ update_configs() {
 finalize() {
 	# reload systemd service definitions
 	systemctl daemon-reload
-	systemctl start skywire-visor.service
+	systemctl enable skywire-visor.service
 	rm -rf $MIGRATION_BIN/*
 	reboot
 }
