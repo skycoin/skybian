@@ -216,8 +216,8 @@ HV_CONF_TPL='
 			}
 		],
 		"server_addr": "localhost:5505",
-		"bin_path": "./apps",
-		"local_path": "./local"
+		"bin_path": "/usr/bin/apps",
+		"local_path": "/var/skywire-visor/apps"
 	},
 	"hypervisors": [],
 	"cli_addr": "localhost:3435",
