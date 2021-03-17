@@ -13,6 +13,7 @@ import (
 
 	"github.com/mholt/archiver"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/net/context"
 
 	"github.com/skycoin/skybian/pkg/boot"
 )
@@ -69,6 +70,8 @@ func NewBuilder(log logrus.FieldLogger, root string) (*Builder, error) {
 	}, nil
 }
 
+var errDownloadCanceled = errors.New("download canceled")
+
 // DownloadPath returns the path to the download file.
 func (b *Builder) DownloadPath() string {
 	return filepath.Join(b.baseDir, "download"+ExtTarGz)
@@ -86,11 +89,15 @@ func (b *Builder) DownloadCurrent() int64 {
 }
 
 // Download starts downloading from the given URL.
-func (b *Builder) Download(url string) error {
+func (b *Builder) Download(ctx context.Context, url string) error {
 	b.mx.Lock()
 	defer b.mx.Unlock()
 
-	return Download(b.log, url, b.DownloadPath(), &b.dlTotal, &b.dlCurrent)
+	err := Download(ctx, b.log, url, b.DownloadPath(), &b.dlTotal, &b.dlCurrent)
+	if errors.Is(err, context.Canceled) {
+		return errDownloadCanceled
+	}
+	return err
 }
 
 // ExtractArchive extracts the downloaded archive.

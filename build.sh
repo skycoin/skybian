@@ -31,7 +31,7 @@ PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
 PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
 # Image related variables.
-ARMBIAN_IMG_7z=""
+ARMBIAN_IMG_XZ=""
 ARMBIAN_IMG=""
 ARMBIAN_VERSION=""
 ARMBIAN_KERNEL_VERSION=""
@@ -163,9 +163,6 @@ get_skywire()
   mkdir "${PARTS_SKYWIRE_DIR}/bin"
   tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
 
-  info "Renaming 'hypervisor' to 'skywire-hypervisor'..."
-  mv "${PARTS_SKYWIRE_DIR}/bin/hypervisor" "${PARTS_SKYWIRE_DIR}/bin/skywire-hypervisor" || 0
-
   info "Cleaning..."
   rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
@@ -174,83 +171,91 @@ get_skywire()
 
 download_armbian()
 {
-  local _DST=${PARTS_ARMBIAN_DIR}/armbian.7z # Download destination file name.
+  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL}..."
+  wget -c "${ARMBIAN_DOWNLOAD_URL}" ||
+    (error "Image download failed." && return 1)
 
-  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL} to ${_DST} ..."
-  wget -c "${ARMBIAN_DOWNLOAD_URL}" -O "${_DST}" ||
-    (error "Download failed." && return 1)
+  info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL}.sha..."
+  wget -c "${ARMBIAN_DOWNLOAD_URL}.sha" ||
+    (error "Checksum download failed." && return 1)
 }
 
 # Get the latest ARMBIAN image for Orange Pi Prime
 get_armbian()
 {
-  local ARMBIAN_IMG_7z="armbian.7z"
 
-    # change to dest dir
-    cd "${PARTS_ARMBIAN_DIR}" ||
-      (error "Failed to cd." && return 1)
+  # change to dest dir
+  cd "${PARTS_ARMBIAN_DIR}" ||
+    (error "Failed to cd." && return 1)
 
-    # user info
-    info "Getting Armbian image, clearing dest dir first."
+  local ARMBIAN_IMG_XZ="$(ls Armbian*img.xz || true)"
 
-    # test if we have a file in there
-    if [ -r armbian.7z ] ; then
+  # user info
+  info "Getting Armbian image, clearing dest dir first."
 
-        # use already downloaded image file
-        notice "Reusing already downloaded file"
-    else
-        # no image in there, must download
-        info "No cached image, downloading.."
+  # test if we have a file in there
+  if [ -r "${ARMBIAN_IMG_XZ}" ] ; then
 
-        # download it
-        download_armbian
-    fi
+      # todo: doesn't seem to work, always downloads the image
+      # todo: download checksum separately, and use it to validate local copy
 
-    # extract and check it's integrity
-    info "Armbian file to process is '${ARMBIAN_IMG_7z}'."
+      # use already downloaded image file
+      notice "Reusing already downloaded file"
+  else
+      # no image in there, must download
+      info "No cached image, downloading.."
 
-    # check if extracted image is in there to save time
-    if [ -n "$(ls Armbian*.img || true)" ] ; then
-        # image already extracted nothing to do
-        notice "Armbian image already extracted"
-    else
-        # extract armbian
-        info "Extracting image..."
-        if ! 7z e "${ARMBIAN_IMG_7z}" ; then
-            error "Extracting failed, file is corrupt? Re-run the script to get it right."
-            rm "${ARMBIAN_IMG_7z}" &> /dev/null || true
-            exit 1
-        fi
-    fi
+      # download it
+      download_armbian
 
-    # check integrity
-    info "Testing image integrity..."
-    if ! $(command -v sha256sum) -c --status -- *.sha ; then
-        error "Integrity of the image is compromised, re-run the script to get it right."
-        rm -- *img *txt *sha *7z &> /dev/null || true
-        exit 1
-    fi
+      local ARMBIAN_IMG_XZ="$(ls Armbian*img.xz || true)"
+  fi
 
-    # get image filename
-    ARMBIAN_IMG=$(ls Armbian*.img || true)
+  # extract and check it's integrity
+  info "Armbian file to process is '${ARMBIAN_IMG_XZ}'."
 
-    # imge integrity
-    info "Image integrity assured via sha256sum."
-    notice "Final image file is ${ARMBIAN_IMG}"
+  # check integrity
+  info "Testing image integrity..."
+  if ! $(command -v sha256sum) -c --status -- *.sha ; then
+      error "Integrity of the image is compromised, re-run the script to get it right."
+      rm -- armbian *txt *sha *xz &> /dev/null || true
+      exit 1
+  fi
 
-    # get version & kernel version info
-    ARMBIAN_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $2 }')
-    ARMBIAN_KERNEL_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
+  # check if extracted image is in there to save time
+  if [ -n "$(ls Armbian*.img || true)" ] ; then
+      # image already extracted nothing to do
+      notice "Armbian image already extracted"
+  else
+      # extract armbian
+      info "Extracting image..."
+      if ! 7z e "${ARMBIAN_IMG_XZ}" ; then
+          error "Extracting failed, file is corrupt? Re-run the script to get it right."
+          rm "${ARMBIAN_IMG_XZ}" &> /dev/null || true
+          exit 1
+      fi
+  fi
 
-    # info to the user
-    notice "Armbian version: ${ARMBIAN_VERSION}"
-    notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
+  # get image filename
+  ARMBIAN_IMG=$(ls Armbian*.img || true)
+
+  # imge integrity
+  info "Image integrity assured via sha256sum."
+  notice "Final image file is ${ARMBIAN_IMG}"
+
+  # get version & kernel version info
+  ARMBIAN_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $2 }')
+  ARMBIAN_KERNEL_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
+
+  # info to the user
+  notice "Armbian version: ${ARMBIAN_VERSION}"
+  notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 }
 
 get_all()
 {
-  get_armbian || return 1
   get_skywire || return 1
+  get_armbian || return 1
   get_tools || return 1
 }
 
@@ -259,7 +264,7 @@ get_all()
 setup_loop()
 {
   # find free loop device
-  IMG_LOOP=$(losetup -f)
+  IMG_LOOP=$(sudo losetup -f)
 
   # find image sector size (if not user-defined)
   [[ -z $IMG_SECTOR ]] &&
@@ -439,7 +444,7 @@ clean_image()
 clean_output_dir()
 {
   # Clean parts.
-  cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
+  cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.xz' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
 

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"fyne.io/fyne"
+	"fyne.io/fyne/container"
 	"fyne.io/fyne/dialog"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
@@ -39,6 +40,33 @@ func (fg *FyneUI) Page1() fyne.CanvasObject {
 		widget.NewLabelWithStyle(body, fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})))
 }
 
+func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
+	fsImg := widget.NewEntry()
+	fsImg.SetPlaceHolder("path to .img file")
+	fsImg.OnChanged = func(s string) {
+		fg.fsImg = s
+		fg.log.Debugf("Set: fg.fsImg = %v", s)
+	}
+	fsImg.SetText(fg.fsImg)
+	d := dialog.NewFileOpen(func(f fyne.URIReadCloser, err error) {
+		if err != nil {
+			fg.log.Error(err)
+			return
+		}
+		if f == nil {
+			return
+		}
+		uri := f.URI().String()
+		// URI includes file:// scheme, and there is no other way to retrieve full file path
+		filePath := strings.TrimPrefix(uri, "file://")
+		fg.fsImg = filePath
+		fsImg.SetText(filePath)
+	}, fg.w)
+	btn := widget.NewButton("Open", d.Show)
+	box := container.NewHBox(btn, fsImg)
+	return box
+}
+
 // Page2 returns the canvas that draws page 2 of the Fyne interface.
 func (fg *FyneUI) Page2() fyne.CanvasObject {
 	wkDir := newLinkedEntry(&fg.wkDir)
@@ -53,26 +81,20 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	remImg.Hide()
 
-	fsImg := widget.NewEntry()
-	fsImg.SetPlaceHolder("path to .img file")
-	fsImg.OnChanged = func(s string) {
-		fg.fsImg = s
-		fg.log.Debugf("Set: fg.fsImg = %v", s)
-	}
-	fsImg.SetText(fg.fsImg)
-	fsImg.Hide()
+	fsImgPicker := fg.makeFilePicker()
+	fsImgPicker.Hide()
 
 	imgLoc := widget.NewRadio(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
 			remImg.Show()
-			fsImg.Hide()
+			fsImgPicker.Hide()
 		case fg.locations[1]:
 			remImg.Hide()
-			fsImg.Show()
+			fsImgPicker.Show()
 		default:
 			remImg.Hide()
-			fsImg.Hide()
+			fsImgPicker.Hide()
 		}
 	})
 	imgLoc.SetSelected(fg.imgLoc)
@@ -84,11 +106,37 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		fg.log.Debugf("Set: fg.gwIP = %v", s)
 	})
 
+	wifiName := newEntry(fg.wifiName, func(s string) {
+		fg.wifiName = s
+		fg.log.Debugf("Set: fg.gwIP = %v", s)
+	})
+	wifiPass := newEntry(fg.wifiPass, func(s string) {
+		fg.wifiPass = s
+		fg.log.Debugf("Set: fg.wifiPass = %v", s)
+	})
+
+	wifiWidgets := fyne.NewContainerWithLayout(layout.NewVBoxLayout(), widget.NewLabel("Wifi access point name:"),
+		wifiName, widget.NewLabel("Wifi passcode:"), wifiPass)
+	wifiWidgets.Hide()
+
+	enableWifi := widget.NewCheck("Generate wi-fi connection", func(b bool) {
+		if b {
+			fg.wifiName = wifiName.Text
+			fg.wifiPass = wifiPass.Text
+			wifiWidgets.Show()
+		} else {
+			fg.wifiName = ""
+			fg.wifiPass = ""
+			wifiWidgets.Hide()
+		}
+	})
+	enableWifi.SetChecked(false)
+
 	socksPC := newLinkedEntry(&fg.socksPC)
 	socksPC.SetPlaceHolder("passcode")
 
-	visors := newEntry(strconv.Itoa(fg.visors), func(s string) {
-		fg.visors, _ = strconv.Atoi(s)
+	imgNumber := newEntry(strconv.Itoa(fg.imgNumber), func(s string) {
+		fg.imgNumber, _ = strconv.Atoi(s)
 		fg.log.Debugf("Set: fg.visors = %v", s)
 	})
 
@@ -159,25 +207,33 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		},
 		Prev: func() { fg.w.SetContent(fg.Page1()) },
 		Next: func() {
-			if !checkPage2Inputs(fg, visors.Text) {
+			if !checkPage2Inputs(fg, imgNumber.Text) {
 				return
 			}
-			confirmPage2Continue(fg, fg.wkDir, func() {
+			proceed := func() {
+				os.Mkdir(fg.wkDir, os.FileMode(0755))
 				bpsStr, err := fg.generateBPS()
 				if err != nil {
 					dialog.ShowError(err, fg.w)
 					return
 				}
 				fg.w.SetContent(fg.Page3(bpsStr))
-			})
+			}
+			if _, err := os.Stat(fg.wkDir); err == nil {
+				clearWorkDirDialog(fg, fg.wkDir, proceed)
+			} else {
+				proceed()
+			}
 		},
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImg,
+		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImgPicker,
 		widget.NewLabel("Gateway IP:"), gwIP,
+		enableWifi,
+		wifiWidgets,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
-		widget.NewLabel("Number of Visor Images:"), visors,
+		widget.NewLabel("Number of images:"), imgNumber,
 		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
 }
 
@@ -186,12 +242,12 @@ func (fg *FyneUI) resetPage2Values() {
 	fg.remImg = ""
 	fg.gwIP = net.ParseIP(boot.DefaultGatewayIP)
 	fg.socksPC = ""
-	fg.visors = DefaultVisors
+	fg.imgNumber = DefaultImgNumber
 	fg.hvImg = true
 	fg.hvPKs = nil
 }
 
-func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
+func checkPage2Inputs(fg *FyneUI, imgNumText string) bool {
 	if _, err := filepath.Abs(fg.wkDir); err != nil {
 		return showErr(fg, fmt.Errorf("invalid Work Directory: %v", err))
 	}
@@ -214,16 +270,14 @@ func checkPage2Inputs(fg *FyneUI, visorsText string) bool {
 	if fg.gwIP == nil {
 		return showErr(fg, fmt.Errorf("invalid Gateway IP"))
 	}
-	if _, err := strconv.Atoi(visorsText); err != nil {
-		return showErr(fg, fmt.Errorf("invalid Number of Visor Images: %v", err))
-	}
-	if fg.visors < 0 {
-		return showErr(fg, fmt.Errorf("cannot create %d Visor Images", fg.visors))
+	if n, err := strconv.Atoi(imgNumText); err != nil || n <= 0 {
+		return showErr(fg, fmt.Errorf("Number of images should be a positive integer, got: %s",
+			imgNumText))
 	}
 	return true
 }
 
-func confirmPage2Continue(fg *FyneUI, wkDir string, next func()) {
+func clearWorkDirDialog(fg *FyneUI, wkDir string, next func()) {
 	cTitle := "Work Directory Already Exists"
 	cMsg := fmt.Sprintf("Directory %s already exists.\nDelete everything and continue?", wkDir)
 	dialog.ShowConfirm(cTitle, cMsg, func(b bool) {

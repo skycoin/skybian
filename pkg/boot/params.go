@@ -35,6 +35,8 @@ const (
 	LocalSKENV       = "SK"
 	HypervisorPKsENV = "HVS"
 	SocksPassEnv     = "SS"
+	WifiNameEnv      = "WFN"
+	WifiPassEnv      = "WFP"
 )
 
 // Modes.
@@ -83,11 +85,13 @@ func (m *Mode) UnmarshalText(text []byte) (err error) {
 
 // Params are the boot parameters for a given node.
 type Params struct {
-	Mode      Mode          `json:"mode"`
-	LocalIP   net.IP        `json:"local_ip"`
-	GatewayIP net.IP        `json:"gateway_ip"`
-	LocalPK   cipher.PubKey `json:"local_pk"` // Not actually encoded to bps.
-	LocalSK   cipher.SecKey `json:"local_sk"`
+	Mode             Mode          `json:"mode"`
+	LocalIP          net.IP        `json:"local_ip"`
+	GatewayIP        net.IP        `json:"gateway_ip"`
+	WifiEndpointName string        `json:"wifi_name,omitempty"`
+	WifiEndpointPass string        `json:"wifi_pass,omitempty"`
+	LocalPK          cipher.PubKey `json:"local_pk"` // Not actually encoded to bps.
+	LocalSK          cipher.SecKey `json:"local_sk"`
 
 	// only valid if mode == "0x00" (hypervisor)
 	HypervisorPKs    cipher.PubKeys `json:"hypervisor_pks,omitempty"`
@@ -95,7 +99,7 @@ type Params struct {
 }
 
 // MakeHypervisorParams is a convenience function for creating boot parameters for a hypervisor.
-func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
+func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass string) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -111,12 +115,17 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey) (Params, error) {
 		LocalPK:   pk,
 		LocalSK:   sk,
 	}
+	if wifiName != "" || wifiPass != "" {
+		params.WifiEndpointName = wifiName
+		params.WifiEndpointPass = wifiPass
+	}
 	_, err = params.Encode()
 	return params, err
 }
 
 // MakeVisorParams is a convenience function for creating boot parameters for a visor.
-func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey, socksPC string) (Params, error) {
+func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey,
+	socksPC string, wifiName, wifiPass string) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -133,6 +142,10 @@ func MakeVisorParams(prevIP net.IP, gwIP net.IP, sk cipher.SecKey, hvPKs []ciphe
 		LocalSK:          sk,
 		HypervisorPKs:    hvPKs,
 		SkysocksPasscode: socksPC,
+	}
+	if wifiName != "" || wifiPass != "" {
+		params.WifiEndpointName = wifiName
+		params.WifiEndpointPass = wifiPass
 	}
 	_, err = params.Encode()
 	return params, err
@@ -219,16 +232,32 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 			return err
 		}
 	}
+	if len(bp.WifiEndpointName) > 0 && len(bp.WifiEndpointPass) > 0 {
+		if err := PrintEnv(w, WifiNameEnv, bp.WifiEndpointName); err != nil {
+			return err
+		}
+		if err := PrintEnv(w, WifiPassEnv, bp.WifiEndpointPass); err != nil {
+			return err
+		}
+	}
 	return nil
 }
+
+// todo: encode/decode as it is now is infested with magical numbers and manually assembling data
+// if boot parameters get more complexe, consider using something
+// like encoding/gob or protobuf for better readability/maintainability
+//
 
 // Encode encodes the boot parameters in a concise format to be wrote to the MBR.
 func (bp Params) Encode() ([]byte, error) {
 	keys := bp.LocalSK[:]
+	toEncode := [][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP,
+		[]byte(bp.SkysocksPasscode), []byte(bp.WifiEndpointName), []byte(bp.WifiEndpointPass)}
 	for _, hvPK := range bp.HypervisorPKs {
 		keys = append(keys, hvPK[:]...)
 	}
-	raw := bytes.Join([][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP, []byte(bp.SkysocksPasscode), keys}, []byte{sep})
+	toEncode = append(toEncode, keys)
+	raw := bytes.Join(toEncode, []byte{sep})
 	if len(raw) > size {
 		return nil, ErrParamsTooLarge
 	}
@@ -240,15 +269,21 @@ func (bp Params) Encode() ([]byte, error) {
 
 // Decode decodes the boot parameters from the given raw bytes.
 func (bp *Params) Decode(raw []byte) error {
-	split := bytes.SplitN(raw, []byte{sep}, 5)
-	if len(split) != 5 {
+	split := bytes.SplitN(raw, []byte{sep}, 7)
+	// 5 for a regular config, 7 for wifi-enabled config
+	if len(split) != 7 {
 		return ErrCannotReadParams
 	}
 
 	bp.Mode, bp.LocalIP, bp.GatewayIP, bp.SkysocksPasscode =
 		Mode(split[0][0]), split[1], split[2], string(split[3])
 
-	keys := split[4]
+	if len(split) == 7 {
+		bp.WifiEndpointName = string(split[4])
+		bp.WifiEndpointPass = string(split[5])
+	}
+
+	keys := split[6]
 	keys = keys[copy(bp.LocalSK[:], keys):]
 	for {
 		var pk cipher.PubKey
@@ -257,6 +292,7 @@ func (bp *Params) Decode(raw []byte) error {
 		}
 		bp.HypervisorPKs = append(bp.HypervisorPKs, pk)
 	}
+
 	return nil
 }
 

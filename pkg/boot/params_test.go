@@ -93,7 +93,40 @@ func generatePKs(n int) cipher.PubKeys {
 	return out
 }
 
-func TestBootParams(t *testing.T) {
+func TestBootParamsWifi(t *testing.T) {
+	imgName := prepareMockImg(t)
+	defer func() { require.NoError(t, os.Remove(imgName)) }()
+
+	_, err := ReadParams(imgName)
+	require.EqualError(t, err, ErrCannotReadParams.Error())
+
+	pk, sk := cipher.GenerateKeyPair()
+	fmt.Println("pk =", pk)
+	fmt.Println("sk =", sk)
+
+	params := Params{
+		Mode:             VisorMode,
+		LocalIP:          net.ParseIP("192.168.0.2"),
+		GatewayIP:        net.ParseIP("192.168.0.1"),
+		LocalSK:          sk,
+		HypervisorPKs:    generatePKs(4),
+		SkysocksPasscode: "",
+		WifiEndpointName: "testName",
+		WifiEndpointPass: "pass",
+	}
+
+	raw, err := params.Encode()
+	require.NoError(t, err)
+	require.Len(t, raw, size)
+
+	require.NoError(t, WriteParams(imgName, params))
+
+	readParams, err := ReadParams(imgName)
+	require.NoError(t, err)
+	require.Equal(t, params, readParams)
+}
+
+func TestBootParamsNoWifi(t *testing.T) {
 	imgName := prepareMockImg(t)
 	defer func() { require.NoError(t, os.Remove(imgName)) }()
 
