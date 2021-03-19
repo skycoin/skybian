@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-ARCHIVE_NAME="skywire-v0.4.0-linux-arm64.tar.gz"
-RELEASE_URL="https://github.com/skycoin/skywire/releases/download/v0.4.0/$ARCHIVE_NAME"
+ARCHIVE_NAME="skywire-v0.4.1-linux-arm64.tar.gz"
+RELEASE_URL="https://github.com/skycoin/skywire/releases/download/v0.4.1/$ARCHIVE_NAME"
 
 MIGRATION_DIR="/var/skywire/migration"
 MIGRATION_BIN="${MIGRATION_DIR}/bin"
@@ -10,11 +10,24 @@ BACKUP_BIN=$MIGRATION_BACKUP/bin
 BACKUP_CONF=$MIGRATION_BACKUP/conf
 SYSTEMD_DIR="/etc/systemd/system"
 
+SYSTEMD_FILE_OLD="/etc/systemd/system/skywire-startup.service"
+
 main() {
+	prepare_old
 	prepare
 	update_binaries
 	update_configs
 	finalize
+}
+
+prepare_old() {
+	echo "Checking for old systemd service..."
+
+	if [ -f "$SYSTEMD_FILE_OLD" ]; then
+	curl -o /etc/systemd/system/skywire-visor.service https://raw.githubusercontent.com/skycoin/skybian/master/static/skywire-visor.service
+	systemctl daemon-reload
+	systemctl disable skywire-startup.service
+	fi
 }
 
 prepare() {
