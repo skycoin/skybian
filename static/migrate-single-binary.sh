@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ARCHIVE_NAME="skywire-v0.4.1-linux-arm64.tar.gz"
+ARCHIVE_NAME="skywire-v0.4.1-linux-arm.tar.gz"
 RELEASE_URL="https://github.com/skycoin/skywire/releases/download/v0.4.1/$ARCHIVE_NAME"
 
 MIGRATION_DIR="/var/skywire/migration"
