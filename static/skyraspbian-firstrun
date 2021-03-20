@@ -79,7 +79,7 @@ setup_network()
   sudo nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
   
   # Put the connection up
-  sudo nmcli con up "$NET_NAME"
+  #sudo nmcli con up "$NET_NAME"
 }
 setup_network || exit 1
 
@@ -109,6 +109,8 @@ setup_wifi()
 
 if [[ -n "$WFN" ]]; then
   setup_wifi || exit 1
+else
+  setup_network || exit 1
 fi
 
 for file in /etc/ssh/ssh_host* ; do
