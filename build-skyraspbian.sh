@@ -184,9 +184,9 @@ download_raspbian()
   wget -c "${RASPBIAN_DOWNLOAD_URL}" ||
     (error "Download failed." && return 1)
 
-  info "Downloading checksum file from ${ARMBIAN_DOWNLOAD_SHA} to ${_DST} ..."
-  wget -c "${RASPBIAN_DOWNLOAD_SHA}" ||
-    (error "Download failed." && return 1)
+  info "Downloading checksum from ${RASPBIAN_DOWNLOAD_URL}.sha..."
+  wget -c "${RASPBIAN_DOWNLOAD_URL}.sha256" ||
+    (error "Checksum download failed." && return 1)
 }
 
 # Get the latest RASPBIAN image for Orange Pi Prime
