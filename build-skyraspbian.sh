@@ -243,28 +243,12 @@ get_raspbian()
         fi
     fi
 
-    # check integrity
-    #info "Testing image integrity..."
-    #if ! $(command -v sha256sum) -c --status -- *.sha ; then
-    #    error "Integrity of the image is compromised, re-run the script to get it right."
-    #    rm -- *img *txt *sha *7z &> /dev/null || true
-    #    exit 1
-    #fi
-
     # get image filename
     RASPBIAN_IMG=$(ls *rasp*.img || true)
 
     # imge integrity
     info "Image integrity assured via sha256sum."
     notice "Final image file is ${RASPBIAN_IMG}"
-
-    # get version & kernel version info
-    #ARMBIAN_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $2 }')
-    #ARMBIAN_KERNEL_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
-
-    # info to the user
-    #notice "Armbian version: ${ARMBIAN_VERSION}"
-    #notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
 }
 
 get_all()
