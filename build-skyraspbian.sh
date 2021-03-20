@@ -214,7 +214,7 @@ get_raspbian()
 
         # download it
         download_raspbian
-    #fi
+    fi
 
     local RASPBIAN_IMG_7z=$(ls *raspios*.zip || true)
 
