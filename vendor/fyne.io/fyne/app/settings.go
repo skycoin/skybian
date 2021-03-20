@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"io"
 	"os"
 	"path/filepath"
 	"sync"
@@ -14,9 +13,8 @@ import (
 // SettingsSchema is used for loading and storing global settings
 type SettingsSchema struct {
 	// these items are used for global settings load
-	ThemeName    string  `json:"theme"`
-	Scale        float32 `json:"scale"`
-	PrimaryColor string  `json:"primary_color"`
+	ThemeName string  `json:"theme"`
+	Scale     float32 `json:"scale"`
 }
 
 // StoragePath returns the location of the settings storage
@@ -28,9 +26,8 @@ func (sc *SettingsSchema) StoragePath() string {
 var _ fyne.Settings = (*settings)(nil)
 
 type settings struct {
-	propertyLock   sync.RWMutex
-	theme          fyne.Theme
-	themeSpecified bool
+	themeLock sync.RWMutex
+	theme     fyne.Theme
 
 	listenerLock    sync.Mutex
 	changeListeners []chan fyne.Settings
@@ -39,46 +36,22 @@ type settings struct {
 	schema SettingsSchema
 }
 
-func (s *settings) BuildType() fyne.BuildType {
-	return buildMode
-}
-
-func (s *settings) PrimaryColor() string {
-	s.propertyLock.RLock()
-	defer s.propertyLock.RUnlock()
-	return s.schema.PrimaryColor
-}
-
-// OverrideTheme allows the settings app to temporarily preview different theme details.
-// Please make sure that you remember the original settings and call this again to revert the change.
-func (s *settings) OverrideTheme(theme fyne.Theme, name string) {
-	s.propertyLock.Lock()
-	defer s.propertyLock.Unlock()
-	s.schema.PrimaryColor = name
-	s.theme = theme
-}
-
 func (s *settings) Theme() fyne.Theme {
-	s.propertyLock.RLock()
-	defer s.propertyLock.RUnlock()
+	s.themeLock.RLock()
+	defer s.themeLock.RUnlock()
 	return s.theme
 }
 
 func (s *settings) SetTheme(theme fyne.Theme) {
-	s.themeSpecified = true
-	s.applyTheme(theme)
-}
-
-func (s *settings) applyTheme(theme fyne.Theme) {
-	s.propertyLock.Lock()
-	defer s.propertyLock.Unlock()
+	s.themeLock.Lock()
+	defer s.themeLock.Unlock()
 	s.theme = theme
 	s.apply()
 }
 
 func (s *settings) Scale() float32 {
-	s.propertyLock.RLock()
-	defer s.propertyLock.RUnlock()
+	s.themeLock.RLock()
+	defer s.themeLock.RUnlock()
 	return s.schema.Scale
 }
 
@@ -104,7 +77,7 @@ func (s *settings) apply() {
 
 func (s *settings) load() {
 	err := s.loadFromFile(s.schema.StoragePath())
-	if err != nil && err != io.EOF { // we can get an EOF in windows settings writes
+	if err != nil {
 		fyne.LogError("Settings load error:", err)
 	}
 
@@ -112,7 +85,7 @@ func (s *settings) load() {
 }
 
 func (s *settings) loadFromFile(path string) error {
-	file, err := os.Open(path) // #nosec
+	file, err := os.Open(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -130,21 +103,17 @@ func (s *settings) fileChanged() {
 }
 
 func (s *settings) setupTheme() {
-	if s.themeSpecified {
-		return
-	}
 	name := s.schema.ThemeName
 	if env := os.Getenv("FYNE_THEME"); env != "" {
-		s.themeSpecified = true
 		name = env
 	}
 
 	if name == "light" {
-		s.applyTheme(theme.LightTheme())
+		s.SetTheme(theme.LightTheme())
 	} else if name == "dark" {
-		s.applyTheme(theme.DarkTheme())
+		s.SetTheme(theme.DarkTheme())
 	} else {
-		s.applyTheme(defaultTheme())
+		s.SetTheme(defaultTheme())
 	}
 }
 

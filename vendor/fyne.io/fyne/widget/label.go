@@ -9,12 +9,10 @@ import (
 
 // Label widget is a label component with appropriate padding and layout.
 type Label struct {
-	BaseWidget
+	textProvider
 	Text      string
 	Alignment fyne.TextAlign // The alignment of the Text
-	Wrapping  fyne.TextWrap  // The wrapping of the Text
 	TextStyle fyne.TextStyle // The style of the label text
-	provider  *textProvider
 }
 
 // NewLabel creates a new label widget with the set text content
@@ -35,46 +33,22 @@ func NewLabelWithStyle(text string, alignment fyne.TextAlign, style fyne.TextSty
 
 // Refresh checks if the text content should be updated then refreshes the graphical context
 func (l *Label) Refresh() {
-	if l.provider == nil { // not created until visible
-		return
-	}
-
-	if l.Text != string(l.provider.buffer) {
-		l.provider.setText(l.Text)
-	} else {
-		l.provider.updateRowBounds() // if truncate/wrap has changed
+	if l.Text != string(l.buffer) {
+		l.textProvider.SetText(l.Text)
 	}
 
 	l.BaseWidget.Refresh()
 }
 
-// Resize sets a new size for the label.
-// Note this should not be used if the widget is being managed by a Layout within a Container.
-func (l *Label) Resize(size fyne.Size) {
-	l.BaseWidget.Resize(size)
-	if l.provider == nil { // not created until visible
-		return
-	}
-	l.provider.Resize(size)
-}
-
 // SetText sets the text of the label
 func (l *Label) SetText(text string) {
 	l.Text = text
-	if l.provider == nil { // not created until visible
-		return
-	}
-	l.provider.setText(text) // calls refresh
+	l.textProvider.SetText(text) // calls refresh
 }
 
 // textAlign tells the rendering textProvider our alignment
 func (l *Label) textAlign() fyne.TextAlign {
 	return l.Alignment
-}
-
-// textWrap tells the rendering textProvider our wrapping
-func (l *Label) textWrap() fyne.TextWrap {
-	return l.Wrapping
 }
 
 // textStyle tells the rendering textProvider our style
@@ -87,29 +61,27 @@ func (l *Label) textColor() color.Color {
 	return theme.TextColor()
 }
 
-// concealed tells the rendering textProvider if we are a concealed field
-func (l *Label) concealed() bool {
+// password tells the rendering textProvider if we are a password field
+func (l *Label) password() bool {
 	return false
 }
 
 // object returns the root object of the widget so it can be referenced
 func (l *Label) object() fyne.Widget {
-	return l.super()
+	return l
 }
 
 // CreateRenderer is a private method to Fyne which links this widget to its renderer
 func (l *Label) CreateRenderer() fyne.WidgetRenderer {
 	l.ExtendBaseWidget(l)
-	l.provider = newTextProvider(l.Text, l)
-	l.provider.size = l.size
-	return l.provider.CreateRenderer()
+	hidden := l.Hidden
+	l.textProvider = newTextProvider(l.Text, l)
+	l.textProvider.Hidden = hidden
+	return l.textProvider.CreateRenderer()
 }
 
 // MinSize returns the size that this widget should not shrink below
 func (l *Label) MinSize() fyne.Size {
 	l.ExtendBaseWidget(l)
-	if p := l.provider; p != nil && l.Text != string(p.buffer) {
-		p.setText(l.Text)
-	}
 	return l.BaseWidget.MinSize()
 }

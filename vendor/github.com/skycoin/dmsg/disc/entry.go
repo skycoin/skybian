@@ -1,6 +1,7 @@
 package disc
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -239,7 +240,7 @@ func (e *Entry) Sign(sk cipher.SecKey) error {
 }
 
 // Validate checks if entry is valid.
-func (e *Entry) Validate(validateTimestamp bool) error {
+func (e *Entry) Validate() error {
 	// Must have version
 	if e.Version == "" {
 		return ErrValidationNoVersion
@@ -264,19 +265,17 @@ func (e *Entry) Validate(validateTimestamp bool) error {
 		return ErrValidationEmptyServerAddress
 	}
 
-	if validateTimestamp {
-		now, ts := time.Now(), time.Unix(0, e.Timestamp)
-		earliestAcceptable := now.Add(-entryLifetime)
-		latestAcceptable := now.Add(allowedEntryTimestampError) // in case when time on nodes mismatches a bit
+	now, ts := time.Now(), time.Unix(0, e.Timestamp)
+	earliestAcceptable := now.Add(-entryLifetime)
+	latestAcceptable := now.Add(allowedEntryTimestampError) // in case when time on nodes mismatches a bit
 
-		if ts.After(latestAcceptable) || ts.Before(earliestAcceptable) {
-			log.Warnf("Entry timestamp %v is not correct (now: %v)", ts, now)
-			// Skybian boards have issues with mismatching time because of https://github.com/skycoin/skybian/issues/47.
-			// This causes issues like https://github.com/SkycoinPro/skywire-services/issues/274.
-			// Therefore, the timestamp check needs to be temporarily disabled until the issue is resolved.
-			//
-			// return ErrValidationOutdatedTime
-		}
+	if ts.After(latestAcceptable) || ts.Before(earliestAcceptable) {
+		log.Warnf("Entry timestamp %v is not correct (now: %v)", ts, now)
+		// Skybian boards have issues with mismatching time because of https://github.com/skycoin/skybian/issues/47.
+		// This causes issues like https://github.com/SkycoinPro/skywire-services/issues/274.
+		// Therefore, the timestamp check needs to be temporarily disabled until the issue is resolved.
+		//
+		// return ErrValidationOutdatedTime
 	}
 
 	return nil

@@ -6,12 +6,6 @@ import (
 	"github.com/skycoin/dmsg/cipher"
 )
 
-// Constants for skywire root directories.
-const (
-	DefaultSkywirePath = "."
-	PackageSkywirePath = "/opt/skywire"
-)
-
 // Constants for default services.
 const (
 	DefaultTpDiscAddr          = "http://transport.discovery.skywire.skycoin.com"
@@ -35,7 +29,6 @@ const (
 )
 
 // Dmsg port constants.
-// TODO(evanlinjin): Define these properly. These are currently random.
 const (
 	DmsgCtrlPort       uint16 = 7   // Listening port for dmsgctrl protocol (similar to TCP Echo Protocol).
 	DmsgSetupPort      uint16 = 36  // Listening port of a setup node.
@@ -50,8 +43,7 @@ const (
 
 	DefaultDmsgPtyCLINet    = "unix"
 	DefaultDmsgPtyCLIAddr   = "/tmp/dmsgpty.sock"
-	DefaultDmsgPtyWhitelist = DefaultSkywirePath + "/dmsgpty/whitelist.json"
-	PackageDmsgPtyWhiteList = PackageSkywirePath + "/dmsgpty/whitelist.json"
+	DefaultDmsgPtyWhitelist = "./dmsgpty/whitelist.json"
 )
 
 // Default STCP constants.
@@ -76,7 +68,7 @@ const (
 	VPNServerPort uint16 = 44
 
 	VPNClientName = "vpn-client"
-	// TODO(darkrengarius): this one's not needed for the app to run but lack of it causes errors
+	// TODO: this one's not needed for the app to run but lack of it causes errors
 	VPNClientPort uint16 = 43
 )
 
@@ -92,29 +84,14 @@ const (
 const (
 	DefaultAppSrvAddr     = "localhost:5505"
 	AppDiscUpdateInterval = 30 * time.Second
-	DefaultAppLocalPath   = DefaultSkywirePath + "/local"
-	DefaultAppBinPath     = DefaultSkywirePath + "/apps"
+	DefaultAppLocalPath   = "./local"
+	DefaultAppBinPath     = "./apps"
 	DefaultLogLevel       = "info"
-	PackageAppLocalPath   = PackageSkywirePath + "/local"
-	PackageAppBinPath     = PackageSkywirePath + "/apps"
 )
 
 // Default routing constants
 const (
-	DefaultTpLogStore = DefaultSkywirePath + "/transport_logs"
-	PackageTpLogStore = PackageSkywirePath + "/transport_logs"
-)
-
-// Default hypervisor constants
-const (
-	DefaultHypervisorDB = ".skycoin/hypervisor/users.db"
-	DefaultEnableAuth   = true
-	DefaultEnableTLS    = false
-	DefaultTLSKey       = DefaultSkywirePath + "/ssl/key.pem"
-	DefaultTLSCert      = DefaultSkywirePath + "/ssl/cert.pem"
-	PackageEnableTLS    = true
-	PackageTLSKey       = PackageSkywirePath + "/ssl/key.pem"
-	PackageTLSCert      = PackageSkywirePath + "/ssl/cert.pem"
+	DefaultTpLogStore = "./transport_logs"
 )
 
 // MustPK unmarshals string PK to cipher.PubKey. It panics if unmarshaling fails.

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"image"
+	"image/draw"
 	_ "image/jpeg" // avoid users having to import when using image widget
 	_ "image/png"  // avoid the same for PNG images
 	"io"
@@ -14,10 +15,8 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
 	"fyne.io/fyne/internal"
-
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
-	"golang.org/x/image/draw"
 )
 
 // PaintImage renders a given fyne Image to a Go standard image
@@ -41,7 +40,7 @@ func PaintImage(img *canvas.Image, c fyne.Canvas, width, height int) image.Image
 		}
 
 		if strings.ToLower(filepath.Ext(name)) == ".svg" {
-			tex := svgCacheGet(name, width, height)
+			tex := svgCacheGet(img.Resource, width, height)
 			if tex == nil {
 				// Not in cache, so load the item and add to cache
 
@@ -50,30 +49,18 @@ func PaintImage(img *canvas.Image, c fyne.Canvas, width, height int) image.Image
 					fyne.LogError("SVG Load error:", err)
 					return nil
 				}
+				icon.SetTarget(0, 0, float64(width), float64(height))
 
-				origW, origH := int(icon.ViewBox.W), int(icon.ViewBox.H)
-				aspect := float32(origW) / float32(origH)
-				viewAspect := float32(width) / float32(height)
-
-				texW, texH := width, height
-				if viewAspect > aspect {
-					texW = int(float32(height) * aspect)
-				} else if viewAspect < aspect {
-					texH = int(float32(width) / aspect)
-				}
-
-				icon.SetTarget(0, 0, float64(texW), float64(texH))
+				w, h := int(icon.ViewBox.W), int(icon.ViewBox.H)
 				// this is used by our render code, so let's set it to the file aspect
-				aspects[img.Resource] = aspect
+				aspects[img.Resource] = float32(w) / float32(h)
 				// if the image specifies it should be original size we need at least that many pixels on screen
 				if img.FillMode == canvas.ImageFillOriginal {
-					if !checkImageMinSize(img, c, origW, origH) {
-						return nil
-					}
+					checkImageMinSize(img, c, w, h)
 				}
 
-				tex = image.NewNRGBA(image.Rect(0, 0, texW, texH))
-				scanner := rasterx.NewScannerGV(origW, origH, tex, tex.Bounds())
+				tex = image.NewRGBA(image.Rect(0, 0, width, height))
+				scanner := rasterx.NewScannerGV(w, h, tex, tex.Bounds())
 				raster := rasterx.NewDasher(width, height, scanner)
 
 				err = drawSVGSafely(icon, raster)
@@ -81,8 +68,7 @@ func PaintImage(img *canvas.Image, c fyne.Canvas, width, height int) image.Image
 					fyne.LogError("SVG Render error:", err)
 					return nil
 				}
-
-				svgCachePut(name, tex, width, height)
+				svgCachePut(img.Resource, tex, width, height)
 			}
 
 			return tex
@@ -100,51 +86,36 @@ func PaintImage(img *canvas.Image, c fyne.Canvas, width, height int) image.Image
 		aspects[img] = float32(origSize.X) / float32(origSize.Y)
 		// if the image specifies it should be original size we need at least that many pixels on screen
 		if img.FillMode == canvas.ImageFillOriginal {
-			if !checkImageMinSize(img, c, origSize.X, origSize.Y) {
-				return nil
-			}
+			checkImageMinSize(img, c, origSize.X, origSize.Y)
 		}
 
-		return scaleImage(pixels, width, height, img.ScaleMode)
+		tex := image.NewRGBA(image.Rect(0, 0, pixels.Bounds().Dx(), pixels.Bounds().Dy()))
+		draw.Draw(tex, tex.Bounds(), pixels, pixels.Bounds().Min, draw.Src)
+
+		return tex
 	case img.Image != nil:
 		origSize := img.Image.Bounds().Size()
 		// this is used by our render code, so let's set it to the file aspect
 		aspects[img] = float32(origSize.X) / float32(origSize.Y)
 		// if the image specifies it should be original size we need at least that many pixels on screen
 		if img.FillMode == canvas.ImageFillOriginal {
-			if !checkImageMinSize(img, c, origSize.X, origSize.Y) {
-				return nil
-			}
+			checkImageMinSize(img, c, origSize.X, origSize.Y)
 		}
 
-		return scaleImage(img.Image, width, height, img.ScaleMode)
-	default:
-		return image.NewNRGBA(image.Rect(0, 0, 1, 1))
-	}
-}
+		tex := image.NewRGBA(image.Rect(0, 0, origSize.X, origSize.Y))
+		draw.Draw(tex, tex.Bounds(), img.Image, img.Image.Bounds().Min, draw.Src)
 
-func scaleImage(pixels image.Image, scaledW, scaledH int, scale canvas.ImageScale) image.Image {
-	pixW := fyne.Min(scaledW, pixels.Bounds().Dx()) // don't push more pixels than we have to
-	pixH := fyne.Min(scaledH, pixels.Bounds().Dy()) // the GL calls will scale this up on GPU.
-	scaledBounds := image.Rect(0, 0, pixW, pixH)
-	tex := image.NewNRGBA(scaledBounds)
-	switch scale {
-	case canvas.ImageScalePixels:
-		draw.NearestNeighbor.Scale(tex, scaledBounds, pixels, pixels.Bounds(), draw.Over, nil)
+		return tex
 	default:
-		if scale != canvas.ImageScaleSmooth {
-			fyne.LogError("Invalid canvas.ImageScale value, using canvas.ImageScaleSmooth", nil)
-		}
-		draw.CatmullRom.Scale(tex, scaledBounds, pixels, pixels.Bounds(), draw.Over, nil)
+		return image.NewRGBA(image.Rect(0, 0, 1, 1))
 	}
-	return tex
 }
 
 func drawSVGSafely(icon *oksvg.SvgIcon, raster *rasterx.Dasher) error {
 	var err error
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.New("crash when rendering svg")
+			err = errors.New("Crash when rendering SVG")
 		}
 	}()
 	icon.Draw(raster, 1)
@@ -152,14 +123,11 @@ func drawSVGSafely(icon *oksvg.SvgIcon, raster *rasterx.Dasher) error {
 	return err
 }
 
-func checkImageMinSize(img *canvas.Image, c fyne.Canvas, pixX, pixY int) bool {
-	dpSize := fyne.NewSize(internal.UnscaleInt(c, pixX), internal.UnscaleInt(c, pixY))
+func checkImageMinSize(img *canvas.Image, c fyne.Canvas, pixX, pixY int) {
+	pixSize := fyne.NewSize(internal.UnscaleInt(c, pixX), internal.UnscaleInt(c, pixY))
 
-	if img.MinSize() != dpSize {
-		img.SetMinSize(dpSize)
+	if img.MinSize() != pixSize {
+		img.SetMinSize(pixSize)
 		canvas.Refresh(img) // force the initial size to be respected
-		return false
 	}
-
-	return true
 }

@@ -41,8 +41,6 @@ func (t PacketType) String() string {
 		return "ClosePacket"
 	case KeepAlivePacket:
 		return "KeepAlivePacket"
-	case NetworkProbePacket:
-		return "NetworkProbe"
 	case HandshakePacket:
 		return "Handshake"
 	default:
@@ -59,7 +57,6 @@ const (
 	ClosePacket
 	KeepAlivePacket
 	HandshakePacket
-	NetworkProbePacket
 )
 
 // CloseCode represents close code for ClosePacket.
@@ -122,19 +119,6 @@ func MakeKeepAlivePacket(id RouteID) Packet {
 	return packet
 }
 
-// MakeNetworkProbePacket constructs a new NetworkProbePacket.
-func MakeNetworkProbePacket(id RouteID, timestamp, throughput int64) Packet {
-	packet := make([]byte, PacketHeaderSize+16)
-
-	packet[PacketTypeOffset] = byte(NetworkProbePacket)
-	binary.BigEndian.PutUint32(packet[PacketRouteIDOffset:], uint32(id))
-	binary.BigEndian.PutUint16(packet[PacketPayloadSizeOffset:], uint16(16))
-	binary.BigEndian.PutUint64(packet[PacketPayloadOffset:], uint64(timestamp))
-	binary.BigEndian.PutUint64(packet[PacketPayloadOffset+8:], uint64(throughput))
-
-	return packet
-}
-
 // MakeHandshakePacket constructs a new HandshakePacket.
 func MakeHandshakePacket(id RouteID, supportEncryption bool) Packet {
 	packet := make([]byte, PacketHeaderSize+1)
@@ -169,5 +153,5 @@ func (p Packet) RouteID() RouteID {
 
 // Payload returns payload from a Packet.
 func (p Packet) Payload() []byte {
-	return p[PacketPayloadOffset:]
+	return p[PacketPayloadOffset:] // TODO: consider checking if real payload size differs
 }

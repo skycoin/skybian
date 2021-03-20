@@ -15,12 +15,13 @@
 - `shutdown_timeout` (Duration)
 - `restart_check_delay` (string)
 - `public_trusted_visor` (bool)
-- `hypervisor` (*[Config](#Config))
 
 
-# V1UptimeTracker
+# V1Routing
 
-- `addr` (string)
+- `setup_nodes` ()
+- `route_finder` (string)
+- `route_finder_timeout` (Duration)
 
 
 # V1Transport
@@ -29,6 +30,19 @@
 - `address_resolver` (string)
 - `log_store` (*[V1LogStore](#V1LogStore))
 - `trusted_visors` ()
+
+
+# V1Dmsgpty
+
+- `port` (uint16)
+- `authorization_file` (string)
+- `cli_network` (string)
+- `cli_address` (string)
+
+
+# V1UptimeTracker
+
+- `addr` (string)
 
 
 # V1Launcher
@@ -40,31 +54,16 @@
 - `local_path` (string)
 
 
-# V1AppDisc
-
-- `update_interval` (Duration)
-- `proxy_discovery_addr` (string)
-
-
 # V1LogStore
 
 - `type` (string) - Type defines the log store type. Valid values: file, memory.
 - `location` (string)
 
 
-# V1Dmsgpty
+# V1AppDisc
 
-- `port` (uint16)
-- `authorization_file` (string)
-- `cli_network` (string)
-- `cli_address` (string)
-
-
-# V1Routing
-
-- `setup_nodes` ()
-- `route_finder` (string)
-- `route_finder_timeout` (Duration)
+- `update_interval` (Duration)
+- `proxy_discovery_addr` (string)
 
 
 # Common
@@ -76,35 +75,22 @@
 - `pk` (PubKey)
 
 
-# DmsgConfig
+# AppConfig
 
-- `discovery` (string)
-- `sessions_count` (int)
-
-
-# Config
-
-- `-` (PubKey)
-- `-` (SecKey)
-- `db_path` (string)
-- `enable_auth` (bool)
-- `cookies` ([CookieConfig](#CookieConfig))
-- `-` (string)
-- `dmsg_port` (uint16)
-- `http_addr` (string)
-- `enable_tls` (bool)
-- `tls_cert_file` (string)
-- `tls_key_file` (string)
+- `name` (string)
+- `args` ([]string)
+- `auto_start` (bool)
+- `port` (Port)
 
 
-# CookieConfig
+# MasterLogger
 
-- `hash_key` (Key)
-- `block_key` (Key)
-- `expires_duration` (Duration)
-- `path` (string)
-- `domain` (string)
-- `-` (bool)
+- `` (*[Logger](#Logger))
+
+
+# Logger
+
+- `` (FieldLogger)
 
 
 # RWMutex
@@ -128,19 +114,7 @@
 - `local_address` (string)
 
 
-# MasterLogger
+# DmsgConfig
 
-- `` (*[Logger](#Logger))
-
-
-# Logger
-
-- `` (FieldLogger)
-
-
-# AppConfig
-
-- `name` (string)
-- `args` ([]string)
-- `auto_start` (bool)
-- `port` (Port)
+- `discovery` (string)
+- `sessions_count` (int)

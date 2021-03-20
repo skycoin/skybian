@@ -33,13 +33,6 @@ func (p *InMemoryPreferences) get(key string) (interface{}, bool) {
 	return v, err
 }
 
-func (p *InMemoryPreferences) remove(key string) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	delete(p.values, key)
-}
-
 // Values provides access to the underlying value map - for internal use only...
 func (p *InMemoryPreferences) Values() map[string]interface{} {
 	p.lock.RLock()
@@ -68,11 +61,7 @@ func (p *InMemoryPreferences) BoolWithFallback(key string, fallback bool) bool {
 		return fallback
 	}
 
-	val, ok := value.(bool)
-	if !ok {
-		return false
-	}
-	return val
+	return value.(bool)
 }
 
 // SetBool saves a boolean value for the given key
@@ -92,11 +81,7 @@ func (p *InMemoryPreferences) FloatWithFallback(key string, fallback float64) fl
 		return fallback
 	}
 
-	val, ok := value.(float64)
-	if !ok {
-		return 0.0
-	}
-	return val
+	return value.(float64)
 }
 
 // SetFloat saves a float64 value for the given key
@@ -120,11 +105,7 @@ func (p *InMemoryPreferences) IntWithFallback(key string, fallback int) int {
 	if intVal, ok := value.(int); ok {
 		return intVal
 	}
-	val, ok := value.(float64)
-	if !ok {
-		return 0
-	}
-	return int(val)
+	return int(value.(float64))
 }
 
 // SetInt saves an integer value for the given key
@@ -150,11 +131,6 @@ func (p *InMemoryPreferences) StringWithFallback(key, fallback string) string {
 // SetString saves a string value for the given key
 func (p *InMemoryPreferences) SetString(key string, value string) {
 	p.set(key, value)
-}
-
-// RemoveValue deletes a value on the given key
-func (p *InMemoryPreferences) RemoveValue(key string) {
-	p.remove(key)
 }
 
 // NewInMemoryPreferences creates a new preferences implementation stored in memory

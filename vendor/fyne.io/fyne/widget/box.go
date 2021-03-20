@@ -5,14 +5,12 @@ import (
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/internal/widget"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
 )
 
 // Box widget is a simple list where the child elements are arranged in a single column
-// for vertical or a single row for horizontal arrangement.
-// Deprecated: Use container.NewVBox() or container.NewHBox().
+// for vertical or a single row for horizontal arrangement
 type Box struct {
 	BaseWidget
 	background color.Color
@@ -23,25 +21,23 @@ type Box struct {
 
 // Refresh updates this box to match the current theme
 func (b *Box) Refresh() {
-	if b.background != nil {
-		b.background = theme.BackgroundColor()
-	}
+	b.background = theme.BackgroundColor()
 
-	b.BaseWidget.Refresh()
+	b.BaseWidget.refresh(b)
 }
 
 // Prepend inserts a new CanvasObject at the top/left of the box
 func (b *Box) Prepend(object fyne.CanvasObject) {
 	b.Children = append([]fyne.CanvasObject{object}, b.Children...)
 
-	b.Refresh()
+	b.refresh(b)
 }
 
 // Append adds a new CanvasObject to the end/right of the box
 func (b *Box) Append(object fyne.CanvasObject) {
 	b.Children = append(b.Children, object)
 
-	b.Refresh()
+	b.refresh(b)
 }
 
 // MinSize returns the size that this widget should not shrink below
@@ -60,33 +56,36 @@ func (b *Box) CreateRenderer() fyne.WidgetRenderer {
 		lay = layout.NewVBoxLayout()
 	}
 
-	return &boxRenderer{BaseRenderer: widget.NewBaseRenderer(b.Children), layout: lay, box: b}
+	return &boxRenderer{objects: b.Children, layout: lay, box: b}
 }
 
-// NewHBox creates a new horizontally aligned box widget with the specified list of child objects.
-// Deprecated: Use container.NewHBox() instead.
+func (b *Box) setBackgroundColor(bg color.Color) {
+	b.background = bg
+}
+
+// NewHBox creates a new horizontally aligned box widget with the specified list of child objects
 func NewHBox(children ...fyne.CanvasObject) *Box {
 	return &Box{BaseWidget: BaseWidget{}, Horizontal: true, Children: children}
 }
 
-// NewVBox creates a new vertically aligned box widget with the specified list of child objects.
-// Deprecated: Use container.NewVBox() instead.
+// NewVBox creates a new vertically aligned box widget with the specified list of child objects
 func NewVBox(children ...fyne.CanvasObject) *Box {
 	return &Box{BaseWidget: BaseWidget{}, Horizontal: false, Children: children}
 }
 
 type boxRenderer struct {
-	widget.BaseRenderer
 	layout fyne.Layout
-	box    *Box
+
+	objects []fyne.CanvasObject
+	box     *Box
 }
 
 func (b *boxRenderer) MinSize() fyne.Size {
-	return b.layout.MinSize(b.Objects())
+	return b.layout.MinSize(b.objects)
 }
 
 func (b *boxRenderer) Layout(size fyne.Size) {
-	b.layout.Layout(b.Objects(), size)
+	b.layout.Layout(b.objects, size)
 }
 
 func (b *boxRenderer) BackgroundColor() color.Color {
@@ -97,11 +96,19 @@ func (b *boxRenderer) BackgroundColor() color.Color {
 	return b.box.background
 }
 
+func (b *boxRenderer) Objects() []fyne.CanvasObject {
+	return b.objects
+}
+
 func (b *boxRenderer) Refresh() {
-	b.SetObjects(b.box.Children)
-	for _, child := range b.Objects() {
+	b.objects = b.box.Children
+	for _, child := range b.objects {
 		child.Refresh()
 	}
+	b.Layout(b.box.Size())
 
 	canvas.Refresh(b.box)
+}
+
+func (b *boxRenderer) Destroy() {
 }

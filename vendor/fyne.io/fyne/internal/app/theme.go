@@ -11,21 +11,18 @@ func ApplyThemeTo(content fyne.CanvasObject, canv fyne.Canvas) {
 	if content == nil {
 		return
 	}
-
-	switch o := content.(type) {
-	case fyne.Widget:
-		for _, co := range cache.Renderer(o).Objects() {
-			ApplyThemeTo(co, canv)
+	if wid, ok := content.(fyne.Widget); ok {
+		for _, o := range cache.Renderer(wid).Objects() {
+			ApplyThemeTo(o, canv)
 		}
-		cache.Renderer(o).Layout(content.Size()) // theme can cause sizing changes
-	case *fyne.Container:
-		for _, co := range o.Objects {
-			ApplyThemeTo(co, canv)
-		}
-		if l := o.Layout; l != nil {
-			l.Layout(o.Objects, o.Size()) // theme can cause sizing changes
+		cache.Renderer(wid).Layout(wid.Size()) // theme can cause sizing changes
+	}
+	if c, ok := content.(*fyne.Container); ok {
+		for _, o := range c.Objects {
+			ApplyThemeTo(o, canv)
 		}
 	}
+
 	content.Refresh()
 }
 
@@ -36,8 +33,8 @@ func ApplySettings(set fyne.Settings, app fyne.App) {
 		ApplyThemeTo(window.Content(), window.Canvas())
 		window.Canvas().SetScale(set.Scale())
 
-		for _, overlay := range window.Canvas().Overlays().List() {
-			ApplyThemeTo(overlay, window.Canvas())
+		if window.Canvas().Overlay() != nil {
+			ApplyThemeTo(window.Canvas().Overlay(), window.Canvas())
 		}
 	}
 }

@@ -7,8 +7,8 @@ import (
 	"fyne.io/fyne/internal/driver/glfw"
 )
 
-// NewWithID returns a new app instance using the appropriate runtime driver.
+// NewWithID returns a new app instance using the OpenGL driver.
 // The ID string should be globally unique to this app.
 func NewWithID(id string) fyne.App {
-	return newAppWithDriver(glfw.NewGLDriver(), id)
+	return NewAppWithDriver(glfw.NewGLDriver(), id)
 }

@@ -180,11 +180,8 @@ func (l *Launcher) AppStates() []*AppState {
 	var states []*AppState
 	for _, app := range l.apps {
 		state := &AppState{AppConfig: app, Status: AppStatusStopped}
-		if proc, ok := l.procM.ProcByName(app.Name); ok {
-			summary := proc.ConnectionsSummary()
-			if summary != nil {
-				state.Status = AppStatusRunning
-			}
+		if _, ok := l.procM.ProcByName(app.Name); ok {
+			state.Status = AppStatusRunning
 		}
 		states = append(states, state)
 	}
@@ -208,7 +205,6 @@ func (l *Launcher) startApp(cmd string, args, envs []string) error {
 	if !ok {
 		return ErrAppNotFound
 	}
-
 	if args != nil {
 		ac.Args = args
 	}
@@ -261,7 +257,8 @@ func (l *Launcher) RestartApp(name string) error {
 	}
 
 	cmd := proc.Cmd()
-	if err := l.StartApp(name, nil, cmd.Env); err != nil {
+	// complete list of args includes binary name which is not needed, so omit it
+	if err := l.StartApp(name, cmd.Args[1:], cmd.Env); err != nil {
 		return fmt.Errorf("failed to start %s: %w", name, err)
 	}
 

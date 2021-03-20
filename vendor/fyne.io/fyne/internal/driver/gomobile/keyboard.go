@@ -2,18 +2,21 @@ package gomobile
 
 import (
 	"fyne.io/fyne"
-	"fyne.io/fyne/driver/mobile"
-	"github.com/fyne-io/mobile/app"
 )
 
-func showVirtualKeyboard(keyboard mobile.KeyboardType) {
-	if driver, ok := fyne.CurrentApp().Driver().(*mobileDriver); ok {
-		driver.app.ShowVirtualKeyboard(app.KeyboardType(keyboard))
+type hasKeyboard interface {
+	ShowVirtualKeyboard()
+	HideVirtualKeyboard()
+}
+
+func showVirtualKeyboard() {
+	if adv, ok := fyne.CurrentApp().Driver().(*mobileDriver).app.(hasKeyboard); ok {
+		adv.ShowVirtualKeyboard()
 	}
 }
 
 func hideVirtualKeyboard() {
-	if driver, ok := fyne.CurrentApp().Driver().(*mobileDriver); ok {
-		driver.app.HideVirtualKeyboard()
+	if adv, ok := fyne.CurrentApp().Driver().(*mobileDriver).app.(hasKeyboard); ok {
+		adv.HideVirtualKeyboard()
 	}
 }

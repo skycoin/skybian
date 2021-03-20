@@ -5,7 +5,6 @@ import (
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/internal/widget"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
 )
@@ -24,7 +23,7 @@ type ToolbarAction struct {
 // ToolbarObject gets a button to render this ToolbarAction
 func (t *ToolbarAction) ToolbarObject() fyne.CanvasObject {
 	button := NewButtonWithIcon("", t.Icon, t.OnActivated)
-	button.Importance = LowImportance
+	button.HideShadow = true
 
 	return button
 }
@@ -68,27 +67,42 @@ func NewToolbarSeparator() ToolbarItem {
 // Toolbar widget creates a horizontal list of tool buttons
 type Toolbar struct {
 	BaseWidget
+
 	Items []ToolbarItem
+
+	objs []fyne.CanvasObject
+}
+
+func (t *Toolbar) append(item ToolbarItem) {
+	t.objs = append(t.objs, item.ToolbarObject())
+}
+
+func (t *Toolbar) prepend(item ToolbarItem) {
+	t.objs = append([]fyne.CanvasObject{item.ToolbarObject()}, t.objs...)
 }
 
 // CreateRenderer is a private method to Fyne which links this widget to its renderer
 func (t *Toolbar) CreateRenderer() fyne.WidgetRenderer {
 	t.ExtendBaseWidget(t)
-	r := &toolbarRenderer{toolbar: t, layout: layout.NewHBoxLayout()}
-	r.resetObjects()
-	return r
+	for _, item := range t.Items {
+		t.append(item)
+	}
+
+	return &toolbarRenderer{toolbar: t, layout: layout.NewHBoxLayout()}
 }
 
 // Append a new ToolbarItem to the end of this Toolbar
 func (t *Toolbar) Append(item ToolbarItem) {
 	t.Items = append(t.Items, item)
-	t.Refresh()
+
+	t.append(item)
 }
 
 // Prepend a new ToolbarItem to the start of this Toolbar
 func (t *Toolbar) Prepend(item ToolbarItem) {
 	t.Items = append([]ToolbarItem{item}, t.Items...)
-	t.Refresh()
+
+	t.prepend(item)
 }
 
 // MinSize returns the size that this widget should not shrink below
@@ -107,29 +121,34 @@ func NewToolbar(items ...ToolbarItem) *Toolbar {
 }
 
 type toolbarRenderer struct {
-	widget.BaseRenderer
-	layout  fyne.Layout
-	objs    []fyne.CanvasObject
+	layout fyne.Layout
+
+	objects []fyne.CanvasObject
 	toolbar *Toolbar
 }
 
 func (r *toolbarRenderer) MinSize() fyne.Size {
-	return r.layout.MinSize(r.Objects())
+	return r.layout.MinSize(r.objects)
 }
 
 func (r *toolbarRenderer) Layout(size fyne.Size) {
-	r.layout.Layout(r.Objects(), size)
+	r.layout.Layout(r.objects, size)
 }
 
 func (r *toolbarRenderer) BackgroundColor() color.Color {
 	return theme.ButtonColor()
 }
 
+func (r *toolbarRenderer) Objects() []fyne.CanvasObject {
+	return r.objects
+}
+
 func (r *toolbarRenderer) Refresh() {
-	r.resetObjects()
+	r.objects = r.toolbar.objs
+
 	for i, item := range r.toolbar.Items {
 		if _, ok := item.(*ToolbarSeparator); ok {
-			rect := r.Objects()[i].(*canvas.Rectangle)
+			rect := r.objects[i].(*canvas.Rectangle)
 			rect.FillColor = theme.TextColor()
 		}
 	}
@@ -137,12 +156,5 @@ func (r *toolbarRenderer) Refresh() {
 	canvas.Refresh(r.toolbar)
 }
 
-func (r *toolbarRenderer) resetObjects() {
-	if len(r.objs) != len(r.toolbar.Items) {
-		r.objs = make([]fyne.CanvasObject, 0, len(r.toolbar.Items))
-		for _, item := range r.toolbar.Items {
-			r.objs = append(r.objs, item.ToolbarObject())
-		}
-	}
-	r.SetObjects(r.objs)
+func (r *toolbarRenderer) Destroy() {
 }

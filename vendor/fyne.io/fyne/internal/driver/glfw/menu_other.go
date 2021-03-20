@@ -8,6 +8,6 @@ func hasNativeMenu() bool {
 	return false
 }
 
-func setupNativeMenu(_ *window, _ *fyne.MainMenu) {
+func setupNativeMenu(menu *fyne.MainMenu) {
 	// no-op
 }

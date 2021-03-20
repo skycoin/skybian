@@ -43,16 +43,6 @@ const (
 	tpFactor = 1.3
 )
 
-// ManagedTransportConfig is a configuration for managed transport.
-type ManagedTransportConfig struct {
-	Net         *snet.Network
-	DC          DiscoveryClient
-	LS          LogStore
-	RemotePK    cipher.PubKey
-	NetName     string
-	AfterClosed TPCloseCallback
-}
-
 // ManagedTransport manages a direct line of communication between two visor nodes.
 // There is a single underlying connection between two edges.
 // Initial dialing can be requested by either edge of the connection.
@@ -85,26 +75,22 @@ type ManagedTransport struct {
 	once sync.Once
 	wg   sync.WaitGroup
 
-	remoteAddr string
-
-	afterClosedMu sync.RWMutex
-	afterClosed   TPCloseCallback
+	remoteAddrs []string
 }
 
 // NewManagedTransport creates a new ManagedTransport.
-func NewManagedTransport(conf ManagedTransportConfig) *ManagedTransport {
+func NewManagedTransport(n *snet.Network, dc DiscoveryClient, ls LogStore, rPK cipher.PubKey, netName string) *ManagedTransport {
 	mt := &ManagedTransport{
-		log:         logging.MustGetLogger(fmt.Sprintf("tp:%s", conf.RemotePK.String()[:6])),
-		rPK:         conf.RemotePK,
-		netName:     conf.NetName,
-		n:           conf.Net,
-		dc:          conf.DC,
-		ls:          conf.LS,
-		Entry:       makeEntry(conf.Net.LocalPK(), conf.RemotePK, conf.NetName),
-		LogEntry:    new(LogEntry),
-		connCh:      make(chan struct{}, 1),
-		done:        make(chan struct{}),
-		afterClosed: conf.AfterClosed,
+		log:      logging.MustGetLogger(fmt.Sprintf("tp:%s", rPK.String()[:6])),
+		rPK:      rPK,
+		netName:  netName,
+		n:        n,
+		dc:       dc,
+		ls:       ls,
+		Entry:    makeEntry(n.LocalPK(), rPK, netName),
+		LogEntry: new(LogEntry),
+		connCh:   make(chan struct{}, 1),
+		done:     make(chan struct{}),
 	}
 	mt.wg.Add(2)
 	return mt
@@ -217,12 +203,6 @@ func (mt *ManagedTransport) Serve(readCh chan<- routing.Packet) {
 	}
 }
 
-func (mt *ManagedTransport) onAfterClosed(f TPCloseCallback) {
-	mt.afterClosedMu.Lock()
-	mt.afterClosed = f
-	mt.afterClosedMu.Unlock()
-}
-
 func (mt *ManagedTransport) isServing() bool {
 	select {
 	case <-mt.done:
@@ -246,21 +226,9 @@ func (mt *ManagedTransport) Close() (err error) {
 	return err
 }
 
-func (mt *ManagedTransport) close() {
-	mt.disconnect()
-
-	mt.afterClosedMu.RLock()
-	afterClosed := mt.afterClosed
-	mt.afterClosedMu.RUnlock()
-
-	if afterClosed != nil {
-		afterClosed(mt.netName, mt.remoteAddr)
-	}
-}
-
-// disconnect stops serving the transport and ensures that transport status is updated to DOWN.
+// close stops serving the transport and ensures that transport status is updated to DOWN.
 // It also waits until mt.Serve returns if specified.
-func (mt *ManagedTransport) disconnect() {
+func (mt *ManagedTransport) close() {
 	mt.once.Do(func() { close(mt.done) })
 	_ = mt.updateStatus(false, 1) //nolint:errcheck
 }
@@ -271,7 +239,7 @@ func (mt *ManagedTransport) Accept(ctx context.Context, conn *snet.Conn) error {
 	defer mt.connMx.Unlock()
 
 	if conn.Network() != mt.netName {
-		return ErrWrongNetwork
+		return errors.New("wrong network") // TODO: Make global var.
 	}
 
 	if !mt.isServing() {
@@ -346,7 +314,7 @@ func (mt *ManagedTransport) redial(ctx context.Context) error {
 
 		// If the error is not temporary, it most likely means that the transport is no longer registered.
 		// Hence, we should close the managed transport.
-		mt.disconnect()
+		mt.close()
 		mt.log.
 			WithError(err).
 			Warn("Transport closed due to redial failure. Transport is likely no longer in discovery.")
@@ -598,7 +566,7 @@ func (mt *ManagedTransport) readPacket() (packet routing.Packet, err error) {
 	log.WithField("type", packet.Type().String()).
 		WithField("rt_id", packet.RouteID()).
 		WithField("size", packet.Size()).
-		Debug("Received packet.")
+		Info("Received packet.")
 	return packet, nil
 }
 

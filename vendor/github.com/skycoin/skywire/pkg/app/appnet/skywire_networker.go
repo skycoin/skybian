@@ -62,9 +62,8 @@ func (r *SkywireNetworker) DialContext(ctx context.Context, addr Addr) (conn net
 		return nil, err
 	}
 
-	return &SkywireConn{
+	return &skywireConn{
 		Conn:     conn,
-		nrg:      conn.(*router.NoiseRouteGroup),
 		freePort: freePort,
 	}, nil
 }
@@ -79,7 +78,8 @@ func (r *SkywireNetworker) ListenContext(ctx context.Context, addr Addr) (net.Li
 	const bufSize = 1000000
 
 	lis := &skywireListener{
-		addr:     addr,
+		addr: addr,
+		// TODO: pass buf size
 		connsCh:  make(chan net.Conn, bufSize),
 		freePort: nil,
 	}
@@ -179,10 +179,7 @@ func (l *skywireListener) Accept() (net.Conn, error) {
 		return nil, errors.New("listening on closed connection")
 	}
 
-	return &SkywireConn{
-		Conn: conn,
-		nrg:  conn.(*router.NoiseRouteGroup),
-	}, nil
+	return conn, nil
 }
 
 // Close closes listener.
@@ -206,4 +203,31 @@ func (l *skywireListener) Addr() net.Addr {
 // via `Accept`.
 func (l *skywireListener) putConn(conn net.Conn) {
 	l.connsCh <- conn
+}
+
+// skywireConn is a connection wrapper for skynet.
+type skywireConn struct {
+	net.Conn
+	freePort   func()
+	freePortMx sync.RWMutex
+	once       sync.Once
+}
+
+// Close closes connection.
+func (c *skywireConn) Close() error {
+	var err error
+
+	c.once.Do(func() {
+		defer func() {
+			c.freePortMx.RLock()
+			defer c.freePortMx.RUnlock()
+			if c.freePort != nil {
+				c.freePort()
+			}
+		}()
+
+		err = c.Conn.Close()
+	})
+
+	return err
 }

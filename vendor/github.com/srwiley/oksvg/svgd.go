@@ -36,7 +36,7 @@ type (
 		LineWidth, DashOffset, MiterLimit float64
 		Dash                              []float64
 		UseNonZeroWinding                 bool
-		fillerColor, linerColor           interface{} // either color.Color or rasterx.Gradient
+		fillerColor, linerColor           interface{} // either color.Color or *rasterx.Gradient
 		LineGap                           rasterx.GapFunc
 		LeadLineCap                       rasterx.CapFunc // This is used if different than LineCap
 		LineCap                           rasterx.CapFunc
@@ -119,7 +119,7 @@ func (svgp *SvgPath) DrawTransformed(r *rasterx.Dasher, opacity float64, t raste
 		switch fillerColor := svgp.fillerColor.(type) {
 		case color.Color:
 			rf.SetColor(rasterx.ApplyOpacity(fillerColor, svgp.FillOpacity*opacity))
-		case rasterx.Gradient:
+		case *rasterx.Gradient:
 			if fillerColor.Units == rasterx.ObjectBoundingBox {
 				fRect := rf.Scanner.GetPathExtent()
 				mnx, mny := float64(fRect.Min.X)/64, float64(fRect.Min.Y)/64
@@ -155,7 +155,7 @@ func (svgp *SvgPath) DrawTransformed(r *rasterx.Dasher, opacity float64, t raste
 		switch linerColor := svgp.linerColor.(type) {
 		case color.Color:
 			r.SetColor(rasterx.ApplyOpacity(linerColor, svgp.LineOpacity*opacity))
-		case rasterx.Gradient:
+		case *rasterx.Gradient:
 			if linerColor.Units == rasterx.ObjectBoundingBox {
 				fRect := r.Scanner.GetPathExtent()
 				mnx, mny := float64(fRect.Min.X)/64, float64(fRect.Min.Y)/64
@@ -343,19 +343,24 @@ func (c *IconCursor) parseTransform(v string) (rasterx.Matrix2D, error) {
 func (c *IconCursor) readStyleAttr(curStyle *PathStyle, k, v string) error {
 	switch k {
 	case "fill":
-		gradient, ok := c.ReadGradURL(v, curStyle.fillerColor)
-		if ok {
+		gradient, err := c.ReadGradURL(v)
+		if err != nil {
+			return err
+		}
+		if gradient != nil {
 			curStyle.fillerColor = gradient
 			break
 		}
-		var err error
 		curStyle.fillerColor, err = ParseSVGColor(v)
 		return err
 	case "stroke":
-		gradient, ok := c.ReadGradURL(v, curStyle.linerColor)
-		if ok {
+		gradient, err := c.ReadGradURL(v)
+		if gradient != nil {
 			curStyle.linerColor = gradient
 			break
+		}
+		if err != nil {
+			return err
 		}
 		col, errc := ParseSVGColor(v)
 		if errc != nil {
@@ -529,7 +534,7 @@ func splitOnCommaOrSpace(s string) []string {
 	return strings.FieldsFunc(s,
 		func(r rune) bool {
 			return r == ',' || r == ' '
-		})
+	})
 }
 
 func (c *IconCursor) readStartElement(se xml.StartElement) (err error) {
@@ -566,7 +571,6 @@ func (c *IconCursor) readStartElement(se xml.StartElement) (err error) {
 		return nil
 	}
 	err = df(c, se.Attr)
-
 	if len(c.Path) > 0 {
 		//The cursor parsed a path from the xml element
 		pathCopy := make(rasterx.Path, len(c.Path))
@@ -672,70 +676,27 @@ func readFraction(v string) (f float64, err error) {
 	}
 	f, err = parseFloat(v, 64)
 	f /= d
-	// Is this is an unnecessary restriction? For now fractions can be all values not just in the range [0,1]
-	// if f > 1 {
-	// 	f = 1
-	// } else if f < 0 {
-	// 	f = 0
-	// }
-	return
-}
-
-// getColor is a helper function to get the background color
-// if ReadGradUrl needs it.
-func getColor(clr interface{}) color.Color {
-	switch c := clr.(type) {
-	case rasterx.Gradient: // This is a bit lazy but oh well
-		for _, s := range c.Stops {
-			if s.StopColor != nil {
-				return s.StopColor
-			}
-		}
-	case color.NRGBA:
-		return c
-	}
-	return colornames.Black
-}
-
-func localizeGradIfStopClrNil(g *rasterx.Gradient, defaultColor interface{}) (grad rasterx.Gradient) {
-	grad = *g
-	for _, s := range grad.Stops {
-		if s.StopColor == nil { // This means we need copy the gradient's Stop slice
-			// and fill in the default color
-
-			// Copy the stops
-			stops := make([]rasterx.GradStop, len(grad.Stops))
-			copy(stops, grad.Stops)
-			grad.Stops = stops
-			// Use the background color when a stop color is nil
-			clr := getColor(defaultColor)
-			for i, s := range stops {
-				if s.StopColor == nil {
-					grad.Stops[i].StopColor = clr
-				}
-			}
-			break // Only need to do this once
-		}
+	if f > 1 {
+		f = 1
+	} else if f < 0 {
+		f = 0
 	}
 	return
 }
 
 // ReadGradURL reads an SVG format gradient url
-// Since the context of the gradient can affect the colors
-// the current fill or line color is passed in and used in
-// the case of a nil stopClor value
-func (c *IconCursor) ReadGradURL(v string, defaultColor interface{}) (grad rasterx.Gradient, ok bool) {
+func (c *IconCursor) ReadGradURL(v string) (grad *rasterx.Gradient, err error) {
 	if strings.HasPrefix(v, "url(") && strings.HasSuffix(v, ")") {
 		urlStr := strings.TrimSpace(v[4 : len(v)-1])
 		if strings.HasPrefix(urlStr, "#") {
-			var g *rasterx.Gradient
-			g, ok = c.icon.Grads[urlStr[1:]]
+			grad, ok := c.icon.Grads[urlStr[1:]]
 			if ok {
-				grad = localizeGradIfStopClrNil(g, defaultColor)
+				return grad, nil
 			}
+			return nil, nil // missingIdError
 		}
 	}
-	return
+	return nil, nil // not a gradient url, and not an error
 }
 
 // ReadGradAttr reads an SVG gradient attribute

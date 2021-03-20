@@ -41,7 +41,6 @@ type ProcManager interface {
 	Stop(appName string) error
 	Wait(appName string) error
 	Range(next func(appName string, proc *Proc) bool)
-	ConnectionsSummary(appName string) ([]ConnectionSummary, error)
 	Addr() net.Addr
 }
 
@@ -265,15 +264,6 @@ func (m *procManager) Range(next func(name string, proc *Proc) bool) {
 			break
 		}
 	}
-}
-
-func (m *procManager) ConnectionsSummary(appName string) ([]ConnectionSummary, error) {
-	p, err := m.get(appName)
-	if err != nil {
-		return nil, err
-	}
-
-	return p.ConnectionsSummary(), nil
 }
 
 // stopAll stops all the apps run with this manager instance.

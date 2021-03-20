@@ -5,7 +5,6 @@ import (
 
 	"fyne.io/fyne"
 	"fyne.io/fyne/canvas"
-	internalWidget "fyne.io/fyne/internal/widget"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
@@ -16,33 +15,26 @@ type menuLabel struct {
 	label *widget.Label
 
 	menu   *fyne.Menu
-	bar    *widget.Box
-	canvas *mobileCanvas
+	canvas fyne.Canvas
 }
 
 func (m *menuLabel) Tapped(*fyne.PointEvent) {
 	pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(m)
-	widget.ShowPopUpMenuAtPosition(m.menu, m.canvas, fyne.NewPos(pos.X+m.Size().Width, pos.Y))
+	widget.NewPopUpMenuAtPosition(m.menu, m.canvas, fyne.NewPos(pos.X+m.Size().Width, pos.Y))
+}
 
-	// TODO use NewPopUpMenu in 2.0 once the Deprecated
-	menu := m.canvas.Overlays().Top().(*internalWidget.OverlayContainer).Content.(*widget.Menu)
-	menuDismiss := menu.OnDismiss // this dismisses the menu stack
-	menu.OnDismiss = func() {
-		menuDismiss()
-		m.bar.Hide() // dismiss the overlay menu bar
-		m.canvas.menu = nil
-	}
+func (m *menuLabel) TappedSecondary(*fyne.PointEvent) {
 }
 
 func (m *menuLabel) CreateRenderer() fyne.WidgetRenderer {
 	return widget.Renderer(m.Box)
 }
 
-func newMenuLabel(item *fyne.Menu, parent *widget.Box, c *mobileCanvas) *menuLabel {
+func newMenuLabel(item *fyne.Menu, c *mobileCanvas) *menuLabel {
 	label := widget.NewLabel(item.Label)
 	box := widget.NewHBox(layout.NewSpacer(), label, layout.NewSpacer(), widget.NewIcon(theme.MenuExpandIcon()))
 
-	m := &menuLabel{box, label, item, parent, c}
+	m := &menuLabel{box, label, item, c}
 	return m
 }
 
@@ -54,16 +46,17 @@ func (c *mobileCanvas) showMenu(menu *fyne.MainMenu) {
 	}))
 	panel = widget.NewVBox(top)
 	for _, item := range menu.Items {
-		panel.Append(newMenuLabel(item, panel, c))
+		panel.Append(newMenuLabel(item, c))
 	}
 	shadow := canvas.NewHorizontalGradient(theme.ShadowColor(), color.Transparent)
 	c.menu = fyne.NewContainer(panel, shadow)
 
-	safePos, safeSize := c.InteractiveArea()
-	panel.Move(safePos)
-	panel.Resize(fyne.NewSize(panel.MinSize().Width+theme.Padding(), safeSize.Height))
-	shadow.Resize(fyne.NewSize(theme.Padding()/2, safeSize.Height))
-	shadow.Move(fyne.NewPos(panel.Size().Width+safePos.X, safePos.Y))
+	devicePadTopLeft, devicePadBottomRight := devicePadding()
+	padY := devicePadTopLeft.Height + devicePadBottomRight.Height
+	panel.Move(fyne.NewPos(devicePadTopLeft.Width, devicePadTopLeft.Height))
+	panel.Resize(fyne.NewSize(panel.MinSize().Width+theme.Padding(), c.size.Height-padY))
+	shadow.Resize(fyne.NewSize(theme.Padding()/2, c.size.Height-padY))
+	shadow.Move(fyne.NewPos(panel.Size().Width+devicePadTopLeft.Width, devicePadTopLeft.Height))
 }
 
 func (d *mobileDriver) findMenu(win *window) *fyne.MainMenu {

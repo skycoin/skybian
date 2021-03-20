@@ -12,15 +12,13 @@
 //
 //   func main() {
 //   	a := app.New()
-//   	w := a.NewWindow("Hello")
 //
-//   	hello := widget.NewLabel("Hello Fyne!")
+//   	w := a.NewWindow("Hello")
 //   	w.SetContent(widget.NewVBox(
-//   		hello,
-//   		widget.NewButton("Hi!", func() {
-//   			hello.SetText("Welcome :)")
-//   		}),
-//   	))
+//   		widget.NewLabel("Hello Fyne!"),
+//   		widget.NewButton("Quit", func() {
+//   			a.Quit()
+//   		})))
 //
 //   	w.ShowAndRun()
 //   }

@@ -7,7 +7,6 @@ import (
 
 	"github.com/skycoin/skywire/pkg/app/launcher"
 	"github.com/skycoin/skywire/pkg/snet"
-	"github.com/skycoin/skywire/pkg/visor/hypervisorconfig"
 )
 
 //go:generate readmegen -n V1 -o ./README.md ./v1.go
@@ -32,12 +31,10 @@ type V1 struct {
 	CLIAddr     string          `json:"cli_addr"`
 
 	LogLevel          string   `json:"log_level"`
-	ShutdownTimeout   Duration `json:"shutdown_timeout,omitempty"`    // time value, examples: 10s, 1m, etc
-	RestartCheckDelay Duration `json:"restart_check_delay,omitempty"` // time value, examples: 10s, 1m, etc
+	ShutdownTimeout   Duration `json:"shutdown_timeout,omitempty"` // time value, examples: 10s, 1m, etc
+	RestartCheckDelay string   `json:"restart_check_delay,omitempty"`
 
 	PublicTrustedVisor bool `json:"public_trusted_visor,omitempty"`
-
-	Hypervisor *hypervisorconfig.Config `json:"hypervisor,omitempty"`
 }
 
 // V1Dmsgpty configures the dmsgpty-host.

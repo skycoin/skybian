@@ -29,7 +29,4 @@ type Preferences interface {
 	StringWithFallback(key, fallback string) string
 	// SetString saves a string value for the given key
 	SetString(key string, value string)
-
-	// RemoveValue removes a value for the given key (not currently supported on iOS)
-	RemoveValue(key string)
 }

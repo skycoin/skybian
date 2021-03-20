@@ -29,9 +29,6 @@ type Device interface {
 	Orientation() DeviceOrientation
 	IsMobile() bool
 	HasKeyboard() bool
-	SystemScaleForWindow(Window) float32
-
-	// Deprecated: Use SystemScaleForWindow instead - system scale can vary depending on window placement
 	SystemScale() float32
 }
 
