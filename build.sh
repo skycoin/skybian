@@ -199,7 +199,7 @@ create_folders_rpi()
     info "Creating output folder structure..."
     mkdir -p "$FINAL_IMG_DIR"
     mkdir -p "$FS_MNT_POINT"
-    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
+    mkdir -p "$PARTS_DIR" "$PARTS_RASPBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
     mkdir -p "$IMAGE_DIR"
 
     info "Done!"
@@ -892,21 +892,73 @@ clean_output_dir_rpi()
 }
 
 # build disk
-build_disk_official()
+build_disk_prime()
 {
   # check image
-  cd "${PARTS_ARMBIAN_DIR}" || return 1
-  if [ ls == *Orangepiprime*.xz ] ; then
-	  NAME="Skybian-prime-${VERSION}"
-  elif [ ls == *Orangepi3*.xz ] ; then
-    NAME="Skybian-pi3-${VERSION}"
-  fi
+  #cd "${PARTS_ARMBIAN_DIR}" || return 1
+  #if [ ls == *Orangepiprime*.xz ] ; then
+	#  NAME="Skybian-prime-${VERSION}"
+  #elif [ ls == *Orangepi3*.xz ] ; then
+  #  NAME="Skybian-pi3-${VERSION}"
+  #fi
 
   # move to correct dir
   cd "${IMAGE_DIR}" || return 1
 
   # final name
-  #local NAME="Skybian-${VERSION}"
+  local NAME="Skybian-prime-${VERSION}"
+
+  # info
+  info "Building image for ${NAME}"
+
+  # force a FS sync
+  info "Forcing a fs rsync to umount the real fs"
+  sudo sync
+
+  # umount the base image
+  info "Umount the fs"
+  sudo umount "${FS_MNT_POINT}"
+
+  # check integrity & fix minor errors
+  rootfs_check
+
+  # TODO [TEST]
+  # shrink the partition to a minimum size
+  # sudo resize2fs -M "${IMG_LOOP}"
+  #
+  # shrink the partition
+
+  # force a FS sync
+  info "Forcing a fs rsync to umount the loop device"
+  sudo sync
+
+  # freeing the loop device
+  info "Freeing the loop device"
+  sudo losetup -d "${IMG_LOOP}"
+
+  # copy the image to final dir.
+  info "Copy the image to final dir"
+  cp "${BASE_IMG}" "${FINAL_IMG_DIR}/${NAME}.img"
+
+  # info
+  info "Image for ${NAME} ready"
+}
+
+build_disk_opi3()
+{
+  # check image
+  #cd "${PARTS_ARMBIAN_DIR}" || return 1
+  #if [ ls == *Orangepiprime*.xz ] ; then
+	#  NAME="Skybian-prime-${VERSION}"
+  #elif [ ls == *Orangepi3*.xz ] ; then
+  #  NAME="Skybian-pi3-${VERSION}"
+  #fi
+
+  # move to correct dir
+  cd "${IMAGE_DIR}" || return 1
+
+  # final name
+  local NAME="Skybian-opi3-${VERSION}"
 
   # info
   info "Building image for ${NAME}"
@@ -1013,7 +1065,7 @@ build_prime()
     chroot_actions_official || return 1
 
     # build manager image
-    build_disk_official || return 1
+    build_disk_prime || return 1
 
     # all good signal
     info "Success!"
@@ -1044,7 +1096,7 @@ build_opi3()
     chroot_actions_official || return 1
 
     # build manager image
-    build_disk_official || return 1
+    build_disk_opi3 || return 1
 
     # all good signal
     info "Success!"
