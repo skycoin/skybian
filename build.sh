@@ -315,7 +315,7 @@ download_armbian_opi3()
     (error "Checksum download failed." && return 1)
 }
 
-download_armbian_rpi()
+download_raspbian()
 {
   info "Downloading image from ${RASPBIAN_DOWNLOAD_URL} to ${_DST} ..."
   wget -c "${RASPBIAN_DOWNLOAD_URL}" ||
@@ -888,7 +888,7 @@ clean_output_dir_rpi()
 build_disk()
 {
   # check image
-  cd "${PARTS_DIR}" || return 1
+  cd "${PARTS_ARMBIAN_DIR}" || return 1
   if [ ls == *Orangepiprime*.xz ] ; then
 	  local NAME="Skybian-prime-${VERSION}"
   elif [ ls == *Orangepi3*.xz ] ; then
