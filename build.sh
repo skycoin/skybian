@@ -885,16 +885,14 @@ clean_output_dir_rpi()
 }
 
 # build disk
-build_disk()
+build_disk_official()
 {
   # check image
   cd "${PARTS_ARMBIAN_DIR}" || return 1
   if [ ls == *Orangepiprime*.xz ] ; then
-	  local NAME="Skybian-prime-${VERSION}"
+	  NAME="Skybian-prime-${VERSION}"
   elif [ ls == *Orangepi3*.xz ] ; then
-    local NAME="Skybian-pi3-${VERSION}"
-  elif [ ls == *raspios*.zip ] ; then
-    local NAME="Skybian-rpi-${VERSION}"
+    NAME="Skybian-pi3-${VERSION}"
   fi
 
   # move to correct dir
@@ -902,6 +900,50 @@ build_disk()
 
   # final name
   #local NAME="Skybian-${VERSION}"
+
+  # info
+  info "Building image for ${NAME}"
+
+  # force a FS sync
+  info "Forcing a fs rsync to umount the real fs"
+  sudo sync
+
+  # umount the base image
+  info "Umount the fs"
+  sudo umount "${FS_MNT_POINT}"
+
+  # check integrity & fix minor errors
+  rootfs_check
+
+  # TODO [TEST]
+  # shrink the partition to a minimum size
+  # sudo resize2fs -M "${IMG_LOOP}"
+  #
+  # shrink the partition
+
+  # force a FS sync
+  info "Forcing a fs rsync to umount the loop device"
+  sudo sync
+
+  # freeing the loop device
+  info "Freeing the loop device"
+  sudo losetup -d "${IMG_LOOP}"
+
+  # copy the image to final dir.
+  info "Copy the image to final dir"
+  cp "${BASE_IMG}" "${FINAL_IMG_DIR}/${NAME}.img"
+
+  # info
+  info "Image for ${NAME} ready"
+}
+
+build_disk_rpi()
+{
+  # move to correct dir
+  cd "${IMAGE_DIR}" || return 1
+
+  # final name
+  local NAME="SkyRaspbian-${VERSION}"
 
   # info
   info "Building image for ${NAME}"
@@ -964,7 +1006,7 @@ build_prime()
     chroot_actions_official || return 1
 
     # build manager image
-    build_disk || return 1
+    build_disk_official || return 1
 
     # all good signal
     info "Success!"
@@ -995,7 +1037,7 @@ build_opi3()
     chroot_actions_official || return 1
 
     # build manager image
-    build_disk || return 1
+    build_disk_official || return 1
 
     # all good signal
     info "Success!"
@@ -1029,7 +1071,7 @@ build_rpi()
     chroot_actions_rpi || return 1
 
     # build manager image
-    build_disk || return 1
+    build_disk_rpi || return 1
 
     # all good signal
     info "Success!"
