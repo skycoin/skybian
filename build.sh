@@ -872,11 +872,15 @@ clean_output_dir_official()
 
   # Clean parts.
   cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.xz' -delete
+  cd ${ROOT}/output-opi3/parts/armbian && find . -type f ! -name '*.xz' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  cd ${ROOT}/output-opi3/parts/skywire && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
+  cd ${ROOT}/output-opi3/final . -type f ! -name '*.tar.gz' -delete
 
   # Rm base image.
   rm -v "${BASE_IMG}"
+  rm -v ${ROOT}/output-opi3/image/base_image
 
   # cd to root.
   cd "${ROOT}" || return 1
