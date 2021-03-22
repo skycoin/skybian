@@ -858,13 +858,25 @@ clean_image()
 
 clean_output_dir_official()
 {
+
+    PARTS_DIR=${ROOT}/output-prime/parts
+    IMAGE_DIR=${ROOT}/output-prime/image
+    FINAL_IMG_DIR=${ROOT}/output-prime/final
+
+    # Base image location: we will work with partitions.
+    BASE_IMG=${IMAGE_DIR}/base_image
+
+    # Download directories.
+    PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
+    PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
+
   # Clean parts.
   cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.xz' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
 
   # Rm base image.
-  rm -v "${IMAGE_DIR}/base_image"
+  rm -v "${BASE_IMG}"
 
   # cd to root.
   cd "${ROOT}" || return 1
@@ -872,13 +884,24 @@ clean_output_dir_official()
 
 clean_output_dir_rpi()
 {
+    PARTS_DIR=${ROOT}/output-skyraspbian/parts
+    IMAGE_DIR=${ROOT}/output-skyraspbian/image
+    FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
+
+    # Base image location: we will work with partitions.
+    BASE_IMG=${IMAGE_DIR}/base_image
+
+    # Download directories.
+    PARTS_RASPBIAN_DIR=${PARTS_DIR}/raspbian
+    PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
+
   # Clean parts.
   cd "${PARTS_RASPBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
 
   # Rm base image.
-  rm -v "${IMAGE_DIR}/base_image"
+  rm -v "${BASE_IMG}/base_image"
 
   # cd to root.
   cd "${ROOT}" || return 1
