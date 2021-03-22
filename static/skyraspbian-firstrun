@@ -1,0 +1,133 @@
+#!/bin/bash
+# Created by @evanlinjin and edited by @asxtree
+
+# TODO(evanlinjin): Write documentation for the following:
+# - Where we are placing the boot params.
+# - Values of the boot params.
+
+DEV_FILE=/dev/mmcblk0
+CONFIG_FILE=/etc/skywire-config.json
+
+TLS_KEY=/etc/skywire-hypervisor/key.pem
+TLS_CERT=/etc/skywire-hypervisor/cert.pem
+
+NET_NAME="Wired connection 1"
+WIFI_NAME="Wireless connection 1"
+
+# Stop here if config files are already generated.
+if [[ -n "$IP" ]]; then
+  echo "Nothing to be done here."
+  sudo systemctl disable skyraspbian-firstrun.service
+  exit 0
+fi
+
+# 'setup_skywire' extracts boot parameters.
+# These parameters are stored in the MBR (Master Boot Record) Bootstrap code
+# area of the boot device. This starts at position +0E0(hex) and has 216 bytes.
+setup_skywire()
+{
+  if ! readonly BOOT_PARAMS=$(/usr/bin/skyconf -if=$DEV_FILE -c=$CONFIG_FILE -keyf=$TLS_KEY -certf=$TLS_CERT); then
+    echo "Failed to setup skywire environment."
+    return 1
+  fi
+
+  # Obtains the following ENVs from boot params:
+  # MD IP GW PK SK HVS SS SUCCESS LOGFILE
+  echo "-----BEGIN BOOT PARAMS-----"
+  echo "$BOOT_PARAMS"
+  echo "-----END BOOT PARAMS-----"
+  if ! eval "$BOOT_PARAMS"; then
+    echo "Failed to eval boot params."
+    return 1
+  fi
+
+  # Print 'skyconf' logs.
+  if [[ -n "$LOGFILE" ]] ; then
+    echo "-----BEGIN SKYCONF LOGS-----"
+    $(command -v cat) - < "$LOGFILE" | while IFS= read -r line; do
+      echo "$line"
+    done
+    echo "-----END SKYCONF LOGS-----"
+  else
+    echo "Cannot access 'skyconf' logs."
+  fi
+}
+setup_skywire || exit 1
+
+# 'setup_network' sets up networking for Skybian.
+# It uses the IP (local IP address) and GW (Gateway IP address) of the boot
+# params. If these are not defined, defaults will be kept.
+
+# Disable dhcpcd in order to set the wifi correctly otherwise an error will be received when trying to start the wifi
+sudo systemctl stop dhcpcd
+sudo systemctl disable dhcpcd
+
+setup_network()
+{
+  echo "Setting up network $NET_NAME..."
+
+  if [[ -n "$IP" ]]; then
+    echo "Setting manual IP to $IP for $NET_NAME."
+    sudo nmcli con mod "$NET_NAME" ipv4.addresses "$IP" ipv4.method "manual"
+  fi
+
+  if [[ -n "$GW" ]]; then
+    echo "Setting manual Gateway IP to $GW for $NET_NAME."
+    sudo nmcli con mod "$NET_NAME" ipv4.gateway "$GW"
+  fi
+
+  sudo nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+  
+  # Put the connection up
+  #sudo nmcli con up "$NET_NAME"
+}
+setup_network || exit 1
+
+setup_wifi()
+{
+  echo "Setting up wifi connection $WIFI_NAME..."
+  sudo nmcli c add type wifi con-name "$WIFI_NAME" ifname wlan0 ssid $WFN
+  if [[ -n "$WFP" ]]; then
+    sudo nmcli c modify "$WIFI_NAME" wifi-sec.key-mgmt wpa-psk wifi-sec.psk $WFP
+  fi
+
+  if [[ -n "$IP" && -n "$GW" ]]; then
+    echo "Setting manual IP to $IP for $WIFI_NAME."
+    sudo nmcli con mod "$WIFI_NAME" ipv4.addresses "$IP/24" ipv4.method "manual"
+  fi
+
+  if [[ -n "$GW" ]]; then
+    echo "Setting manual Gateway IP to $GW for $WIFI_NAME."
+    sudo nmcli con mod "$WIFI_NAME" ipv4.gateway "$GW"
+  fi
+  sudo nmcli con mod "$WIFI_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+  
+  sudo nmcli con down "$WIFI_NAME"
+  sleep 3
+  sudo nmcli con up "$WIFI_NAME"
+}
+
+if [[ -n "$WFN" ]]; then
+  setup_wifi || exit 1
+else
+  setup_network || exit 1
+fi
+
+for file in /etc/ssh/ssh_host* ; do
+    echo "[skybian-firstrun] Checking $file:"
+    cat "$file"
+  done
+
+# Enable associated service.
+echo "Enabling 'skywire-visor.service'."
+sudo systemctl enable skywire-visor.service
+sleep 2
+sudo systemctl start skywire-visor.service
+
+# Change pi user password to skyraspbian
+#echo "Changing the pi user password to skyraspbian."
+#printf "skybian\nskybian\n" | passwd pi
+
+sudo systemctl disable skyraspbian-firstrun.service
+
+exit 0
