@@ -534,7 +534,7 @@ get_raspbian()
 get_all_prime()
 {
   get_skywire || return 1
-  get_armbian || return 1
+  get_armbian_prime || return 1
   get_tools_official || return 1
 }
 
