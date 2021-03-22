@@ -16,26 +16,6 @@ source "$(pwd)/build.conf"
 # On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
 NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go"
 
-# Output directory.
-PARTS_DIR=${ROOT}/output/parts
-IMAGE_DIR=${ROOT}/output/image
-FS_MNT_POINT=${ROOT}/output/mnt
-FINAL_IMG_DIR=${ROOT}/output/final
-
-# Base image location: we will work with partitions.
-BASE_IMG=${IMAGE_DIR}/base_image
-
-# Download directories.
-PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
-PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-PARTS_TOOLS_DIR=${PARTS_DIR}/tools
-
-# Image related variables.
-ARMBIAN_IMG_XZ=""
-ARMBIAN_IMG=""
-ARMBIAN_VERSION=""
-ARMBIAN_KERNEL_VERSION=""
-
 # Loop device.
 IMG_LOOP="" # free loop device to be used.
 
