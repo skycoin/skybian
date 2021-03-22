@@ -970,7 +970,7 @@ build_prime()
     info "Success!"
 }
 
-build_prime()
+build_opi3()
 {
     # test for needed tools
     tool_test || return 1
