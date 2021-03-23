@@ -81,7 +81,6 @@ setup_network()
   # Put the connection up
   #sudo nmcli con up "$NET_NAME"
 }
-setup_network || exit 1
 
 setup_wifi()
 {
