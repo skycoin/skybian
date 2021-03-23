@@ -552,7 +552,7 @@ enable_ssh()
 }
 
 # setup the rootfs to a loop device
-setup_loop()
+setup_loop_official()
 {
   # find free loop device
   IMG_LOOP=$(sudo losetup -f)
@@ -567,6 +567,24 @@ setup_loop()
 
   # setup loop device for root fs
   info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${IMG_OFFSET}' ..."
+  sudo losetup -o "$((IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
+}
+
+setup_loop_rpi()
+{
+  # find free loop device
+  IMG_LOOP=$(sudo losetup -f)
+
+  # find image sector size (if not user-defined)
+  [[ -z $IMG_SECTOR ]] &&
+    IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
+
+  # find image offset (if not user-defined)
+  [[ -z "${RPI_IMG_OFFSET}" ]] &&
+    RPI_IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
+
+  # setup loop device for root fs
+  info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${RPI_IMG_OFFSET}' ..."
   sudo losetup -o "$((IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
 }
 
@@ -610,7 +628,7 @@ prepare_base_image_official()
   fi
 
   info "Setting up loop device..."
-  setup_loop || return 1
+  setup_loop_official || return 1
   rootfs_check || return 1
 
   info "Resizing root fs..."
@@ -637,7 +655,7 @@ prepare_base_image_rpi()
   cp "${PARTS_DIR}/raspbian/${RASPBIAN_IMG}" "${BASE_IMG}" || return 1
 
   info "Setting up loop device..."
-  setup_loop || return 1
+  setup_loop_rpi || return 1
   rootfs_check || return 1
 
   info "Resizing root fs..."
