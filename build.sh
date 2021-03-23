@@ -805,11 +805,11 @@ chroot_actions_rpi()
 # calculate md5, sha1 and compress
 calc_sums_compress()
 {
-  FINAL_IMG_DIR="${ROOT}/output-prime/final ${ROOT}/output-prime/final ${ROOT}/output-skyraspbian/final"
+  FINAL_IMG_DIR="${ROOT}/output-prime/final ${ROOT}/output-opi3/final ${ROOT}/output-skyraspbian/final"
   for dir in ${FINAL_IMG_DIR} ; do
   
     # change to final dest
-    cd "${FINAL_IMG_DIR}" ||
+    cd "${dir}" ||
       (error "Failed to cd." && return 1)
 
     # info
