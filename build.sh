@@ -16,6 +16,15 @@ source "$(pwd)/build.conf"
 # On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
 NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go"
 
+# Image related variables.
+ARMBIAN_IMG_XZ=""
+ARMBIAN_IMG=""
+ARMBIAN_VERSION=""
+ARMBIAN_KERNEL_VERSION=""
+RASPBIAN_IMG_7z=""
+RASPBIAN_IMG=""
+RASPBIAN_VERSION=""
+
 # Loop device.
 IMG_LOOP="" # free loop device to be used.
 
@@ -114,11 +123,6 @@ create_folders_prime()
     PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
     PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
-    # Image related variables.
-    ARMBIAN_IMG_XZ=""
-    ARMBIAN_IMG=""
-    ARMBIAN_VERSION=""
-    ARMBIAN_KERNEL_VERSION=""
     # output [main folder]
     #   /final [this will be the final images dir]
     #   /parts [all thing we download from the internet]
@@ -150,11 +154,6 @@ create_folders_opi3()
     PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
     PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
-    # Image related variables.
-    ARMBIAN_IMG_XZ=""
-    ARMBIAN_IMG=""
-    ARMBIAN_VERSION=""
-    ARMBIAN_KERNEL_VERSION=""
     # output [main folder]
     #   /final [this will be the final images dir]
     #   /parts [all thing we download from the internet]
@@ -184,11 +183,6 @@ create_folders_rpi()
     PARTS_RASPBIAN_DIR=${PARTS_DIR}/raspbian
     PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
     PARTS_TOOLS_DIR=${PARTS_DIR}/tools
-
-    # Image related variables.
-    RASPBIAN_IMG_7z=""
-    RASPBIAN_IMG=""
-    RASPBIAN_VERSION=""
 
     # output [main folder]
     #   /final [this will be the final images dir]
@@ -710,9 +704,6 @@ copy_to_img_rpi()
   sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
 
   # Copy scripts
-  #info "Copying disable user creation script..."
-  #sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-  #sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
   info "Copying headers (so OS presents itself as Skybian)..."
   sudo cp "${ROOT}/static/10-skyraspbian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
   sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skyraspbian-header" || return 1
@@ -921,7 +912,15 @@ build_disk_prime()
   cd "${IMAGE_DIR}" || return 1
 
   # final name
-  local NAME="Skybian-prime-${VERSION}"
+  if [ ${BOARD} == PRIME ] ; then
+	  local NAME="Skybian-prime-${VERSION}"
+  elif [ ${BOARD} == OPI3 ] ; then
+    local NAME="Skybian-opi3-${VERSION}"
+  elif [ ${BOARD} == RPI ] ; then
+    local NAME="Skybian-rpi-${VERSION}"
+  fi
+
+  #local NAME="Skybian-prime-${VERSION}"
 
   # info
   info "Building image for ${NAME}"
@@ -1057,6 +1056,7 @@ build_disk_rpi()
 
 build_prime()
 {
+    BOARD=PRIME
     # test for needed tools
     tool_test || return 1
 
@@ -1088,6 +1088,7 @@ build_prime()
 
 build_opi3()
 {
+    BOARD=OPI3
     # test for needed tools
     tool_test || return 1
 
@@ -1111,7 +1112,7 @@ build_opi3()
     chroot_actions_official || return 1
 
     # build manager image
-    build_disk_opi3 || return 1
+    build_disk_prime || return 1
 
     # all good signal
     info "Success!"
@@ -1119,6 +1120,7 @@ build_opi3()
 
 build_rpi()
 {
+    BOARD=RPI
     # test for needed tools
     tool_test || return 1
 
@@ -1145,7 +1147,7 @@ build_rpi()
     chroot_actions_rpi || return 1
 
     # build manager image
-    build_disk_rpi || return 1
+    build_disk_prime || return 1
 
     # all good signal
     info "Success!"
