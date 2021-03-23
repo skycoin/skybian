@@ -110,17 +110,17 @@ tool_test()
 create_folders_prime()
 {
     # Output directory.
-    if [ ${BOARD} == PRIME ] ; then
+    if [ ${BOARD} == "PRIME" ] ; then
 	    PARTS_DIR=${ROOT}/output-prime/parts
       IMAGE_DIR=${ROOT}/output-prime/image
       FS_MNT_POINT=${ROOT}/output-prime/mnt
       FINAL_IMG_DIR=${ROOT}/output-prime/final
-    elif [ ${BOARD} == OPI3 ] ; then
+    elif [ ${BOARD} == "OPI3" ] ; then
       PARTS_DIR=${ROOT}/output-opi3/parts
       IMAGE_DIR=${ROOT}/output-opi3/image
       FS_MNT_POINT=${ROOT}/output-opi3/mnt
       FINAL_IMG_DIR=${ROOT}/output-opi3/final
-    elif [ ${BOARD} == RPI ] ; then
+    elif [ ${BOARD} == "RPI" ] ; then
       PARTS_DIR=${ROOT}/output-rpi/parts
       IMAGE_DIR=${ROOT}/output-rpi/image
       FS_MNT_POINT=${ROOT}/output-rpi/mnt
@@ -159,9 +159,9 @@ get_tools_official()
   info "_src=$_src"
   info "_out=$_out"
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${BOARD} == "PRIME" ] || [ ${BOARD} == "OPI3" ] ; then
 	  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${BOARD} == "RPI" ] ; then
     env GOOS=linux GOARCH=arm GOARM=7 go build -o "$_out" -v "$_src" || return 1
   fi
 
@@ -214,7 +214,7 @@ get_skywire_rpi()
 
 download_armbian_prime()
 {
-  if [ ${BOARD} == PRIME ] ; then
+  if [ ${BOARD} == "PRIME" ] ; then
 	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL} to ${_DST} ..."
     wget -c "${ARMBIAN_DOWNLOAD_URL}" ||
       (error "Image download failed." && return 1)
@@ -222,7 +222,7 @@ download_armbian_prime()
     info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL}.sha to ${_DST} ..."
     wget -c "${ARMBIAN_DOWNLOAD_URL}.sha" ||
       (error "Checksum download failed." && return 1)
-  elif [ ${BOARD} == OPI3 ] ; then
+  elif [ ${BOARD} == "OPI3" ] ; then
 	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_OPI3} to ${_DST} ..."
     wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}" ||
       (error "Image download failed." && return 1)
@@ -230,7 +230,7 @@ download_armbian_prime()
     info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_OPI3}.sha to ${_DST} ..."
     wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.sha" ||
       (error "Checksum download failed." && return 1)
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${BOARD} == "RPI" ] ; then
     info "Downloading image from ${RASPBIAN_DOWNLOAD_URL} to ${_DST} ..."
     wget -c "${RASPBIAN_DOWNLOAD_URL}" ||
       (error "Download failed." && return 1)
@@ -418,7 +418,7 @@ enable_ssh()
 # setup the rootfs to a loop device
 setup_loop_official()
 {
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${BOARD} == "PRIME" ] || [ ${BOARD} == "OPI3" ] ; then
 	    # find free loop device
       IMG_LOOP=$(sudo losetup -f)
 
@@ -433,7 +433,7 @@ setup_loop_official()
       # setup loop device for root fs
       info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${IMG_OFFSET}' ..."
       sudo losetup -o "$((IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${BOARD} == "RPI" ] ; then
       # find free loop device
       IMG_LOOP=$(sudo losetup -f)
 
@@ -558,7 +558,7 @@ copy_to_img_official()
   info "Copying skywire tools..."
   sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${BOARD} == "PRIME" ] || [ ${BOARD} == "OPI3" ] ; then
     # Copy skywire bins
 	  sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
     sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
@@ -576,7 +576,7 @@ copy_to_img_official()
     info "Copying chroot script..."
     sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
     sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${BOARD} == "RPI" ] ; then
     # Copy skywire bins
 	  sudo cp "$ROOT"/static/skyraspbian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
     sudo chmod +x "$FS_MNT_POINT"/usr/bin/skyraspbian-firstrun || return 1
@@ -613,9 +613,9 @@ chroot_actions_official()
   # enable chroot
   info "Seting up chroot jail..."
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${BOARD} == "PRIME" ] || [ ${BOARD} == "OPI3" ] ; then
 	  sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${BOARD} == "RPI" ] ; then
     sudo cp "$(command -v qemu-arm-static)" "${FS_MNT_POINT}/usr/bin/"
   fi
 
@@ -624,11 +624,11 @@ chroot_actions_official()
   sudo mount --bind /dev "${FS_MNT_POINT}/dev"
   sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${BOARD} == "PRIME" ] || [ ${BOARD} == "OPI3" ] ; then
 	  # Executing chroot script
     info "Executing chroot script..."
     sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${BOARD} == "RPI" ] ; then
     # ld.so.preload fix
     sed -i 's/^/#/g' "${FS_MNT_POINT}/etc/ld.so.preload"
 
@@ -643,9 +643,9 @@ chroot_actions_official()
 	  # Disable chroot
     info "Disabling the chroot jail..."
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${BOARD} == "PRIME" ] || [ ${BOARD} == "OPI3" ] ; then
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${BOARD} == "RPI" ] ; then
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-arm-static"
   fi
     
@@ -831,7 +831,7 @@ build_disk_prime()
 
 build_prime()
 {
-    BOARD=PRIME
+    BOARD="PRIME"
     # test for needed tools
     tool_test || return 1
 
@@ -863,7 +863,7 @@ build_prime()
 
 build_opi3()
 {
-    BOARD=OPI3
+    BOARD="OPI3"
     # test for needed tools
     tool_test || return 1
 
@@ -895,7 +895,7 @@ build_opi3()
 
 build_rpi()
 {
-    BOARD=RPI
+    BOARD="RPI"
     # test for needed tools
     tool_test || return 1
 
