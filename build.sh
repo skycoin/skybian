@@ -636,13 +636,6 @@ prepare_base_image_rpi()
   info "Copying base image..."
   cp "${PARTS_DIR}/raspbian/${RASPBIAN_IMG}" "${BASE_IMG}" || return 1
 
-  # Add space to base image
-  #if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
-  #  info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
-  #  truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
-  #  echo ", +" | sfdisk -N1 "${BASE_IMG}" # add free space to the part 1 (sfdisk way)
-  #fi
-
   info "Setting up loop device..."
   setup_loop || return 1
   rootfs_check || return 1
@@ -794,31 +787,35 @@ chroot_actions_rpi()
 # calculate md5, sha1 and compress
 calc_sums_compress()
 {
-  # change to final dest
-  cd "${FINAL_IMG_DIR}" ||
-    (error "Failed to cd." && return 1)
+  FINAL_IMG_DIR="${ROOT}/output-prime/final ${ROOT}/output-prime/final ${ROOT}/output-skyraspbian/final"
+  for dir in ${FINAL_IMG_DIR} ; do
+  
+    # change to final dest
+    cd "${FINAL_IMG_DIR}" ||
+      (error "Failed to cd." && return 1)
 
-  # info
-  info "Calculating the md5sum for the image, this may take a while"
+    # info
+    info "Calculating the md5sum for the image, this may take a while"
 
-  # cycle for each one
-  for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
-    # MD5
-    info "MD5 Sum for image: $img"
-    md5sum -b "${img}" > "${img}.md5"
+    # cycle for each one
+      for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
+      # MD5
+        info "MD5 Sum for image: $img"
+        md5sum -b "${img}" > "${img}.md5"
 
-    # sha1
-    info "SHA1 Sum for image: $img"
-    sha1sum -b "${img}" > "${img}.sha1"
+        # sha1
+        info "SHA1 Sum for image: $img"
+        sha1sum -b "${img}" > "${img}.sha1"
 
-    # compress
-    info "Compressing, this will take a while..."
-    name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
-    tar -cvzf "${name}.tar.gz" "${img}"*
+        # compress
+        info "Compressing, this will take a while..."
+        name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
+        tar -cvzf "${name}.tar.gz" "${img}"*
+    done
+
+    cd "${ROOT}" || return 1
+    info "Done!"
   done
-
-  cd "${ROOT}" || return 1
-  info "Done!"
 }
 
 clean_image()
