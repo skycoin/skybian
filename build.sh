@@ -434,7 +434,7 @@ get_armbian_opi3()
       info "No cached image, downloading.."
 
       # download it
-      download_armbian_opi3
+      download_armbian_prime
 
       local ARMBIAN_IMG_XZ="$(ls Armbian*img.xz || true)"
   fi
@@ -1280,7 +1280,7 @@ build_rpi()
 main_build()
 {
     # build prime skybian image
-    build_prime || return 1
+    #build_prime || return 1
 
     # build opi3 skybian image
     build_opi3 || return 1
