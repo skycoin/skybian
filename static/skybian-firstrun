@@ -17,7 +17,7 @@ WIFI_NAME="Wireless connection 1"
 # Stop here if config files are already generated.
 if [[ -f "$CONFIG_FILE" ]]; then
   echo "Nothing to be done here."
-  systemctl disable skybian-firstrun.service
+  sudo systemctl disable skybian-firstrun.service
   exit 0
 fi
 
@@ -57,44 +57,49 @@ setup_skywire || exit 1
 # 'setup_network' sets up networking for Skybian.
 # It uses the IP (local IP address) and GW (Gateway IP address) of the boot
 # params. If these are not defined, defaults will be kept.
+
+# Disable dhcpcd in order to set the wifi correctly otherwise an error will be received when trying to start the wifi
+sudo systemctl stop dhcpcd
+sudo systemctl disable dhcpcd
+
 setup_network()
 {
   echo "Setting up network $NET_NAME..."
 
   if [[ -n "$IP" ]]; then
     echo "Setting manual IP to $IP for $NET_NAME."
-    nmcli con mod "$NET_NAME" ipv4.addresses "$IP/24" ipv4.method "manual"
+    sudo nmcli con mod "$NET_NAME" ipv4.addresses "$IP/24" ipv4.method "manual"
   fi
 
   if [[ -n "$GW" ]]; then
     echo "Setting manual Gateway IP to $GW for $NET_NAME."
-    nmcli con mod "$NET_NAME" ipv4.gateway "$GW"
+    sudo nmcli con mod "$NET_NAME" ipv4.gateway "$GW"
   fi
 
-  nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+  sudo nmcli con mod "$NET_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
 }
 
 setup_wifi()
 {
   echo "Setting up wifi connection $WIFI_NAME..."
-  nmcli c add type wifi con-name "$WIFI_NAME" ifname wlan0 ssid $WFN
+  sudo nmcli c add type wifi con-name "$WIFI_NAME" ifname wlan0 ssid $WFN
   if [[ -n "$WFP" ]]; then
-    nmcli c modify "$WIFI_NAME" wifi-sec.key-mgmt wpa-psk wifi-sec.psk $WFP
+    sudo nmcli c modify "$WIFI_NAME" wifi-sec.key-mgmt wpa-psk wifi-sec.psk $WFP
   fi
 
   if [[ -n "$IP" && -n "$GW" ]]; then
     echo "Setting manual IP to $IP for $WIFI_NAME."
-    nmcli con mod "$WIFI_NAME" ipv4.addresses "$IP/24" ipv4.method "manual"
+    sudo nmcli con mod "$WIFI_NAME" ipv4.addresses "$IP/24" ipv4.method "manual"
   fi
 
   if [[ -n "$GW" ]]; then
     echo "Setting manual Gateway IP to $GW for $WIFI_NAME."
-    nmcli con mod "$WIFI_NAME" ipv4.gateway "$GW"
+    sudo nmcli con mod "$WIFI_NAME" ipv4.gateway "$GW"
   fi
-  nmcli con mod "$WIFI_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
-  nmcli con down "$WIFI_NAME"
+  sudo nmcli con mod "$WIFI_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
+  sudo nmcli con down "$WIFI_NAME"
   sleep 3
-  nmcli con up "$WIFI_NAME"
+  sudo nmcli con up "$WIFI_NAME"
 }
 
 # assume wifi should be configured instead of ethernet when wifi name env var is set
@@ -110,36 +115,36 @@ for file in /etc/ssh/ssh_host* ; do
 done
 
 echo "Enabling 'skywire-visor.service'."
-systemctl enable skywire-visor.service
+sudo systemctl enable skywire-visor.service
 sleep 2
-systemctl start skywire-visor.service
+sudo systemctl start skywire-visor.service
 
 install_ntp()
 {
     # (courtesy of https://github.com/some4/skywire-install-bash/blob/master/install.sh)
     # Stop timesyncd:
-    systemctl stop systemd-timesyncd.service
+    sudo systemctl stop systemd-timesyncd.service
 
     # Backup (but don't overwrite an existing) config. If not, sed will keep
     #   appending file:
-    cp -n /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.orig
+    sudo cp -n /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.orig
     # Use fresh copy in case installer used on existing system:
-    cp /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
+    sudo p /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
 
     # When system is set to sync with RTC the time can't be updated and NTP
     #   is crippled. Switch off that setting with:
-    timedatectl set-local-rtc 0
-    timedatectl set-ntp on
-    apt update && apt install -y ntp
+    sudo timedatectl set-local-rtc 0
+    sudo timedatectl set-ntp on
+    sudo apt update && sudo apt install -y ntp
 
-    systemctl disable systemd-timesyncd.service
+    sudo systemctl disable systemd-timesyncd.service
 
     info "Restarting NTP..."
-    systemctl restart ntp.service
+    sudo systemctl restart ntp.service
     # Set hardware clock to UTC (which doesn't have daylight savings):
-    hwclock -w
+    sudo wclock -w
 }
 install_ntp || logger "Failed to setup ntp service"
 
-systemctl disable skybian-firstrun.service
+sudo systemctl disable skybian-firstrun.service
 exit 0

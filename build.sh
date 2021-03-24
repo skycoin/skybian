@@ -538,11 +538,12 @@ copy_to_img()
   info "Copying skywire tools..."
   sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
-    # Copy skywire bins
-	  sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
-    sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
+  # Copy skywire bins
+	sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
+  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
+  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+    
     # Copy scripts
     info "Copying disable user creation script..."
     sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
@@ -639,30 +640,38 @@ chroot_actions()
 # calculate md5, sha1 and compress
 calc_sums_compress()
 {
-  FINAL_IMG_DIR="${ROOT}/output-prime/final ${ROOT}/output-opi3/final ${ROOT}/output-rpi/final"
-  for dir in ${FINAL_IMG_DIR} ; do
+  if [ ${BOARD} == PRIME ] ; then
+  # output prime skybian image
+	  FINAL_IMG_DIR="${ROOT}/output-prime/final"
+  elif [ ${BOARD} == OPI3 ] ; then
+  # output opi3 skybian image
+	  FINAL_IMG_DIR="${ROOT}/output-opi3/final"
+  elif [ ${BOARD} == RPI ] ; then
+  # output skyraspbian image
+    FINAL_IMG_DIR="${ROOT}/output-rpi/final"
+  fi
   
-    # change to final dest
-    cd "${dir}" ||
+  # change to final dest
+    cd "${FINAL_IMG_DIR}" ||
       (error "Failed to cd." && return 1)
 
-    # info
+  # info
     info "Calculating the md5sum for the image, this may take a while"
 
-    # cycle for each one
-      for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
-      # MD5
-        info "MD5 Sum for image: $img"
-        md5sum -b "${img}" > "${img}.md5"
+  # cycle for each one
+    for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
+    # MD5
+      info "MD5 Sum for image: $img"
+      md5sum -b "${img}" > "${img}.md5"
 
-        # sha1
-        info "SHA1 Sum for image: $img"
-        sha1sum -b "${img}" > "${img}.sha1"
+    # sha1
+      info "SHA1 Sum for image: $img"
+      sha1sum -b "${img}" > "${img}.sha1"
 
-        # compress
-        info "Compressing, this will take a while..."
-        name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
-        tar -cvzf "${name}.tar.gz" "${img}"*
+    # compress
+      info "Compressing, this will take a while..."
+      name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
+      tar -cvzf "${name}.tar.gz" "${img}"*
     done
 
     cd "${ROOT}" || return 1
@@ -772,7 +781,7 @@ build_disk()
 
 build_prime()
 {
-    BOARD=PRIME
+    #BOARD=PRIME
     # test for needed tools
     tool_test || return 1
 
@@ -804,7 +813,7 @@ build_prime()
 
 build_opi3()
 {
-    BOARD=OPI3
+    #BOARD=OPI3
     # test for needed tools
     tool_test || return 1
 
@@ -836,7 +845,7 @@ build_opi3()
 
 build_rpi()
 {
-    BOARD=RPI
+    #BOARD=RPI
     # test for needed tools
     tool_test || return 1
 
@@ -872,14 +881,16 @@ build_rpi()
 # main build block
 main_build()
 {
+    if [ ${BOARD} == PRIME ] ; then
     # build prime skybian image
-    build_prime || return 1
-
+	    build_prime || return 1
+    elif [ ${BOARD} == OPI3 ] ; then
     # build opi3 skybian image
-    build_opi3 || return 1
-
+	    build_opi3 || return 1
+    elif [ ${BOARD} == RPI ] ; then
     # build skyraspbian image
-    build_rpi || return 1
+      build_rpi || return 1
+    fi
 
     # all good signal
     info "Success!"
