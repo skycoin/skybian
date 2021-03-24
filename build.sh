@@ -17,13 +17,19 @@ source "$(pwd)/build.conf"
 NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go"
 
 # Image related variables.
-ARMBIAN_IMG_XZ=""
-ARMBIAN_IMG=""
-ARMBIAN_VERSION=""
-ARMBIAN_KERNEL_VERSION=""
-RASPBIAN_IMG_7z=""
-RASPBIAN_IMG=""
-RASPBIAN_VERSION=""
+#OS_IMG_XZ=""
+#OS_IMG=""
+#OS_VERSION=""
+#OS_KERNEL_VERSION=""
+#OS_IMG_XZ=""
+#OS_IMG=""
+#OS_VERSION=""
+
+OS_IMG_XZ=""
+OS_IMG=""
+OS_VERSION=""
+OS_KERNEL_VERSION=""
+
 
 # Loop device.
 IMG_LOOP="" # free loop device to be used.
@@ -150,19 +156,18 @@ create_folders()
     info "Done!"
 }
 
-#create_folders_opi3()
+#create_folders_rpi()
 # {
-    # Output directory.
-    #PARTS_DIR=${ROOT}/output-opi3/parts
-    #IMAGE_DIR=${ROOT}/output-opi3/image
-    #FS_MNT_POINT=${ROOT}/output-opi3/mnt
-    #FINAL_IMG_DIR=${ROOT}/output-opi3/final
+    #PARTS_DIR=${ROOT}/output-skyraspbian/parts
+    #IMAGE_DIR=${ROOT}/output-skyraspbian/image
+    #FS_MNT_POINT=${ROOT}/output-skyraspbian/mnt
+    #FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
 
     # Base image location: we will work with partitions.
     #BASE_IMG=${IMAGE_DIR}/base_image
 
     # Download directories.
-    #PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
+    #PARTS_RASPBIAN_DIR=${PARTS_DIR}/OS
     #PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
     #PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
@@ -175,43 +180,13 @@ create_folders()
     #info "Creating output folder structure..."
     #mkdir -p "$FINAL_IMG_DIR"
     #mkdir -p "$FS_MNT_POINT"
-    #mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
+    #mkdir -p "$PARTS_DIR" "$PARTS_RASPBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
     #mkdir -p "$IMAGE_DIR"
 
     #info "Done!"
 #}
 
-create_folders_rpi()
-{
-    PARTS_DIR=${ROOT}/output-skyraspbian/parts
-    IMAGE_DIR=${ROOT}/output-skyraspbian/image
-    FS_MNT_POINT=${ROOT}/output-skyraspbian/mnt
-    FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
-
-    # Base image location: we will work with partitions.
-    BASE_IMG=${IMAGE_DIR}/base_image
-
-    # Download directories.
-    PARTS_RASPBIAN_DIR=${PARTS_DIR}/raspbian
-    PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-    PARTS_TOOLS_DIR=${PARTS_DIR}/tools
-
-    # output [main folder]
-    #   /final [this will be the final images dir]
-    #   /parts [all thing we download from the internet]
-    #   /mnt [to mount resources, like img fs, etc]
-    #   /image [all image processing goes here]
-
-    info "Creating output folder structure..."
-    mkdir -p "$FINAL_IMG_DIR"
-    mkdir -p "$FS_MNT_POINT"
-    mkdir -p "$PARTS_DIR" "$PARTS_RASPBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
-    mkdir -p "$IMAGE_DIR"
-
-    info "Done!"
-}
-
-get_tools_official()
+get_tools()
 {
   local _src="$ROOT/cmd/skyconf/skyconf.go"
   local _out="$PARTS_TOOLS_DIR/skyconf"
@@ -286,7 +261,7 @@ get_skywire_rpi()
   info "Done!"
 }
 
-download_armbian()
+download_os()
 {
   if [ ${BOARD} == PRIME ] ; then
 	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL}..."
@@ -345,13 +320,13 @@ get_armbian()
   cd "${PARTS_OS_DIR}" ||
     (error "Failed to cd." && return 1)
 
-  local ARMBIAN_IMG_XZ="$(ls Armbian*img.xz || true)"
+  local OS_IMG_XZ="$(ls Armbian*img.xz || true)"
 
   # user info
   info "Getting Armbian image, clearing dest dir first."
 
   # test if we have a file in there
-  if [ -r "${ARMBIAN_IMG_XZ}" ] ; then
+  if [ -r "${OS_IMG_XZ}" ] ; then
 
       # todo: doesn't seem to work, always downloads the image
       # todo: download checksum separately, and use it to validate local copy
@@ -363,13 +338,13 @@ get_armbian()
       info "No cached image, downloading.."
 
       # download it
-      download_armbian
+      download_os
 
-      local ARMBIAN_IMG_XZ="$(ls Armbian*img.xz || true)"
+      local OS_IMG_XZ="$(ls Armbian*img.xz || true)"
   fi
 
   # extract and check it's integrity
-  info "Armbian file to process is '${ARMBIAN_IMG_XZ}'."
+  info "Armbian file to process is '${OS_IMG_XZ}'."
 
   # check integrity
   info "Testing image integrity..."
@@ -386,45 +361,45 @@ get_armbian()
   else
       # extract armbian
       info "Extracting image..."
-      if ! 7z e "${ARMBIAN_IMG_XZ}" ; then
+      if ! 7z e "${OS_IMG_XZ}" ; then
           error "Extracting failed, file is corrupt? Re-run the script to get it right."
-          rm "${ARMBIAN_IMG_XZ}" &> /dev/null || true
+          rm "${OS_IMG_XZ}" &> /dev/null || true
           exit 1
       fi
   fi
 
   # get image filename
-  ARMBIAN_IMG=$(ls Armbian*.img || true)
+  OS_IMG=$(ls Armbian*.img || true)
 
   # imge integrity
   info "Image integrity assured via sha256sum."
-  notice "Final image file is ${ARMBIAN_IMG}"
+  notice "Final image file is ${OS_IMG}"
 
   # get version & kernel version info
-  ARMBIAN_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $2 }')
-  ARMBIAN_KERNEL_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
+  OS_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $2 }')
+  OS_KERNEL_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
 
   # info to the user
-  notice "Armbian version: ${ARMBIAN_VERSION}"
-  notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
+  notice "Armbian version: ${OS_VERSION}"
+  notice "Armbian kernel version: ${OS_KERNEL_VERSION}"
 }
 
 # Get the latest RASPBIAN image for Orange Pi Prime
 get_raspbian()
 {
-  #local RASPBIAN_IMG_7z="raspbian.7z"
+  #local OS_IMG_XZ="raspbian.7z"
 
     # change to dest dir
     cd "${PARTS_OS_DIR}" ||
       (error "Failed to cd." && return 1)
 
-    local RASPBIAN_IMG_7z=$(ls *raspios*.zip || true)
+    local OS_IMG_XZ=$(ls *raspios*.zip || true)
 
     # user info
     info "Getting Raspbian image, clearing dest dir first."
 
     # test if we have a file in there
-    if [ -r "${RASPBIAN_IMG_7z}" ] ; then
+    if [ -r "${OS_IMG_XZ}" ] ; then
 
         # use already downloaded image file
         notice "Reusing already downloaded file"
@@ -433,13 +408,13 @@ get_raspbian()
         info "No cached image, downloading.."
 
         # download it
-        download_armbian
+        download_os
     fi
 
-    local RASPBIAN_IMG_7z=$(ls *raspios*.zip || true)
+    local OS_IMG_XZ=$(ls *raspios*.zip || true)
 
     # extract and check it's integrity
-    info "Raspbian file to process is '${RASPBIAN_IMG_7z}'."
+    info "Raspbian file to process is '${OS_IMG_XZ}'."
 
     # check integrity
     info "Testing image integrity..."
@@ -456,19 +431,19 @@ get_raspbian()
     else
         # extract raspbian
         info "Extracting image..."
-        if ! 7z e "${RASPBIAN_IMG_7z}" ; then
+        if ! 7z e "${OS_IMG_XZ}" ; then
             error "Extracting failed, file is corrupt? Re-run the script to get it right."
-            rm "${RASPBIAN_IMG_7z}" &> /dev/null || true
+            rm "${OS_IMG_XZ}" &> /dev/null || true
             exit 1
         fi
     fi
 
     # get image filename
-    RASPBIAN_IMG=$(ls *rasp*.img || true)
+    OS_IMG=$(ls *rasp*.img || true)
 
     # imge integrity
     info "Image integrity assured via sha256sum."
-    notice "Final image file is ${RASPBIAN_IMG}"
+    notice "Final image file is ${OS_IMG}"
 }
 
 get_all_official()
@@ -496,7 +471,7 @@ get_all_rpi()
 enable_ssh()
 {
 	info "Mounting /boot"
-	sudo mount -o loop,offset=4194304 "${PARTS_DIR}/raspbian/${RASPBIAN_IMG}" "${FS_MNT_POINT}"
+	sudo mount -o loop,offset=4194304 "${PARTS_DIR}/OS/${OS_IMG}" "${FS_MNT_POINT}"
  
 	info "Enabling UART"
 	sudo sed -i '/^#dtoverlay=vc4-fkms-v3d.*/a enable_uart=1' "${FS_MNT_POINT}/config.txt"
@@ -595,7 +570,7 @@ prepare_base_image_official()
 
   # copy armbian image to base image location
   info "Copying base image..."
-  cp "${PARTS_DIR}/OS/${ARMBIAN_IMG}" "${BASE_IMG}" || return 1
+  cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
   # Add space to base image
   if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
@@ -629,7 +604,7 @@ prepare_base_image_rpi()
 
   # copy raspbian image to base image location
   info "Copying base image..."
-  cp "${PARTS_DIR}/OR/${RASPBIAN_IMG}" "${BASE_IMG}" || return 1
+  cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
   info "Setting up loop device..."
   setup_loop_rpi || return 1
@@ -879,60 +854,87 @@ clean_image()
   [[ -n "${IMG_LOOP}" ]] && sudo losetup -d "${IMG_LOOP}"
 }
 
-clean_output_dir_official()
+clean_output_dir()
 {
+    PARTS_OS_DIR="${ROOT}/output-prime/parts/OS ${ROOT}/output-opi3/parts/OS ${ROOT}/output-rpi/parts/OS"
+    for i in ${PARTS_OS_DIR} ; do
 
-    PARTS_DIR=${ROOT}/output-prime/parts
-    IMAGE_DIR=${ROOT}/output-prime/image
-    FINAL_IMG_DIR=${ROOT}/output-prime/final
+      cd "${i}" && find . -type f ! -name '*.xz' -delete
+
+    done
+
+    PARTS_SKYWIRE_DIR="${ROOT}/output-prime/parts/skywire ${ROOT}/output-opi3/parts/skywire ${ROOT}/output-rpi/parts/skywire"
+    for j in ${PARTS_SKYWIRE_DIR} ; do
+
+      cd "${j}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+    
+    done
+
+    FINAL_IMG_DIR="${ROOT}/output-prime/final ${ROOT}/output-opi3/final ${ROOT}/output-rpi/final" 
+    for k in ${FINAL_IMG_DIR} ; do
+
+      cd "${k}" && find . -type f ! -name '*.tar.gz' -delete
+    
+    done
+
+    BASE_IMG="${ROOT}/output-prime/image/base_image ${ROOT}/output-opi3/image/base_image ${ROOT}/output-rpi/image/base_image"
+    for l in ${BASE_IMG} ; do
+
+      rm -v "${l}"
+
+    done
+
+    #PARTS_DIR=${ROOT}/output-prime/parts
+    #IMAGE_DIR=${ROOT}/output-prime/image
+    #FINAL_IMG_DIR=${ROOT}/output-prime/final
 
     # Base image location: we will work with partitions.
-    BASE_IMG=${IMAGE_DIR}/base_image
+    #BASE_IMG=${IMAGE_DIR}/base_image
 
     # Download directories.
-    PARTS_OS_DIR=${PARTS_DIR}/OS
-    PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
+    #PARTS_OS_DIR=${PARTS_DIR}/OS
+    #PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
 
   # Clean parts.
-  cd "${PARTS_OS_DIR}" && find . -type f ! -name '*.xz' -delete
-  cd ${ROOT}/output-opi3/parts/OS && find . -type f ! -name '*.xz' -delete
-  cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  cd ${ROOT}/output-opi3/parts/skywire && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
-  cd ${ROOT}/output-opi3/final . -type f ! -name '*.tar.gz' -delete
+  #cd "${PARTS_OS_DIR}" && find . -type f ! -name '*.xz' -delete
+  #cd ${ROOT}/output-opi3/parts/OS && find . -type f ! -name '*.xz' -delete
+  #cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  #cd ${ROOT}/output-opi3/parts/skywire && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  #cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
+  #cd ${ROOT}/output-opi3/final . -type f ! -name '*.tar.gz' -delete
 
   # Rm base image.
-  rm -v "${BASE_IMG}"
-  rm -v ${ROOT}/output-opi3/image/base_image
+  #rm -v "${BASE_IMG}"
+  #rm -v ${ROOT}/output-opi3/image/base_image
 
   # cd to root.
   cd "${ROOT}" || return 1
 }
 
-clean_output_dir_rpi()
-{
-    PARTS_DIR=${ROOT}/output-skyraspbian/parts
-    IMAGE_DIR=${ROOT}/output-skyraspbian/image
-    FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
+#clean_output_dir_rpi()
+# {
+    #PARTS_DIR=${ROOT}/output-skyraspbian/parts
+    #IMAGE_DIR=${ROOT}/output-skyraspbian/image
+    #FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
 
     # Base image location: we will work with partitions.
-    BASE_IMG=${IMAGE_DIR}/base_image
+    #BASE_IMG=${IMAGE_DIR}/base_image
 
     # Download directories.
-    PARTS_OS_DIR=${PARTS_DIR}/OS
-    PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
+    #PARTS_OS_DIR=${PARTS_DIR}/OS
+    #PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
 
   # Clean parts.
-  cd "${PARTS_RASPBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
-  cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
+  #cd "${PARTS_RASPBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
+  #cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  #cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
 
   # Rm base image.
-  rm -v "${BASE_IMG}/base_image"
+  #rm -v "${BASE_IMG}/base_image"
 
   # cd to root.
-  cd "${ROOT}" || return 1
-}
+  #cd "${ROOT}" || return 1
+#}
 
 # build disk
 build_disk()
@@ -1187,10 +1189,10 @@ main_build()
     build_prime || return 1
 
     # build opi3 skybian image
-    #build_opi3 || return 1
+    build_opi3 || return 1
 
     # build skyraspbian image
-    #build_rpi || return 1
+    build_rpi || return 1
 
     # all good signal
     info "Success!"
@@ -1198,8 +1200,7 @@ main_build()
 
 main_clean()
 {
-  clean_output_dir_official
-  clean_output_dir_rpi
+  clean_output_dir
   clean_image || return 0
 }
 
