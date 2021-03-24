@@ -27,6 +27,7 @@ Dates must be YEAR-MONTH-DAY
 
 ### Changed
 
+- Changed Debian Stretch to Debian Buster support for Orange Pi Prime
 - Combined initial build of Orange Pi Prime skybian image with Orange Pi 3 and Raspberry Pi
 
 ## [0.1.2] - 2020-04-20
