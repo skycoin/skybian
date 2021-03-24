@@ -474,7 +474,7 @@ get_raspbian()
 get_all_official()
 {
   get_skywire || return 1
-  get_armbian_prime || return 1
+  get_armbian || return 1
   get_tools_official || return 1
 }
 
