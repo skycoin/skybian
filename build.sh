@@ -1079,7 +1079,7 @@ build_disk()
 
   # info
   #info "Image for ${NAME} ready"
-}
+#}
 
 build_prime()
 {
