@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-# This is the main script to build the Skybian OS for Skycoin miners.
+# This is the main script to build the Skybian OS for Skycoin Official and Raspberry Pi miners.
 #
-# Author: evanlinjin@github.com, @evanlinjin in telegram
+# Author: evanlinjin@github.com, @evanlinjin in Telegram
+# Modified by: asxtree@github.com, @asxtree in Telegram
 # Skycoin / Rudi team
 #
 
@@ -17,19 +18,10 @@ source "$(pwd)/build.conf"
 NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go"
 
 # Image related variables.
-#OS_IMG_XZ=""
-#OS_IMG=""
-#OS_VERSION=""
-#OS_KERNEL_VERSION=""
-#OS_IMG_XZ=""
-#OS_IMG=""
-#OS_VERSION=""
-
 OS_IMG_XZ=""
 OS_IMG=""
 OS_VERSION=""
 OS_KERNEL_VERSION=""
-
 
 # Loop device.
 IMG_LOOP="" # free loop device to be used.
@@ -116,16 +108,19 @@ tool_test()
 create_folders()
 {
     # Output directory.
+    ## For Orange Pi Prime the output directory will be output-prime
     if [ ${BOARD} == PRIME ] ; then
 	    PARTS_DIR=${ROOT}/output-prime/parts
       IMAGE_DIR=${ROOT}/output-prime/image
       FS_MNT_POINT=${ROOT}/output-prime/mnt
       FINAL_IMG_DIR=${ROOT}/output-prime/final
+    ## For Orange Pi 3 the output directory will be output-opi3
     elif [ ${BOARD} == OPI3 ] ; then
       PARTS_DIR=${ROOT}/output-opi3/parts
       IMAGE_DIR=${ROOT}/output-opi3/image
       FS_MNT_POINT=${ROOT}/output-opi3/mnt
       FINAL_IMG_DIR=${ROOT}/output-opi3/final
+    ## For Raspberry Pi the output directory will be output-rpi
     elif [ ${BOARD} == RPI ] ; then
       PARTS_DIR=${ROOT}/output-rpi/parts
       IMAGE_DIR=${ROOT}/output-rpi/image
@@ -141,7 +136,7 @@ create_folders()
     PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
     PARTS_TOOLS_DIR=${PARTS_DIR}/tools
 
-    # output [main folder]
+    # output-x [main folder]
     #   /final [this will be the final images dir]
     #   /parts [all thing we download from the internet]
     #   /mnt [to mount resources, like img fs, etc]
@@ -156,36 +151,7 @@ create_folders()
     info "Done!"
 }
 
-#create_folders_rpi()
-# {
-    #PARTS_DIR=${ROOT}/output-skyraspbian/parts
-    #IMAGE_DIR=${ROOT}/output-skyraspbian/image
-    #FS_MNT_POINT=${ROOT}/output-skyraspbian/mnt
-    #FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
-
-    # Base image location: we will work with partitions.
-    #BASE_IMG=${IMAGE_DIR}/base_image
-
-    # Download directories.
-    #PARTS_RASPBIAN_DIR=${PARTS_DIR}/OS
-    #PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-    #PARTS_TOOLS_DIR=${PARTS_DIR}/tools
-
-    # output [main folder]
-    #   /final [this will be the final images dir]
-    #   /parts [all thing we download from the internet]
-    #   /mnt [to mount resources, like img fs, etc]
-    #   /image [all image processing goes here]
-
-    #info "Creating output folder structure..."
-    #mkdir -p "$FINAL_IMG_DIR"
-    #mkdir -p "$FS_MNT_POINT"
-    #mkdir -p "$PARTS_DIR" "$PARTS_RASPBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
-    #mkdir -p "$IMAGE_DIR"
-
-    #info "Done!"
-#}
-
+# Get tools to configure skyconf
 get_tools()
 {
   local _src="$ROOT/cmd/skyconf/skyconf.go"
@@ -201,24 +167,10 @@ get_tools()
     env GOOS=linux GOARCH=arm GOARM=7 go build -o "$_out" -v "$_src" || return 1
   fi
 
-  #env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
-
   info "Done!"
 }
 
-#get_tools_rpi()
-# {
-  #local _src="$ROOT/cmd/skyconf/skyconf.go"
-  #local _out="$PARTS_TOOLS_DIR/skyconf"
-
-  #info "Building skyconf..."
-  #info "_src=$_src"
-  #info "_out=$_out"
-  #env GOOS=linux GOARCH=arm GOARM=7 go build -o "$_out" -v "$_src" || return 1
-
-  #info "Done!"
-#}
-
+# Get skywire
 get_skywire()
 {
   local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
@@ -261,6 +213,7 @@ get_skywire_rpi()
   info "Done!"
 }
 
+# Download function for OS image of each board type
 download_os()
 {
   if [ ${BOARD} == PRIME ] ; then
@@ -289,28 +242,6 @@ download_os()
       (error "Checksum download failed." && return 1)
   fi
 }
-
-#download_armbian_opi3()
-# {
-  #info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_OPI3}..."
-  #wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}" ||
-  #  (error "Image download failed." && return 1)
-
-  #info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_OPI3}.sha..."
-  #wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.sha" ||
-  #  (error "Checksum download failed." && return 1)
-#}
-
-#download_raspbian()
-# {
-  #info "Downloading image from ${RASPBIAN_DOWNLOAD_URL} to ${_DST} ..."
-  #wget -c "${RASPBIAN_DOWNLOAD_URL}" ||
-  #  (error "Download failed." && return 1)
-
-  #info "Downloading checksum from ${RASPBIAN_DOWNLOAD_URL}.sha..."
-  #wget -c "${RASPBIAN_DOWNLOAD_URL}.sha256" ||
-  #  (error "Checksum download failed." && return 1)
-#}
 
 # Get the latest ARMBIAN image for Orange Pi Prime
 get_armbian()
@@ -387,37 +318,35 @@ get_armbian()
 # Get the latest RASPBIAN image for Orange Pi Prime
 get_raspbian()
 {
-  #local OS_IMG_XZ="raspbian.7z"
-
-    # change to dest dir
-    cd "${PARTS_OS_DIR}" ||
-      (error "Failed to cd." && return 1)
+  # change to dest dir
+  cd "${PARTS_OS_DIR}" ||
+    (error "Failed to cd." && return 1)
 
     local OS_IMG_XZ=$(ls *raspios*.zip || true)
 
-    # user info
-    info "Getting Raspbian image, clearing dest dir first."
+  # user info
+  info "Getting Raspbian image, clearing dest dir first."
 
-    # test if we have a file in there
-    if [ -r "${OS_IMG_XZ}" ] ; then
+  # test if we have a file in there
+  if [ -r "${OS_IMG_XZ}" ] ; then
 
-        # use already downloaded image file
-        notice "Reusing already downloaded file"
-    else
-        # no image in there, must download
-        info "No cached image, downloading.."
+    # use already downloaded image file
+    notice "Reusing already downloaded file"
+  else
+    # no image in there, must download
+    info "No cached image, downloading.."
 
-        # download it
-        download_os
-    fi
+    # download it
+    download_os
+  fi
 
-    local OS_IMG_XZ=$(ls *raspios*.zip || true)
+  local OS_IMG_XZ=$(ls *raspios*.zip || true)
 
-    # extract and check it's integrity
-    info "Raspbian file to process is '${OS_IMG_XZ}'."
+  # extract and check it's integrity
+  info "Raspbian file to process is '${OS_IMG_XZ}'."
 
-    # check integrity
-    info "Testing image integrity..."
+  # check integrity
+  info "Testing image integrity..."
     if ! $(command -v sha256sum) -c --status -- *.sha256 ; then
         error "Integrity of the image is compromised, re-run the script to get it right."
         rm -- *img *txt *sha *7z &> /dev/null || true
@@ -438,12 +367,12 @@ get_raspbian()
         fi
     fi
 
-    # get image filename
-    OS_IMG=$(ls *rasp*.img || true)
+  # get image filename
+  OS_IMG=$(ls *rasp*.img || true)
 
-    # imge integrity
-    info "Image integrity assured via sha256sum."
-    notice "Final image file is ${OS_IMG}"
+  # imge integrity
+  info "Image integrity assured via sha256sum."
+  notice "Final image file is ${OS_IMG}"
 }
 
 get_all_official()
@@ -452,13 +381,6 @@ get_all_official()
   get_armbian || return 1
   get_tools || return 1
 }
-
-#get_all_opi3()
-# {
-#  get_skywire || return 1
-#  get_armbian_prime || return 1
-#  get_tools_official || return 1
-#}
 
 get_all_rpi()
 {
@@ -522,24 +444,6 @@ setup_loop()
   fi
 }
 
-#setup_loop_rpi()
-# {
-  # find free loop device
-  #IMG_LOOP=$(sudo losetup -f)
-
-  # find image sector size (if not user-defined)
-  #[[ -z $IMG_SECTOR ]] &&
-  #  IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
-
-  # find image offset (if not user-defined)
-  #[[ -z "${RPI_IMG_OFFSET}" ]] &&
-  #  RPI_IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
-
-  # setup loop device for root fs
-  #info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${RPI_IMG_OFFSET}' ..."
-  #sudo losetup -o "$((RPI_IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
-#}
-
 # root fs check
 rootfs_check()
 {
@@ -593,6 +497,10 @@ prepare_base_image_official()
   info "Done!"
 }
 
+# Prepares base image.
+# - Copy raspbian img to base img loc
+# - Prepare loop device
+# - Mount loop device
 prepare_base_image_rpi()
 {
   # Raspbian has enough room for adding our
@@ -625,8 +533,6 @@ copy_to_img()
   # Copy skywire bins
   info "Copying skywire bins..."
   sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
-  #sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
-  #sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
   # Copy skywire tools
   info "Copying skywire tools..."
@@ -676,41 +582,9 @@ copy_to_img()
   info "Done!"
 }
 
-#copy_to_img_rpi()
-# {
-  # Copy skywire bins
-  #info "Copying skywire bins..."
-  #sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
-  #sudo cp "$ROOT"/static/skyraspbian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
-  #sudo chmod +x "$FS_MNT_POINT"/usr/bin/skyraspbian-firstrun || return 1
-
-  # Copy skywire tools
-  #info "Copying skywire tools..."
-  #sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
-
-  # Copy scripts
-  #info "Copying headers (so OS presents itself as Skybian)..."
-  #sudo cp "${ROOT}/static/10-skyraspbian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
-  #sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skyraspbian-header" || return 1
-  #sudo rm -rf "${FS_MNT_POINT}/etc/10-uname" || return 1
-  #sudo rm -rf "${FS_MNT_POINT}/etc/motd" || return 1
-
-  # Copy systemd units
-  #info "Copying systemd unit services..."
-  #local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
-  #sudo cp -f "${ROOT}"/static/*.service "${SYSTEMD_DIR}" || return 1
-
-  #info "Done!"
-#}
-
-# fix some defaults on armbian to skywire defaults
+# fix some defaults on armbian and raspbian to skywire defaults
 chroot_actions()
 {
-  # copy chroot scripts to root fs
-  #info "Copying chroot script..."
-  #sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
-  #sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
-
   # enable chroot
   info "Seting up chroot jail..."
 
@@ -741,8 +615,8 @@ chroot_actions()
     sed -i 's/^#//g' "${FS_MNT_POINT}/etc/ld.so.preload"
   fi
 
-	  # Disable chroot
-    info "Disabling the chroot jail..."
+	# Disable chroot
+  info "Disabling the chroot jail..."
 
   if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
@@ -750,9 +624,6 @@ chroot_actions()
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-arm-static"
   fi
     
-  # disable chroot
-  #info "Disabling the chroot jail..."
-  #sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
   sudo umount "${FS_MNT_POINT}/sys"
   sudo umount "${FS_MNT_POINT}/proc"
   sudo umount "${FS_MNT_POINT}/dev/pts"
@@ -764,46 +635,6 @@ chroot_actions()
 
   info "Done!"
 }
-
-#chroot_actions_rpi()
-# {
-  # copy chroot scripts to root fs
-  #info "Copying chroot script..."
-  #sudo cp "${ROOT}/static/chroot_commands_skyraspbian.sh" "${FS_MNT_POINT}/tmp" || return 1
-  #sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands_skyraspbian.sh" || return 1
-
-  # enable chroot
-  #info "Seting up chroot jail..."
-  #sudo cp "$(command -v qemu-arm-static)" "${FS_MNT_POINT}/usr/bin/"
-  #sudo mount -t sysfs none "${FS_MNT_POINT}/sys"
-  #sudo mount -t proc none "${FS_MNT_POINT}/proc"
-  #sudo mount --bind /dev "${FS_MNT_POINT}/dev"
-  #sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
-
-  # ld.so.preload fix
-  #sed -i 's/^/#/g' "${FS_MNT_POINT}/etc/ld.so.preload"
-
-  # Executing chroot script
-  #info "Executing chroot script..."
-  #sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands_skyraspbian.sh
-
-  # revert ld.so.preload fix
-  #sed -i 's/^#//g' "${FS_MNT_POINT}/etc/ld.so.preload"
-  
-  # disable chroot
-  #info "Disabling the chroot jail..."
-  #sudo rm "${FS_MNT_POINT}/usr/bin/qemu-arm-static"
-  #sudo umount "${FS_MNT_POINT}/sys"
-  #sudo umount "${FS_MNT_POINT}/proc"
-  #sudo umount "${FS_MNT_POINT}/dev/pts"
-  #sudo umount "${FS_MNT_POINT}/dev"
-
-  # clean /tmp in root fs
-  #info "Cleaning..."
-  #sudo rm -rf "$FS_MNT_POINT"/tmp/* > /dev/null || true
-
-  #info "Done!"
-#}
 
 # calculate md5, sha1 and compress
 calc_sums_compress()
@@ -884,57 +715,9 @@ clean_output_dir()
 
     done
 
-    #PARTS_DIR=${ROOT}/output-prime/parts
-    #IMAGE_DIR=${ROOT}/output-prime/image
-    #FINAL_IMG_DIR=${ROOT}/output-prime/final
-
-    # Base image location: we will work with partitions.
-    #BASE_IMG=${IMAGE_DIR}/base_image
-
-    # Download directories.
-    #PARTS_OS_DIR=${PARTS_DIR}/OS
-    #PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-
-  # Clean parts.
-  #cd "${PARTS_OS_DIR}" && find . -type f ! -name '*.xz' -delete
-  #cd ${ROOT}/output-opi3/parts/OS && find . -type f ! -name '*.xz' -delete
-  #cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  #cd ${ROOT}/output-opi3/parts/skywire && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  #cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
-  #cd ${ROOT}/output-opi3/final . -type f ! -name '*.tar.gz' -delete
-
-  # Rm base image.
-  #rm -v "${BASE_IMG}"
-  #rm -v ${ROOT}/output-opi3/image/base_image
-
   # cd to root.
   cd "${ROOT}" || return 1
 }
-
-#clean_output_dir_rpi()
-# {
-    #PARTS_DIR=${ROOT}/output-skyraspbian/parts
-    #IMAGE_DIR=${ROOT}/output-skyraspbian/image
-    #FINAL_IMG_DIR=${ROOT}/output-skyraspbian/final
-
-    # Base image location: we will work with partitions.
-    #BASE_IMG=${IMAGE_DIR}/base_image
-
-    # Download directories.
-    #PARTS_OS_DIR=${PARTS_DIR}/OS
-    #PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-
-  # Clean parts.
-  #cd "${PARTS_RASPBIAN_DIR}" && find . -type f ! -name '*.7z' -delete
-  #cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  #cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
-
-  # Rm base image.
-  #rm -v "${BASE_IMG}/base_image"
-
-  # cd to root.
-  #cd "${ROOT}" || return 1
-#}
 
 # build disk
 build_disk()
@@ -942,7 +725,7 @@ build_disk()
   # move to correct dir
   cd "${IMAGE_DIR}" || return 1
 
-  # final name
+  # determine final name
   if [ ${BOARD} == PRIME ] ; then
 	  local NAME="Skybian-prime-${VERSION}"
   elif [ ${BOARD} == OPI3 ] ; then
@@ -986,102 +769,6 @@ build_disk()
   # info
   info "Image for ${NAME} ready"
 }
-
-#build_disk_opi3()
-# {
-  # check image
-  #cd "${PARTS_ARMBIAN_DIR}" || return 1
-  #if [ ls == *Orangepiprime*.xz ] ; then
-	#  NAME="Skybian-prime-${VERSION}"
-  #elif [ ls == *Orangepi3*.xz ] ; then
-  #  NAME="Skybian-pi3-${VERSION}"
-  #fi
-
-  # move to correct dir
-  #cd "${IMAGE_DIR}" || return 1
-
-  # final name
-  #local NAME="Skybian-opi3-${VERSION}"
-
-  # info
-  #info "Building image for ${NAME}"
-
-  # force a FS sync
-  #info "Forcing a fs rsync to umount the real fs"
-  #sudo sync
-
-  # umount the base image
-  #info "Umount the fs"
-  #sudo umount "${FS_MNT_POINT}"
-
-  # check integrity & fix minor errors
-  #rootfs_check
-
-  # TODO [TEST]
-  # shrink the partition to a minimum size
-  # sudo resize2fs -M "${IMG_LOOP}"
-  #
-  # shrink the partition
-
-  # force a FS sync
-  #info "Forcing a fs rsync to umount the loop device"
-  #sudo sync
-
-  # freeing the loop device
-  #info "Freeing the loop device"
-  #sudo losetup -d "${IMG_LOOP}"
-
-  # copy the image to final dir.
-  #info "Copy the image to final dir"
-  #cp "${BASE_IMG}" "${FINAL_IMG_DIR}/${NAME}.img"
-
-  # info
-  #info "Image for ${NAME} ready"
-#}
-
-#build_disk_rpi()
-# {
-  # move to correct dir
-  #cd "${IMAGE_DIR}" || return 1
-
-  # final name
-  #local NAME="SkyRaspbian-${VERSION}"
-
-  # info
-  #info "Building image for ${NAME}"
-
-  # force a FS sync
-  #info "Forcing a fs rsync to umount the real fs"
-  #sudo sync
-
-  # umount the base image
-  #info "Umount the fs"
-  #sudo umount "${FS_MNT_POINT}"
-
-  # check integrity & fix minor errors
-  #rootfs_check
-
-  # TODO [TEST]
-  # shrink the partition to a minimum size
-  # sudo resize2fs -M "${IMG_LOOP}"
-  #
-  # shrink the partition
-
-  # force a FS sync
-  #info "Forcing a fs rsync to umount the loop device"
-  #sudo sync
-
-  # freeing the loop device
-  #info "Freeing the loop device"
-  #sudo losetup -d "${IMG_LOOP}"
-
-  # copy the image to final dir.
-  #info "Copy the image to final dir"
-  #cp "${BASE_IMG}" "${FINAL_IMG_DIR}/${NAME}.img"
-
-  # info
-  #info "Image for ${NAME} ready"
-#}
 
 build_prime()
 {
