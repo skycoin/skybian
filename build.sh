@@ -607,7 +607,7 @@ prepare_base_image_rpi()
   cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
   info "Setting up loop device..."
-  setup_loop_rpi || return 1
+  setup_loop || return 1
   rootfs_check || return 1
 
   info "Resizing root fs..."
