@@ -2,11 +2,14 @@
 
 [![Build Status](https://travis-ci.com/skycoin/skybian.svg?branch=master)](https://travis-ci.com/skycoin/skybian)
 
-Skybian is an [Armbian-based](https://www.armbian.com/) Operating System that contains the Skycoin's Skywire software and it's dependencies.
+Skybian is an [Armbian-based](https://www.armbian.com/) and a [Raspbian-based](https://www.raspberrypi.org/) Operating System that contains the Skycoin's Skywire software and it's dependencies.
 
-Currently, only the [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/) [Single Board Computer](https://en.wikipedia.org/wiki/Single-board_computer) is supported.
+Currently, the supported SBCs, [Single Board Computer](https://en.wikipedia.org/wiki/Single-board_computer) are:
+[Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/).
+[Orange Pi 3](http://www.orangepi.org/Orange%20Pi%203/)
+[Raspberry Pi](https://www.raspberrypi.org/products/)
 
-This repository has two main components. The first is a script for building a base Skybian image. The second is a tool named `skyimager`, that downloads a base Skybian image, and generates a number of final Skybian images (based on the provided options by the user).
+This repository has two main components. The first is a script for building a base Skybian image for each supported SBC type. The second is a tool named `skyimager`, that downloads a base Skybian image, and generates a number of final Skybian images (based on the provided options by the user).
 
 ## Dependencies
 
@@ -18,7 +21,7 @@ Golang 1.13+ is requred.
 **Additional dependencies for building Skybian base image:**
 
 ```
-rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go
+rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go
 ```
 
 For Debian-based linux distributions, you can install these via:
@@ -54,7 +57,7 @@ The [`build.sh`](./build.sh) script orchestrates the Skybian image build process
 
 It's supplemented by files in the `static` folder where auxiliary scripts and systemd service files reside.
 
-Running the script will create a folder named `output` containing:
+Running the script will create a folder named `output-...` for each supported SBC, containing:
 * `parts` - Where downloaded or compiled components such as the Armbian, Skywire and `skyconf` are stored.
 * `image` - Where the temporary image is stored during the build process.
 * `mnt` - Used as a mount point for the image. Scripts will be copied and executed for the image being built.

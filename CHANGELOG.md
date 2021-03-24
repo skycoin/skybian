@@ -18,6 +18,17 @@ This is a note for developers about the recommended tags to keep track of the ch
 Dates must be YEAR-MONTH-DAY
 -->
 
+## [0.2.1] - 2021-03-24
+
+### Added
+
+- Support for building an Orange Pi 3 Skybian arm64 image.
+- Support for building a Raspberry Pi Skybian arm image supported by all raspberry pi models.
+
+### Changed
+
+- Combined initial build of Orange Pi Prime skybian image with Orange Pi 3 and Raspberry Pi
+
 ## [0.1.2] - 2020-04-20
 
 ### Changed
