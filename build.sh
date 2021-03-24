@@ -450,7 +450,7 @@ get_all_official()
 {
   get_skywire || return 1
   get_armbian || return 1
-  get_tools_official || return 1
+  get_tools || return 1
 }
 
 #get_all_opi3()
@@ -464,7 +464,7 @@ get_all_rpi()
 {
   get_skywire_rpi || return 1
   get_raspbian || return 1
-  get_tools_official || return 1
+  get_tools || return 1
 }
 
 # enable ssh, hdmi and UART on raspbian
