@@ -676,7 +676,6 @@ calc_sums_compress()
 
     cd "${ROOT}" || return 1
     info "Done!"
-  done
 }
 
 clean_image()
