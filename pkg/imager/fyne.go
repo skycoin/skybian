@@ -27,17 +27,10 @@ import (
 type ImgType string
 
 const (
-	TypeSkybian    ImgType = "skybian"
-	TypeRaspbian           = "raspbian"
-	TypeRaspbian64         = "raspbian64"
-)
-
-type locType string
-
-const (
-	locSky   locType = "sky"
-	locRasp          = "rasp"
-	locLocal         = "local"
+	TypeSkybian     ImgType = "skybian"
+	TypeRaspbian            = "raspbian"
+	TypeRaspbian64          = "raspbian64"
+	TypeSkybianOPi3         = "skybian-opi3"
 )
 
 // DefaultImgNumber is the default number of visor boot parameters to generate.

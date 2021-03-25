@@ -97,10 +97,12 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	fsImgPicker.Hide()
 	remImgSky := fg.makeRemoteImgsWidget(TypeSkybian)
 	remImgRasp := fg.makeRemoteImgsWidget(TypeRaspbian)
+	remImgSky3 := fg.makeRemoteImgsWidget(TypeSkybianOPi3)
 	// remImgRasp64 := fg.makeRemoteImgsWidget(TypeRaspbian64)
 
 	imgTypes := []string{
-		"Skybian 64 bit (Orange Pi)",
+		"Skybian 64 bit (Orange Pi Prime)",
+		"Skybian 64 bit (Orange Pi 3)",
 		"SkyRaspbian 32 bit (Raspberry Pi)",
 		// "SkyRaspbian 64 bit (Raspberry Pi)",
 	}
@@ -110,15 +112,22 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		case imgTypes[0]:
 			fg.showRemoteSelect(remImgSky)
 			remImgRasp.Hide()
+			remImgSky3.Hide()
 			// remImgRasp64.Hide()
 		case imgTypes[1]:
+			fg.showRemoteSelect(remImgSky3)
 			remImgSky.Hide()
-			fg.showRemoteSelect(remImgRasp)
+			remImgRasp.Hide()
 			// remImgRasp64.Hide()
-			// case imgTypes[2]:
+		case imgTypes[2]:
+			fg.showRemoteSelect(remImgRasp)
+			remImgSky.Hide()
+			remImgSky3.Hide()
+			// case imgTypes[3]:
 			// 	remImgSky.Hide()
 			// 	remImgRasp.Hide()
 			// 	fg.showRemoteSelect(remImgRasp64)
+			//  remImgSky3.Hide()
 		}
 	})
 	remoteTypeSelect.SetSelected(imgTypes[0])
@@ -132,12 +141,14 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			remImgSky.Hide()
 			remImgRasp.Hide()
 			// remImgRasp64.Hide()
+			remImgSky3.Hide()
 			remoteTypeSelect.Hide()
 		default:
 			fsImgPicker.Hide()
 			remImgSky.Hide()
 			remImgRasp.Hide()
 			// remImgRasp64.Hide()
+			remImgSky3.Hide()
 			remoteTypeSelect.Hide()
 		}
 	})
@@ -272,7 +283,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect, remImgSky, remImgRasp,
+		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect, remImgSky, remImgSky3, remImgRasp,
 		// remImgRasp64,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		enableWifi,

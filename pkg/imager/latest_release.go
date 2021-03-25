@@ -23,11 +23,14 @@ func expectedBaseImgAssetName(t ImgType, tag string) string {
 	var filename string
 	switch t {
 	case TypeRaspbian:
-		filename = "SkyRaspbian"
+		filename = "Skybian-rpi"
 	case TypeSkybian:
 		filename = "Skybian"
 	case TypeRaspbian64:
-		filename = "SkyRaspbian64"
+		// todo: fill in proper image file name when this is supported
+		filename = "FILL ME"
+	case TypeSkybianOPi3:
+		filename = "Skybian-opi3"
 	default:
 		panic(fmt.Sprintf("unknown image type: %v", t))
 	}
