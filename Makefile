@@ -17,6 +17,11 @@ TEST_OPTS:=$(TEST_OPTS_BASE) -tags no_ci
 
 IMG_BOOT_PARAMS:='[{"local_ip":"192.168.0.2","gateway_ip":"192.168.0.1","local_sk":"34992ada3a6daa4fbb5ad8b5b958d993ad4e5ed0f51b5ba822c8370212030826","hypervisor_pks":["027c823e9e183f3a89c5c200705f2017c0df253a66bdfae5aa0755d191713b7520"]}]'
 
+.PHONY: dep
+
+dep:
+	GO111MODULE=on go mod vendor -v
+
 check: lint test ## Run linters and tests
 
 install-linters: ## Install linters

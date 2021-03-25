@@ -20,48 +20,55 @@ func TestPrepare(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "TestPrepare")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, os.RemoveAll(dir)) }()
-
-	conf := Config{
-		VisorConf:      filepath.Join(dir, "visor.json"),
-		HypervisorConf: filepath.Join(dir, "hypervisor.json"),
-		TLSKey:         filepath.Join(dir, "key.pem"),
-		TLSCert:        filepath.Join(dir, "cert.pem"),
-	}
 	pk, sk := cipher.GenerateKeyPair()
-	vParams := boot.Params{
-		Mode:             boot.VisorMode,
-		LocalIP:          net.ParseIP(boot.DefaultGatewayIP),
-		GatewayIP:        net.ParseIP(boot.DefaultGatewayIP),
-		LocalPK:          pk,
-		LocalSK:          sk,
-		HypervisorPKs:    []cipher.PubKey{pk},
-		SkysocksPasscode: "test",
+	vConf := Config{
+		Filename: "vskyconf.json",
+		TLSKey:   filepath.Join(dir, "key.pem"),
+		TLSCert:  filepath.Join(dir, "cert.pem"),
+		BootParams: boot.Params{
+			Mode:             boot.VisorMode,
+			LocalIP:          net.ParseIP(boot.DefaultGatewayIP),
+			GatewayIP:        net.ParseIP(boot.DefaultGatewayIP),
+			LocalPK:          pk,
+			LocalSK:          sk,
+			HypervisorPKs:    []cipher.PubKey{pk},
+			SkysocksPasscode: "test",
+		},
 	}
-	hvParams := boot.Params{
-		Mode:             boot.HypervisorMode,
-		LocalIP:          net.ParseIP(boot.DefaultGatewayIP),
-		GatewayIP:        net.ParseIP(boot.DefaultGatewayIP),
-		LocalPK:          pk,
-		LocalSK:          sk,
-		HypervisorPKs:    []cipher.PubKey{pk},
-		SkysocksPasscode: "test",
+	hConf := Config{
+		Filename: "hvskyconf.json",
+		TLSKey:   filepath.Join(dir, "key.pem"),
+		TLSCert:  filepath.Join(dir, "cert.pem"),
+		BootParams: boot.Params{
+			Mode:             boot.HypervisorMode,
+			LocalIP:          net.ParseIP(boot.DefaultGatewayIP),
+			GatewayIP:        net.ParseIP(boot.DefaultGatewayIP),
+			LocalPK:          pk,
+			LocalSK:          sk,
+			HypervisorPKs:    []cipher.PubKey{pk},
+			SkysocksPasscode: "test",
+		},
 	}
-	require.NoError(t, Prepare(logger, conf, vParams))
-	v1, err := ioutil.ReadFile(conf.VisorConf)
+	defer func() {
+		os.Remove(vConf.Filename)
+		os.Remove(hConf.Filename)
+	}()
+	require.NoError(t, GenerateConfigFile(vConf, logger))
+	v1, err := ioutil.ReadFile(vConf.Filename)
 	require.NoError(t, err)
 
-	vParams.LocalPK, vParams.LocalSK = cipher.GenerateKeyPair()
-	require.NoError(t, Prepare(logger, conf, vParams))
-	v2, err := ioutil.ReadFile(conf.VisorConf)
+	vConf.BootParams.LocalPK, vConf.BootParams.LocalSK = cipher.GenerateKeyPair()
+	require.NoError(t, GenerateConfigFile(vConf, logger))
+	v2, err := ioutil.ReadFile(vConf.Filename)
 	require.NoError(t, err)
 
-	require.NoError(t, Prepare(logger, conf, hvParams))
-	v3, err := ioutil.ReadFile(conf.HypervisorConf)
+	require.NoError(t, GenerateConfigFile(hConf, logger))
+	v3, err := ioutil.ReadFile(hConf.Filename)
 	require.NoError(t, err)
 
-	hvParams.LocalPK, hvParams.LocalSK = cipher.GenerateKeyPair()
-	require.NoError(t, Prepare(logger, conf, hvParams))
-	v4, err := ioutil.ReadFile(conf.HypervisorConf)
+	vConf.BootParams.LocalPK, vConf.BootParams.LocalSK = cipher.GenerateKeyPair()
+	require.NoError(t, GenerateConfigFile(hConf, logger))
+	v4, err := ioutil.ReadFile(hConf.Filename)
 	require.NoError(t, err)
 
 	require.Equal(t, v1, v2)
