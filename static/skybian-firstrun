@@ -5,7 +5,7 @@
 # - Where we are placing the boot params.
 # - Values of the boot params.
 
-DEV_FILE=/dev/mmcblk0
+DEV_FILE=$(df / | grep / | awk '{print substr($1,1,12)}')
 CONFIG_FILE=/etc/skywire-config.json
 
 TLS_KEY=/etc/skywire-hypervisor/key.pem

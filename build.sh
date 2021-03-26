@@ -23,6 +23,20 @@ OS_IMG=""
 OS_VERSION=""
 OS_KERNEL_VERSION=""
 
+# Output directory.
+PARTS_DIR=${ROOT}/output/${BOARD}/parts
+IMAGE_DIR=${ROOT}/output/${BOARD}/image
+FS_MNT_POINT=${ROOT}/output/${BOARD}/mnt
+FINAL_IMG_DIR=${ROOT}/output/${BOARD}/final
+
+# Base image location: we will work with partitions.
+BASE_IMG=${IMAGE_DIR}/base_image
+
+# Download directories.
+PARTS_OS_DIR=${PARTS_DIR}/OS
+PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
+PARTS_TOOLS_DIR=${PARTS_DIR}/tools
+
 # Loop device.
 IMG_LOOP="" # free loop device to be used.
 
@@ -107,35 +121,6 @@ tool_test()
 # tracking on purpose: this will generate GB of data on each push
 create_folders()
 {
-    # Output directory.
-    ## For Orange Pi Prime the output directory will be output-prime
-    if [ ${BOARD} == PRIME ] ; then
-	    PARTS_DIR=${ROOT}/output-prime/parts
-      IMAGE_DIR=${ROOT}/output-prime/image
-      FS_MNT_POINT=${ROOT}/output-prime/mnt
-      FINAL_IMG_DIR=${ROOT}/output-prime/final
-    ## For Orange Pi 3 the output directory will be output-opi3
-    elif [ ${BOARD} == OPI3 ] ; then
-      PARTS_DIR=${ROOT}/output-opi3/parts
-      IMAGE_DIR=${ROOT}/output-opi3/image
-      FS_MNT_POINT=${ROOT}/output-opi3/mnt
-      FINAL_IMG_DIR=${ROOT}/output-opi3/final
-    ## For Raspberry Pi the output directory will be output-rpi
-    elif [ ${BOARD} == RPI ] ; then
-      PARTS_DIR=${ROOT}/output-rpi/parts
-      IMAGE_DIR=${ROOT}/output-rpi/image
-      FS_MNT_POINT=${ROOT}/output-rpi/mnt
-      FINAL_IMG_DIR=${ROOT}/output-rpi/final
-    fi
-
-    # Base image location: we will work with partitions.
-    BASE_IMG=${IMAGE_DIR}/base_image
-
-    # Download directories.
-    PARTS_OS_DIR=${PARTS_DIR}/OS
-    PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
-    PARTS_TOOLS_DIR=${PARTS_DIR}/tools
-
     # output-x [main folder]
     #   /final [this will be the final images dir]
     #   /parts [all thing we download from the internet]
@@ -161,9 +146,9 @@ get_tools()
   info "_src=$_src"
   info "_out=$_out"
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${ARCH} == arm64 ] ; then
 	  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
-  elif [ ${BOARD} == RPI ] ; then
+  elif [ ${ARCH} == armhf ] ; then
     env GOOS=linux GOARCH=arm GOARM=7 go build -o "$_out" -v "$_src" || return 1
   fi
 
@@ -176,29 +161,13 @@ get_skywire()
   local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
   if [ ! -f "${_DST}" ] ; then
-      notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
-      wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" || return 1
-  else
-      info "Reusing package in ${_DST}"
-  fi
-
-  info "Extracting package..."
-  mkdir "${PARTS_SKYWIRE_DIR}/bin"
-  tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
-
-  info "Cleaning..."
-  rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
-
-  info "Done!"
-}
-
-get_skywire_rpi()
-{
-  local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
-
-  if [ ! -f "${_DST}" ] ; then
-      notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL_RPI} to ${_DST}..."
-      wget -c "${SKYWIRE_DOWNLOAD_URL_RPI}" -O "${_DST}" || return 1
+    if [ ${BOARD} == rpi ] ; then
+      notice "Downloading package from ${SKYWIRE_ARM_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_ARM_DOWNLOAD_URL}" -O "${_DST}" || return 1
+    else
+      notice "Downloading package from ${SKYWIRE_ARM64_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_ARM64_DOWNLOAD_URL}" -O "${_DST}" || return 1
+    fi
   else
       info "Reusing package in ${_DST}"
   fi
@@ -216,7 +185,7 @@ get_skywire_rpi()
 # Download function for OS image of each board type
 download_os()
 {
-  if [ ${BOARD} == PRIME ] ; then
+  if [ ${BOARD} == prime ] ; then
 	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL}..."
     wget -c "${ARMBIAN_DOWNLOAD_URL}" ||
       (error "Image download failed." && return 1)
@@ -224,37 +193,45 @@ download_os()
     info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL}.sha..."
     wget -c "${ARMBIAN_DOWNLOAD_URL}.sha" ||
       (error "Checksum download failed." && return 1)
-  elif [ ${BOARD} == OPI3 ] ; then
-	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_OPI3}..."
-    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}" ||
+  elif [ ${BOARD} == opi3 ] ; then
+	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_opi3}..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL_opi3}" ||
       (error "Image download failed." && return 1)
 
-    info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_OPI3}.sha..."
-    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.sha" ||
+    info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_opi3}.sha..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL_opi3}.sha" ||
       (error "Checksum download failed." && return 1)
-  elif [ ${BOARD} == RPI ] ; then
-    info "Downloading image from ${RASPBIAN_DOWNLOAD_URL} to ${_DST} ..."
-    wget -c "${RASPBIAN_DOWNLOAD_URL}" ||
+  elif [ ${BOARD} == rpi ] ; then
+    info "Downloading image from ${RASPBIAN_ARMHF_DOWNLOAD_URL} to ${_DST} ..."
+    wget -c "${RASPBIAN_ARMHF_DOWNLOAD_URL}" ||
       (error "Download failed." && return 1)
 
-    info "Downloading checksum from ${RASPBIAN_DOWNLOAD_URL}.sha..."
-    wget -c "${RASPBIAN_DOWNLOAD_URL}.sha256" ||
+    info "Downloading checksum from ${RASPBIAN_ARMHF_DOWNLOAD_URL}.sha..."
+    wget -c "${RASPBIAN_ARMHF_DOWNLOAD_URL}.sha256" ||
+      (error "Checksum download failed." && return 1)
+  elif [ ${BOARD} == rpi64 ] ; then
+    info "Downloading image from ${RASPBIAN_ARM64_DOWNLOAD_URL} to ${_DST} ..."
+    wget -c "${RASPBIAN_ARM64_DOWNLOAD_URL}" ||
+      (error "Download failed." && return 1)
+
+    info "Downloading checksum from ${RASPBIAN_ARM64_DOWNLOAD_URL}.sha..."
+    wget -c "${RASPBIAN_ARM64_DOWNLOAD_URL}.sha256" ||
       (error "Checksum download failed." && return 1)
   fi
 }
 
-# Get the latest ARMBIAN image for Orange Pi Prime
-get_armbian()
+# Get the latest OS image
+get_os()
 {
 
   # change to dest dir
   cd "${PARTS_OS_DIR}" ||
     (error "Failed to cd." && return 1)
 
-  local OS_IMG_XZ="$(ls Armbian*img.xz || true)"
+  local OS_IMG_XZ="$(ls *img.xz || true)"
 
   # user info
-  info "Getting Armbian image, clearing dest dir first."
+  info "Getting the OS image, clearing dest dir first."
 
   # test if we have a file in there
   if [ -r "${OS_IMG_XZ}" ] ; then
@@ -271,24 +248,28 @@ get_armbian()
       # download it
       download_os
 
-      local OS_IMG_XZ="$(ls Armbian*img.xz || true)"
+      if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+        local OS_IMG_XZ=$(ls *.zip || true)
+      else
+        local OS_IMG_XZ="$(ls *img.xz || true)"
+      fi
   fi
 
   # extract and check it's integrity
-  info "Armbian file to process is '${OS_IMG_XZ}'."
+  info "OS image file to process is '${OS_IMG_XZ}'."
 
   # check integrity
   info "Testing image integrity..."
-  if ! $(command -v sha256sum) -c --status -- *.sha ; then
-      error "Integrity of the image is compromised, re-run the script to get it right."
-      rm -- armbian *txt *sha *xz &> /dev/null || true
-      exit 1
-  fi
+    if ! $(command -v sha256sum) -c --status -- *.sha* ; then
+        error "Integrity of the image is compromised, re-run the script to get it right."
+        rm -- *img *txt *sha *xz &> /dev/null || true
+        exit 1
+    fi
 
   # check if extracted image is in there to save time
-  if [ -n "$(ls Armbian*.img || true)" ] ; then
+  if [ -n "$(ls *.img || true)" ] ; then
       # image already extracted nothing to do
-      notice "Armbian image already extracted"
+      notice "OS image already extracted"
   else
       # extract armbian
       info "Extracting image..."
@@ -300,92 +281,27 @@ get_armbian()
   fi
 
   # get image filename
-  OS_IMG=$(ls Armbian*.img || true)
+  OS_IMG=$(ls *.img || true)
 
   # imge integrity
   info "Image integrity assured via sha256sum."
   notice "Final image file is ${OS_IMG}"
 
+  if [ ${OS_IMG} == Armbian*.img ] ; then
   # get version & kernel version info
-  OS_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $2 }')
-  OS_KERNEL_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
+    OS_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $2 }')
+    OS_KERNEL_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
 
   # info to the user
-  notice "Armbian version: ${OS_VERSION}"
-  notice "Armbian kernel version: ${OS_KERNEL_VERSION}"
-}
-
-# Get the latest RASPBIAN image for Orange Pi Prime
-get_raspbian()
-{
-  # change to dest dir
-  cd "${PARTS_OS_DIR}" ||
-    (error "Failed to cd." && return 1)
-
-    local OS_IMG_XZ=$(ls *raspios*.zip || true)
-
-  # user info
-  info "Getting Raspbian image, clearing dest dir first."
-
-  # test if we have a file in there
-  if [ -r "${OS_IMG_XZ}" ] ; then
-
-    # use already downloaded image file
-    notice "Reusing already downloaded file"
-  else
-    # no image in there, must download
-    info "No cached image, downloading.."
-
-    # download it
-    download_os
+    notice "Armbian version: ${OS_VERSION}"
+    notice "Armbian kernel version: ${OS_KERNEL_VERSION}"
   fi
-
-  local OS_IMG_XZ=$(ls *raspios*.zip || true)
-
-  # extract and check it's integrity
-  info "Raspbian file to process is '${OS_IMG_XZ}'."
-
-  # check integrity
-  info "Testing image integrity..."
-    if ! $(command -v sha256sum) -c --status -- *.sha256 ; then
-        error "Integrity of the image is compromised, re-run the script to get it right."
-        rm -- *img *txt *sha *7z &> /dev/null || true
-        exit 1
-    fi
-
-    # check if extracted image is in there to save time
-    if [ -n "$(ls *rasp*.img || true)" ] ; then
-        # image already extracted nothing to do
-        notice "Raspbian image already extracted"
-    else
-        # extract raspbian
-        info "Extracting image..."
-        if ! 7z e "${OS_IMG_XZ}" ; then
-            error "Extracting failed, file is corrupt? Re-run the script to get it right."
-            rm "${OS_IMG_XZ}" &> /dev/null || true
-            exit 1
-        fi
-    fi
-
-  # get image filename
-  OS_IMG=$(ls *rasp*.img || true)
-
-  # imge integrity
-  info "Image integrity assured via sha256sum."
-  notice "Final image file is ${OS_IMG}"
 }
 
-get_all_official()
+get_all()
 {
   get_skywire || return 1
-  get_armbian || return 1
-  get_tools || return 1
-}
-
-get_all_rpi()
-{
-  get_skywire_rpi || return 1
-  get_raspbian || return 1
+  get_os || return 1
   get_tools || return 1
 }
 
@@ -406,13 +322,30 @@ enable_ssh()
  
 	info "Unmounting /boot"
 	sudo umount "${FS_MNT_POINT}"
+
+  info "Done!"
 }
 
 # setup the rootfs to a loop device
 setup_loop()
 {
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
-	    # find free loop device
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+      # find free loop device
+      IMG_LOOP=$(sudo losetup -f)
+
+      # find image sector size (if not user-defined)
+      [[ -z $IMG_SECTOR ]] &&
+        IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
+
+      # find image offset (if not user-defined)
+      [[ -z "${rpi_IMG_OFFSET}" ]] &&
+        rpi_IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
+
+      # setup loop device for root fs
+      info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${rpi_IMG_OFFSET}' ..."
+      sudo losetup -o "$((rpi_IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
+  else
+      # find free loop device
       IMG_LOOP=$(sudo losetup -f)
 
       # find image sector size (if not user-defined)
@@ -426,21 +359,6 @@ setup_loop()
       # setup loop device for root fs
       info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${IMG_OFFSET}' ..."
       sudo losetup -o "$((IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
-  elif [ ${BOARD} == RPI ] ; then
-      # find free loop device
-      IMG_LOOP=$(sudo losetup -f)
-
-      # find image sector size (if not user-defined)
-      [[ -z $IMG_SECTOR ]] &&
-        IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
-
-      # find image offset (if not user-defined)
-      [[ -z "${RPI_IMG_OFFSET}" ]] &&
-        RPI_IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
-
-      # setup loop device for root fs
-      info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${RPI_IMG_OFFSET}' ..."
-      sudo losetup -o "$((RPI_IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
   fi
 }
 
@@ -463,10 +381,11 @@ rootfs_check()
 # - Copy armbian img to base img loc
 # - Increase base image size & prepare loop device
 # - Mount loop device
-prepare_base_image_official()
+prepare_base_image()
 {
   # Armbian image is tight packed, and we need room for adding our
   # bins, apps & configs, so we will make it bigger
+  # Raspbian image is big enough to accomodate all
 
   # clean
   info "Cleaning..."
@@ -476,43 +395,14 @@ prepare_base_image_official()
   info "Copying base image..."
   cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
+  if [ ${BOARD} != rpi ] || [ ${BOARD} != rpi64 ] ; then
   # Add space to base image
-  if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
-    info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
-    truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
-    echo ", +" | sfdisk -N1 "${BASE_IMG}" # add free space to the part 1 (sfdisk way)
+    if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
+      info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
+      truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
+      echo ", +" | sfdisk -N1 "${BASE_IMG}" # add free space to the part 1 (sfdisk way)
+    fi
   fi
-
-  info "Setting up loop device..."
-  setup_loop || return 1
-  rootfs_check || return 1
-
-  info "Resizing root fs..."
-  sudo resize2fs "${IMG_LOOP}" || return 1
-  rootfs_check || return 1
-
-  info "Mounting root fs to ${FS_MNT_POINT}..."
-  sudo mount -t auto "${IMG_LOOP}" "${FS_MNT_POINT}" -o loop,rw
-
-  info "Done!"
-}
-
-# Prepares base image.
-# - Copy raspbian img to base img loc
-# - Prepare loop device
-# - Mount loop device
-prepare_base_image_rpi()
-{
-  # Raspbian has enough room for adding our
-  # bins, apps & configs, making it bigger may result in kernel panic
-
-  # clean
-  info "Cleaning..."
-  rm -rf "${IMAGE_DIR:?}/*" &> /dev/null || true
-
-  # copy raspbian image to base image location
-  info "Copying base image..."
-  cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
   info "Setting up loop device..."
   setup_loop || return 1
@@ -542,8 +432,20 @@ copy_to_img()
 	sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
   sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
     
+    # Copy scripts
+    info "Copying headers (so OS presents itself as Skybian)..."
+    sudo cp "${ROOT}/static/10-skyraspbian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skyraspbian-header" || return 1
+    sudo rm -rf "${FS_MNT_POINT}/etc/10-uname" || return 1
+    sudo rm -rf "${FS_MNT_POINT}/etc/motd" || return 1
+
+    # Copy chroot scripts to root fs
+    info "Copying chroot script..."
+    sudo cp "${ROOT}/static/chroot_commands_skyraspbian.sh" "${FS_MNT_POINT}/tmp" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands_skyraspbian.sh" || return 1
+  else
     # Copy scripts
     info "Copying disable user creation script..."
     sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
@@ -557,22 +459,6 @@ copy_to_img()
     info "Copying chroot script..."
     sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
     sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
-  elif [ ${BOARD} == RPI ] ; then
-    # Copy skywire bins
-	  sudo cp "$ROOT"/static/skyraspbian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
-    sudo chmod +x "$FS_MNT_POINT"/usr/bin/skyraspbian-firstrun || return 1
-
-    # Copy scripts
-    info "Copying headers (so OS presents itself as Skybian)..."
-    sudo cp "${ROOT}/static/10-skyraspbian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skyraspbian-header" || return 1
-    sudo rm -rf "${FS_MNT_POINT}/etc/10-uname" || return 1
-    sudo rm -rf "${FS_MNT_POINT}/etc/motd" || return 1
-
-    # Copy chroot scripts to root fs
-    info "Copying chroot script..."
-    sudo cp "${ROOT}/static/chroot_commands_skyraspbian.sh" "${FS_MNT_POINT}/tmp" || return 1
-    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands_skyraspbian.sh" || return 1
   fi
 
   # Copy systemd units
@@ -589,10 +475,11 @@ chroot_actions()
   # enable chroot
   info "Seting up chroot jail..."
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
-	  sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
-  elif [ ${BOARD} == RPI ] ; then
+  if [ ${BOARD} == rpi ] ; then
     sudo cp "$(command -v qemu-arm-static)" "${FS_MNT_POINT}/usr/bin/"
+  else
+    sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
+    
   fi
 
   sudo mount -t sysfs none "${FS_MNT_POINT}/sys"
@@ -600,29 +487,29 @@ chroot_actions()
   sudo mount --bind /dev "${FS_MNT_POINT}/dev"
   sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
-	  # Executing chroot script
-    info "Executing chroot script..."
-    sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
-  elif [ ${BOARD} == RPI ] ; then
-    # ld.so.preload fix
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+    # ld.so.preload fix this is used only for the arm version of rpi, on rpi64 an error is expected
     sed -i 's/^/#/g' "${FS_MNT_POINT}/etc/ld.so.preload"
 
     # Executing chroot script
     info "Executing chroot script..."
     sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands_skyraspbian.sh
 
-    # revert ld.so.preload fix
+    # revert ld.so.preload fix this is used only for the arm version of rpi, on rpi64 an error is expected
     sed -i 's/^#//g' "${FS_MNT_POINT}/etc/ld.so.preload"
+  else
+    # Executing chroot script
+    info "Executing chroot script..."
+    sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
   fi
 
 	# Disable chroot
   info "Disabling the chroot jail..."
 
-  if [ ${BOARD} == PRIME ] || [ ${BOARD} == OPI3 ] ; then
-    sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
-  elif [ ${BOARD} == RPI ] ; then
+  if [ ${BOARD} == rpi ] ; then
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-arm-static"
+  else
+    sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"    
   fi
     
   sudo umount "${FS_MNT_POINT}/sys"
@@ -640,16 +527,7 @@ chroot_actions()
 # calculate md5, sha1 and compress
 calc_sums_compress()
 {
-  if [ ${BOARD} == PRIME ] ; then
-  # output prime skybian image
-	  FINAL_IMG_DIR="${ROOT}/output-prime/final"
-  elif [ ${BOARD} == OPI3 ] ; then
-  # output opi3 skybian image
-	  FINAL_IMG_DIR="${ROOT}/output-opi3/final"
-  elif [ ${BOARD} == RPI ] ; then
-  # output skyraspbian image
-    FINAL_IMG_DIR="${ROOT}/output-rpi/final"
-  fi
+	  FINAL_IMG_DIR="${ROOT}/output/${BOARD}/final"
   
   # change to final dest
     cd "${FINAL_IMG_DIR}" ||
@@ -695,34 +573,11 @@ clean_image()
 
 clean_output_dir()
 {
-    PARTS_OS_DIR="${ROOT}/output-prime/parts/OS ${ROOT}/output-opi3/parts/OS ${ROOT}/output-rpi/parts/OS"
-    for i in ${PARTS_OS_DIR} ; do
-
-      cd "${i}" && find . -type f ! -name '*.xz' -delete
-
-    done
-
-    PARTS_SKYWIRE_DIR="${ROOT}/output-prime/parts/skywire ${ROOT}/output-opi3/parts/skywire ${ROOT}/output-rpi/parts/skywire"
-    for j in ${PARTS_SKYWIRE_DIR} ; do
-
-      cd "${j}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-    
-    done
-
-    FINAL_IMG_DIR="${ROOT}/output-prime/final ${ROOT}/output-opi3/final ${ROOT}/output-rpi/final" 
-    for k in ${FINAL_IMG_DIR} ; do
-
-      cd "${k}" && find . -type f ! -name '*.tar.gz' -delete
-    
-    done
-
-    BASE_IMG="${ROOT}/output-prime/image/base_image ${ROOT}/output-opi3/image/base_image ${ROOT}/output-rpi/image/base_image"
-    for l in ${BASE_IMG} ; do
-
-      rm -v "${l}"
-
-    done
-
+  cd "${PARTS_OS_DIR}" && find . -type f ! -name '*.xz' -delete
+  cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
+  cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
+  rm -v "${BASE_IMG}"
+  
   # cd to root.
   cd "${ROOT}" || return 1
 }
@@ -733,14 +588,7 @@ build_disk()
   # move to correct dir
   cd "${IMAGE_DIR}" || return 1
 
-  # determine final name
-  if [ ${BOARD} == PRIME ] ; then
-	  local NAME="Skybian-prime-${VERSION}"
-  elif [ ${BOARD} == OPI3 ] ; then
-    local NAME="Skybian-opi3-${VERSION}"
-  elif [ ${BOARD} == RPI ] ; then
-    local NAME="Skybian-rpi-${VERSION}"
-  fi
+  local NAME="Skybian-${BOARD}-${VERSION}"
 
   # info
   info "Building image for ${NAME}"
@@ -778,118 +626,38 @@ build_disk()
   info "Image for ${NAME} ready"
 }
 
-build_prime()
-{
-    #BOARD=PRIME
-    # test for needed tools
-    tool_test || return 1
-
-    # create output folder and it's structure
-    create_folders || return 1
-
-    # erase final images if there
-    warn "Cleaning final images directory"
-    rm -f "$FINAL_IMG_DIR"/* &> /dev/null || true
-
-    # download resources
-    get_all_official || return 1
-
-    # prepares and mounts base image
-    prepare_base_image_official || return 1
-
-    # copy parts to root fs
-    copy_to_img || return 1
-
-    # setup chroot
-    chroot_actions || return 1
-
-    # build manager image
-    build_disk || return 1
-
-    # all good signal
-    info "Success!"
-}
-
-build_opi3()
-{
-    #BOARD=OPI3
-    # test for needed tools
-    tool_test || return 1
-
-    # create output folder and it's structure
-    create_folders || return 1
-
-    # erase final images if there
-    warn "Cleaning final images directory"
-    rm -f "$FINAL_IMG_DIR"/* &> /dev/null || true
-
-    # download resources
-    get_all_official || return 1
-
-    # prepares and mounts base image
-    prepare_base_image_official || return 1
-
-    # copy parts to root fs
-    copy_to_img || return 1
-
-    # setup chroot
-    chroot_actions || return 1
-
-    # build manager image
-    build_disk || return 1
-
-    # all good signal
-    info "Success!"
-}
-
-build_rpi()
-{
-    #BOARD=RPI
-    # test for needed tools
-    tool_test || return 1
-
-    # create output folder and it's structure
-    create_folders || return 1
-
-    # erase final images if there
-    warn "Cleaning final images directory"
-    rm -f "$FINAL_IMG_DIR"/* &> /dev/null || true
-
-    # download resources
-    get_all_rpi || return 1
-
-    # enable ssh, hdmi and uart
-	  enable_ssh || return 1
-
-    # prepares and mounts base image
-    prepare_base_image_rpi || return 1
-
-    # copy parts to root fs
-    copy_to_img || return 1
-
-    # setup chroot
-    chroot_actions || return 1
-
-    # build manager image
-    build_disk || return 1
-
-    # all good signal
-    info "Success!"
-}
-
 # main build block
 main_build()
 {
-    if [ ${BOARD} == PRIME ] ; then
-    # build prime skybian image
-	    build_prime || return 1
-    elif [ ${BOARD} == OPI3 ] ; then
-    # build opi3 skybian image
-	    build_opi3 || return 1
-    elif [ ${BOARD} == RPI ] ; then
-    # build skyraspbian image
-      build_rpi || return 1
+    # test for needed tools
+    tool_test || return 1
+
+    # create output folder and it's structure
+    create_folders || return 1
+
+    # erase final images if there
+    warn "Cleaning final images directory"
+    rm -f "$FINAL_IMG_DIR"/* &> /dev/null || true
+
+    # download resources
+    get_all || return 1
+
+    # enable ssh, hdmi and uart on raspbian
+    if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+	    enable_ssh || return 1
     fi
+
+    # prepares and mounts base image
+    prepare_base_image || return 1
+
+    # copy parts to root fs
+    copy_to_img || return 1
+
+    # setup chroot
+    chroot_actions || return 1
+
+    # build manager image
+    build_disk || return 1
 
     # all good signal
     info "Success!"

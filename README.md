@@ -38,11 +38,12 @@ The GUI uses the [Fyne](https://github.com/fyne-io) library. The prerequisites f
 ## Configure and build
 
 Both the script to build the Skybian base image, as well as the script to build `skyimager-gui` are configured via [`build.conf`](./build.conf).
-There are three boards supported and can be created individually by specifying the board type: Orange Pi Prime = PRIME; Orange Pi 3 = OPI3; Raspberry Pi = RPI
+There are three boards supported and can be created individually by specifying the board type: Orange Pi Prime = prime; Orange Pi 3 = opi3; Raspberry Pi = rpi; Raspberry Pi arm64 = rpi64.
+When building also the architecture is mandatory to be defined as variable in the build command in order to build the right skyconf, available options are ARCH=armhf and ARCH=arm64
 
 To build the Skybian base image, run:
 ```bash
-$ make build-skybian-img BOARD=PRIME
+$ make build-skybian-img BOARD=prime ARCH=arm64
 ```
 
 To build `skyimager-gui`, run:
