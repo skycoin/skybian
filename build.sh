@@ -194,12 +194,12 @@ download_os()
     wget -c "${ARMBIAN_DOWNLOAD_URL}.sha" ||
       (error "Checksum download failed." && return 1)
   elif [ ${BOARD} == opi3 ] ; then
-	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_opi3}..."
-    wget -c "${ARMBIAN_DOWNLOAD_URL_opi3}" ||
+	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_OPI3}..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}" ||
       (error "Image download failed." && return 1)
 
-    info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_opi3}.sha..."
-    wget -c "${ARMBIAN_DOWNLOAD_URL_opi3}.sha" ||
+    info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_OPI3}.sha..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.sha" ||
       (error "Checksum download failed." && return 1)
   elif [ ${BOARD} == rpi ] ; then
     info "Downloading image from ${RASPBIAN_ARMHF_DOWNLOAD_URL} to ${_DST} ..."
