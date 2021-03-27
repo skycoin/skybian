@@ -17,6 +17,13 @@ source "$(pwd)/build.conf"
 # On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
 NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go"
 
+# Check if build variables were set
+# If the BOARD and ARCH variables are not set in the build command, it will build a skybian image for Orange Pi Prime by default
+if [ -z ${BOARD} ] || [ -z ${ARCH} ] ; then
+  BOARD=prime
+  ARCH=arm64
+fi
+
 # Image related variables.
 OS_IMG_XZ=""
 OS_IMG=""
