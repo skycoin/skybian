@@ -41,4 +41,4 @@ sudo mkdir -p /var/skywire-hypervisor || 0
 
 # Enable systemd units.
 info "Enabling systemd units..."
-sudo systemctl enable skyraspbian-firstrun.service || exit 1
+sudo systemctl enable skybian-firstrun.service || exit 1

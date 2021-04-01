@@ -157,6 +157,8 @@ get_tools()
 	  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
   elif [ ${ARCH} == armhf ] ; then
     env GOOS=linux GOARCH=arm GOARM=7 go build -o "$_out" -v "$_src" || return 1
+  elif [ ${ARCH} == armv6 ] ; then
+    env GOOS=linux GOARCH=arm GOARM=6 go build -o "$_out" -v "$_src" || return 1
   fi
 
   info "Done!"
@@ -319,7 +321,7 @@ enable_ssh()
 	sudo mount -o loop,offset=4194304 "${PARTS_DIR}/OS/${OS_IMG}" "${FS_MNT_POINT}"
  
 	info "Enabling UART"
-	sudo sed -i '/^#dtoverlay=vc4-fkms-v3d.*/a enable_uart=1' "${FS_MNT_POINT}/config.txt"
+	sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${FS_MNT_POINT}/config.txt"
  
 	info "Enabling HDMI"
 	sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${FS_MNT_POINT}/config.txt"
@@ -402,14 +404,17 @@ prepare_base_image()
   info "Copying base image..."
   cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
-  if [ ${BOARD} != rpi ] || [ ${BOARD} != rpi64 ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
   # Add space to base image
+    info "There is no need to add extra space to the raspbian image..."
+  else
     if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
       info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
       truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
       echo ", +" | sfdisk -N1 "${BASE_IMG}" # add free space to the part 1 (sfdisk way)
     fi
   fi
+
 
   info "Setting up loop device..."
   setup_loop || return 1
