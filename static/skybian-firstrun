@@ -98,8 +98,9 @@ setup_wifi()
   fi
   sudo nmcli con mod "$WIFI_NAME" ipv4.dns "1.0.0.1, 1.1.1.1"
   sudo nmcli con down "$WIFI_NAME"
-  sleep 3
+  sudo sleep 3
   sudo nmcli con up "$WIFI_NAME"
+  sudo sleep 10
 }
 
 # assume wifi should be configured instead of ethernet when wifi name env var is set
@@ -129,7 +130,7 @@ install_ntp()
     #   appending file:
     sudo cp -n /etc/systemd/timesyncd.conf /etc/systemd/timesyncd.orig
     # Use fresh copy in case installer used on existing system:
-    sudo p /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
+    sudo cp /etc/systemd/timesyncd.orig /etc/systemd/timesyncd.conf
 
     # When system is set to sync with RTC the time can't be updated and NTP
     #   is crippled. Switch off that setting with:
@@ -142,7 +143,7 @@ install_ntp()
     info "Restarting NTP..."
     sudo systemctl restart ntp.service
     # Set hardware clock to UTC (which doesn't have daylight savings):
-    sudo wclock -w
+    sudo hwclock -w
 }
 install_ntp || logger "Failed to setup ntp service"
 

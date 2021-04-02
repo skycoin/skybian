@@ -173,6 +173,9 @@ get_skywire()
     if [ ${BOARD} == rpi ] ; then
       notice "Downloading package from ${SKYWIRE_ARM_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARM_DOWNLOAD_URL}" -O "${_DST}" || return 1
+    elif [ ${BOARD} == rpiw ] ; then
+      notice "Downloading package from ${SKYWIRE_ARMV6_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_ARMV6_DOWNLOAD_URL}" -O "${_DST}" || return 1
     else
       notice "Downloading package from ${SKYWIRE_ARM64_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARM64_DOWNLOAD_URL}" -O "${_DST}" || return 1
@@ -210,7 +213,7 @@ download_os()
     info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_OPI3}.sha..."
     wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.sha" ||
       (error "Checksum download failed." && return 1)
-  elif [ ${BOARD} == rpi ] ; then
+  elif [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
     info "Downloading image from ${RASPBIAN_ARMHF_DOWNLOAD_URL} to ${_DST} ..."
     wget -c "${RASPBIAN_ARMHF_DOWNLOAD_URL}" ||
       (error "Download failed." && return 1)
@@ -257,7 +260,7 @@ get_os()
       # download it
       download_os
 
-      if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+      if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
         local OS_IMG_XZ=$(ls *.zip || true)
       else
         local OS_IMG_XZ="$(ls *img.xz || true)"
@@ -338,7 +341,7 @@ enable_ssh()
 # setup the rootfs to a loop device
 setup_loop()
 {
-  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
       # find free loop device
       IMG_LOOP=$(sudo losetup -f)
 
@@ -347,12 +350,12 @@ setup_loop()
         IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
 
       # find image offset (if not user-defined)
-      [[ -z "${rpi_IMG_OFFSET}" ]] &&
-        rpi_IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
+      [[ -z "${RPI_IMG_OFFSET}" ]] &&
+        RPI_IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
 
       # setup loop device for root fs
-      info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${rpi_IMG_OFFSET}' ..."
-      sudo losetup -o "$((rpi_IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
+      info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${RPI_IMG_OFFSET}' ..."
+      sudo losetup -o "$((RPI_IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
   else
       # find free loop device
       IMG_LOOP=$(sudo losetup -f)
@@ -404,7 +407,7 @@ prepare_base_image()
   info "Copying base image..."
   cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
-  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
   # Add space to base image
     info "There is no need to add extra space to the raspbian image..."
   else
@@ -444,7 +447,7 @@ copy_to_img()
 	sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
   sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
-  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
     
     # Copy scripts
     info "Copying headers (so OS presents itself as Skybian)..."
@@ -487,7 +490,7 @@ chroot_actions()
   # enable chroot
   info "Seting up chroot jail..."
 
-  if [ ${BOARD} == rpi ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
     sudo cp "$(command -v qemu-arm-static)" "${FS_MNT_POINT}/usr/bin/"
   else
     sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
@@ -499,7 +502,7 @@ chroot_actions()
   sudo mount --bind /dev "${FS_MNT_POINT}/dev"
   sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
 
-  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
     # ld.so.preload fix this is used only for the arm version of rpi, on rpi64 an error is expected
     sed -i 's/^/#/g' "${FS_MNT_POINT}/etc/ld.so.preload"
 
@@ -518,7 +521,7 @@ chroot_actions()
 	# Disable chroot
   info "Disabling the chroot jail..."
 
-  if [ ${BOARD} == rpi ] ; then
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-arm-static"
   else
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"    
@@ -655,7 +658,7 @@ main_build()
     get_all || return 1
 
     # enable ssh, hdmi and uart on raspbian
-    if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] ; then
+    if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
 	    enable_ssh || return 1
     fi
 
