@@ -590,7 +590,7 @@ clean_output_dir()
 {
   cd "${PARTS_OS_DIR}" && find . -type f ! -name '*.xz' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
-  cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
+  # cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
   rm -v "${BASE_IMG}"
   
   # cd to root.
