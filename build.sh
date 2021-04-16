@@ -651,8 +651,8 @@ main_build()
     create_folders || return 1
 
     # erase final images if there
-    warn "Cleaning final images directory"
-    rm -f "$FINAL_IMG_DIR"/* &> /dev/null || true
+    # warn "Cleaning final images directory"
+    # rm -f "$FINAL_IMG_DIR"/* &> /dev/null || true
 
     # download resources
     get_all || return 1
