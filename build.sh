@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
-# This is the main script to build the Skybian OS for Skycoin miners.
+# This is the main script to build the Skybian OS for Skycoin Official and Raspberry Pi miners.
 #
-# Author: evanlinjin@github.com, @evanlinjin in telegram
+# Author: evanlinjin@github.com, @evanlinjin in Telegram
+# Modified by: asxtree@github.com, @asxtree in Telegram
 # Skycoin / Rudi team
 #
 
@@ -14,27 +15,34 @@ source "$(pwd)/build.conf"
 
 # Needed tools to run this script, space separated
 # On arch/manjaro, the qemu-aarch64-static dependency is satisfied by installing the 'qemu-arm-static' AUR package.
-NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static go"
+NEEDED_TOOLS="rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go"
+
+# Check if build variables were set
+# If the BOARD and ARCH variables are not set in the build command, it will build a skybian image for Orange Pi Prime by default
+if [ -z ${BOARD} ] || [ -z ${ARCH} ] ; then
+  BOARD=prime
+  ARCH=arm64
+fi
+
+# Image related variables.
+OS_IMG_XZ=""
+OS_IMG=""
+OS_VERSION=""
+OS_KERNEL_VERSION=""
 
 # Output directory.
-PARTS_DIR=${ROOT}/output/parts
-IMAGE_DIR=${ROOT}/output/image
-FS_MNT_POINT=${ROOT}/output/mnt
-FINAL_IMG_DIR=${ROOT}/output/final
+PARTS_DIR=${ROOT}/output/${BOARD}/parts
+IMAGE_DIR=${ROOT}/output/${BOARD}/image
+FS_MNT_POINT=${ROOT}/output/${BOARD}/mnt
+FINAL_IMG_DIR=${ROOT}/output/${BOARD}/final
 
 # Base image location: we will work with partitions.
 BASE_IMG=${IMAGE_DIR}/base_image
 
 # Download directories.
-PARTS_ARMBIAN_DIR=${PARTS_DIR}/armbian
+PARTS_OS_DIR=${PARTS_DIR}/OS
 PARTS_SKYWIRE_DIR=${PARTS_DIR}/skywire
 PARTS_TOOLS_DIR=${PARTS_DIR}/tools
-
-# Image related variables.
-ARMBIAN_IMG_XZ=""
-ARMBIAN_IMG=""
-ARMBIAN_VERSION=""
-ARMBIAN_KERNEL_VERSION=""
 
 # Loop device.
 IMG_LOOP="" # free loop device to be used.
@@ -120,7 +128,7 @@ tool_test()
 # tracking on purpose: this will generate GB of data on each push
 create_folders()
 {
-    # output [main folder]
+    # output-x [main folder]
     #   /final [this will be the final images dir]
     #   /parts [all thing we download from the internet]
     #   /mnt [to mount resources, like img fs, etc]
@@ -129,12 +137,13 @@ create_folders()
     info "Creating output folder structure..."
     mkdir -p "$FINAL_IMG_DIR"
     mkdir -p "$FS_MNT_POINT"
-    mkdir -p "$PARTS_DIR" "$PARTS_ARMBIAN_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
+    mkdir -p "$PARTS_DIR" "$PARTS_OS_DIR" "$PARTS_SKYWIRE_DIR" "$PARTS_TOOLS_DIR"
     mkdir -p "$IMAGE_DIR"
 
     info "Done!"
 }
 
+# Get tools to configure skyconf
 get_tools()
 {
   local _src="$ROOT/cmd/skyconf/skyconf.go"
@@ -143,18 +152,34 @@ get_tools()
   info "Building skyconf..."
   info "_src=$_src"
   info "_out=$_out"
-  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
+
+  if [ ${ARCH} == arm64 ] ; then
+	  env GOOS=linux GOARCH=arm64 GOARM=7 go build -o "$_out" -v "$_src" || return 1
+  elif [ ${ARCH} == armhf ] ; then
+    env GOOS=linux GOARCH=arm GOARM=7 go build -o "$_out" -v "$_src" || return 1
+  elif [ ${ARCH} == armv6 ] ; then
+    env GOOS=linux GOARCH=arm GOARM=6 go build -o "$_out" -v "$_src" || return 1
+  fi
 
   info "Done!"
 }
 
+# Get skywire
 get_skywire()
 {
   local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
   if [ ! -f "${_DST}" ] ; then
-      notice "Downloading package from ${SKYWIRE_DOWNLOAD_URL} to ${_DST}..."
-      wget -c "${SKYWIRE_DOWNLOAD_URL}" -O "${_DST}" || return 1
+    if [ ${BOARD} == rpi ] ; then
+      notice "Downloading package from ${SKYWIRE_ARM_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_ARM_DOWNLOAD_URL}" -O "${_DST}" || return 1
+    elif [ ${BOARD} == rpiw ] ; then
+      notice "Downloading package from ${SKYWIRE_ARMV6_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_ARMV6_DOWNLOAD_URL}" -O "${_DST}" || return 1
+    else
+      notice "Downloading package from ${SKYWIRE_ARM64_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_ARM64_DOWNLOAD_URL}" -O "${_DST}" || return 1
+    fi
   else
       info "Reusing package in ${_DST}"
   fi
@@ -169,32 +194,59 @@ get_skywire()
   info "Done!"
 }
 
-download_armbian()
+# Download function for OS image of each board type
+download_os()
 {
-  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL}..."
-  wget -c "${ARMBIAN_DOWNLOAD_URL}" ||
-    (error "Image download failed." && return 1)
+  if [ ${BOARD} == prime ] ; then
+	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL}..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL}" ||
+      (error "Image download failed." && return 1)
 
-  info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL}.sha..."
-  wget -c "${ARMBIAN_DOWNLOAD_URL}.sha" ||
-    (error "Checksum download failed." && return 1)
+    info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL}.sha..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL}.sha" ||
+      (error "Checksum download failed." && return 1)
+  elif [ ${BOARD} == opi3 ] ; then
+	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_OPI3}..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}" ||
+      (error "Image download failed." && return 1)
+
+    info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_OPI3}.sha..."
+    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.sha" ||
+      (error "Checksum download failed." && return 1)
+  elif [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
+    info "Downloading image from ${RASPBIAN_ARMHF_DOWNLOAD_URL} to ${_DST} ..."
+    wget -c "${RASPBIAN_ARMHF_DOWNLOAD_URL}" ||
+      (error "Download failed." && return 1)
+
+    info "Downloading checksum from ${RASPBIAN_ARMHF_DOWNLOAD_URL}.sha..."
+    wget -c "${RASPBIAN_ARMHF_DOWNLOAD_URL}.sha256" ||
+      (error "Checksum download failed." && return 1)
+  elif [ ${BOARD} == rpi64 ] ; then
+    info "Downloading image from ${RASPBIAN_ARM64_DOWNLOAD_URL} to ${_DST} ..."
+    wget -c "${RASPBIAN_ARM64_DOWNLOAD_URL}" ||
+      (error "Download failed." && return 1)
+
+    info "Downloading checksum from ${RASPBIAN_ARM64_DOWNLOAD_URL}.sha..."
+    wget -c "${RASPBIAN_ARM64_DOWNLOAD_URL}.sha256" ||
+      (error "Checksum download failed." && return 1)
+  fi
 }
 
-# Get the latest ARMBIAN image for Orange Pi Prime
-get_armbian()
+# Get the latest OS image
+get_os()
 {
 
   # change to dest dir
-  cd "${PARTS_ARMBIAN_DIR}" ||
+  cd "${PARTS_OS_DIR}" ||
     (error "Failed to cd." && return 1)
 
-  local ARMBIAN_IMG_XZ="$(ls Armbian*img.xz || true)"
+  local OS_IMG_XZ="$(ls *img.xz || true)"
 
   # user info
-  info "Getting Armbian image, clearing dest dir first."
+  info "Getting the OS image, clearing dest dir first."
 
   # test if we have a file in there
-  if [ -r "${ARMBIAN_IMG_XZ}" ] ; then
+  if [ -r "${OS_IMG_XZ}" ] ; then
 
       # todo: doesn't seem to work, always downloads the image
       # todo: download checksum separately, and use it to validate local copy
@@ -206,77 +258,120 @@ get_armbian()
       info "No cached image, downloading.."
 
       # download it
-      download_armbian
+      download_os
 
-      local ARMBIAN_IMG_XZ="$(ls Armbian*img.xz || true)"
+      if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
+        local OS_IMG_XZ=$(ls *.zip || true)
+      else
+        local OS_IMG_XZ="$(ls *img.xz || true)"
+      fi
   fi
 
   # extract and check it's integrity
-  info "Armbian file to process is '${ARMBIAN_IMG_XZ}'."
+  info "OS image file to process is '${OS_IMG_XZ}'."
 
   # check integrity
   info "Testing image integrity..."
-  if ! $(command -v sha256sum) -c --status -- *.sha ; then
-      error "Integrity of the image is compromised, re-run the script to get it right."
-      rm -- armbian *txt *sha *xz &> /dev/null || true
-      exit 1
-  fi
+    if ! $(command -v sha256sum) -c --status -- *.sha* ; then
+        error "Integrity of the image is compromised, re-run the script to get it right."
+        rm -- *img *txt *sha *xz &> /dev/null || true
+        exit 1
+    fi
 
   # check if extracted image is in there to save time
-  if [ -n "$(ls Armbian*.img || true)" ] ; then
+  if [ -n "$(ls *.img || true)" ] ; then
       # image already extracted nothing to do
-      notice "Armbian image already extracted"
+      notice "OS image already extracted"
   else
       # extract armbian
       info "Extracting image..."
-      if ! 7z e "${ARMBIAN_IMG_XZ}" ; then
+      if ! 7z e "${OS_IMG_XZ}" ; then
           error "Extracting failed, file is corrupt? Re-run the script to get it right."
-          rm "${ARMBIAN_IMG_XZ}" &> /dev/null || true
+          rm "${OS_IMG_XZ}" &> /dev/null || true
           exit 1
       fi
   fi
 
   # get image filename
-  ARMBIAN_IMG=$(ls Armbian*.img || true)
+  OS_IMG=$(ls *.img || true)
 
   # imge integrity
   info "Image integrity assured via sha256sum."
-  notice "Final image file is ${ARMBIAN_IMG}"
+  notice "Final image file is ${OS_IMG}"
 
+  if [ ${OS_IMG} == Armbian*.img ] ; then
   # get version & kernel version info
-  ARMBIAN_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $2 }')
-  ARMBIAN_KERNEL_VERSION=$(echo "${ARMBIAN_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
+    OS_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $2 }')
+    OS_KERNEL_VERSION=$(echo "${OS_IMG}" | awk -F '_' '{ print $6 }' | rev | cut -d '.' -f2- | rev)
 
   # info to the user
-  notice "Armbian version: ${ARMBIAN_VERSION}"
-  notice "Armbian kernel version: ${ARMBIAN_KERNEL_VERSION}"
+    notice "Armbian version: ${OS_VERSION}"
+    notice "Armbian kernel version: ${OS_KERNEL_VERSION}"
+  fi
 }
 
 get_all()
 {
   get_skywire || return 1
-  get_armbian || return 1
+  get_os || return 1
   get_tools || return 1
 }
 
+# enable ssh, hdmi and UART on raspbian
+enable_ssh()
+{
+	info "Mounting /boot"
+	sudo mount -o loop,offset=4194304 "${PARTS_DIR}/OS/${OS_IMG}" "${FS_MNT_POINT}"
+ 
+	info "Enabling UART"
+	sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${FS_MNT_POINT}/config.txt"
+ 
+	info "Enabling HDMI"
+	sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${FS_MNT_POINT}/config.txt"
+ 
+	info "Enabling SSH"
+	sudo touch "${FS_MNT_POINT}/SSH.txt"
+ 
+	info "Unmounting /boot"
+	sudo umount "${FS_MNT_POINT}"
+
+  info "Done!"
+}
 
 # setup the rootfs to a loop device
 setup_loop()
 {
-  # find free loop device
-  IMG_LOOP=$(sudo losetup -f)
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
+      # find free loop device
+      IMG_LOOP=$(sudo losetup -f)
 
-  # find image sector size (if not user-defined)
-  [[ -z $IMG_SECTOR ]] &&
-    IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
+      # find image sector size (if not user-defined)
+      [[ -z $IMG_SECTOR ]] &&
+        IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
 
-  # find image offset (if not user-defined)
-  [[ -z "${IMG_OFFSET}" ]] &&
-    IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
+      # find image offset (if not user-defined)
+      [[ -z "${RPI_IMG_OFFSET}" ]] &&
+        RPI_IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
 
-  # setup loop device for root fs
-  info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${IMG_OFFSET}' ..."
-  sudo losetup -o "$((IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
+      # setup loop device for root fs
+      info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${RPI_IMG_OFFSET}' ..."
+      sudo losetup -o "$((RPI_IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
+  else
+      # find free loop device
+      IMG_LOOP=$(sudo losetup -f)
+
+      # find image sector size (if not user-defined)
+      [[ -z $IMG_SECTOR ]] &&
+        IMG_SECTOR=$(fdisk -l "${BASE_IMG}" | grep "Sector size" | grep -o '[0-9]*' | head -1)
+
+      # find image offset (if not user-defined)
+      [[ -z "${IMG_OFFSET}" ]] &&
+        IMG_OFFSET=$(fdisk -l "${BASE_IMG}" | tail -1 | awk '{print $2}')
+
+      # setup loop device for root fs
+      info "Map root fs to loop device '${IMG_LOOP}': sector size '${IMG_SECTOR}', image offset '${IMG_OFFSET}' ..."
+      sudo losetup -o "$((IMG_OFFSET * IMG_SECTOR))" "${IMG_LOOP}" "${BASE_IMG}"
+  fi
 }
 
 # root fs check
@@ -302,6 +397,7 @@ prepare_base_image()
 {
   # Armbian image is tight packed, and we need room for adding our
   # bins, apps & configs, so we will make it bigger
+  # Raspbian image is big enough to accomodate all
 
   # clean
   info "Cleaning..."
@@ -309,14 +405,19 @@ prepare_base_image()
 
   # copy armbian image to base image location
   info "Copying base image..."
-  cp "${PARTS_DIR}/armbian/${ARMBIAN_IMG}" "${BASE_IMG}" || return 1
+  cp "${PARTS_DIR}/OS/${OS_IMG}" "${BASE_IMG}" || return 1
 
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
   # Add space to base image
-  if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
-    info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
-    truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
-    echo ", +" | sfdisk -N1 "${BASE_IMG}" # add free space to the part 1 (sfdisk way)
+    info "There is no need to add extra space to the raspbian image..."
+  else
+    if [[ "$BASE_IMG_ADDED_SPACE" -ne "0" ]]; then
+      info "Adding ${BASE_IMG_ADDED_SPACE}MB of extra space to the image..."
+      truncate -s +"${BASE_IMG_ADDED_SPACE}M" "${BASE_IMG}"
+      echo ", +" | sfdisk -N1 "${BASE_IMG}" # add free space to the part 1 (sfdisk way)
+    fi
   fi
+
 
   info "Setting up loop device..."
   setup_loop || return 1
@@ -337,21 +438,43 @@ copy_to_img()
   # Copy skywire bins
   info "Copying skywire bins..."
   sudo cp -rf "$PARTS_SKYWIRE_DIR"/bin/* "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
-  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
   # Copy skywire tools
   info "Copying skywire tools..."
   sudo cp -rf "$PARTS_TOOLS_DIR"/* "$FS_MNT_POINT"/usr/bin/ || return 1
 
-  # Copy scripts
-  info "Copying disable user creation script..."
-  sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
-  info "Copying headers (so OS presents itself as Skybian)..."
-  sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
-  sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
+  # Copy skywire bins
+	sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
+  sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
+
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
+    
+    # Copy scripts
+    info "Copying headers (so OS presents itself as Skybian)..."
+    sudo cp "${ROOT}/static/10-skyraspbian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skyraspbian-header" || return 1
+    sudo rm -rf "${FS_MNT_POINT}/etc/10-uname" || return 1
+    sudo rm -rf "${FS_MNT_POINT}/etc/motd" || return 1
+
+    # Copy chroot scripts to root fs
+    info "Copying chroot script..."
+    sudo cp "${ROOT}/static/chroot_commands_skyraspbian.sh" "${FS_MNT_POINT}/tmp" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands_skyraspbian.sh" || return 1
+  else
+    # Copy scripts
+    info "Copying disable user creation script..."
+    sudo cp -f "${ROOT}/static/armbian-check-first-login.sh" "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/etc/profile.d/armbian-check-first-login.sh" || return 1
+    info "Copying headers (so OS presents itself as Skybian)..."
+    sudo cp "${ROOT}/static/10-skybian-header" "${FS_MNT_POINT}/etc/update-motd.d/" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/etc/update-motd.d/10-skybian-header" || return 1
+    sudo cp -f "${ROOT}/static/armbian-motd" "${FS_MNT_POINT}/etc/default" || return 1
+
+    # Copy chroot scripts to root fs
+    info "Copying chroot script..."
+    sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
+    sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
+  fi
 
   # Copy systemd units
   info "Copying systemd unit services..."
@@ -361,29 +484,49 @@ copy_to_img()
   info "Done!"
 }
 
-# fix some defaults on armbian to skywire defaults
+# fix some defaults on armbian and raspbian to skywire defaults
 chroot_actions()
 {
-  # copy chroot scripts to root fs
-  info "Copying chroot script..."
-  sudo cp "${ROOT}/static/chroot_commands.sh" "${FS_MNT_POINT}/tmp" || return 1
-  sudo chmod +x "${FS_MNT_POINT}/tmp/chroot_commands.sh" || return 1
-
   # enable chroot
   info "Seting up chroot jail..."
-  sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
+
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
+    sudo cp "$(command -v qemu-arm-static)" "${FS_MNT_POINT}/usr/bin/"
+  else
+    sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
+    
+  fi
+
   sudo mount -t sysfs none "${FS_MNT_POINT}/sys"
   sudo mount -t proc none "${FS_MNT_POINT}/proc"
   sudo mount --bind /dev "${FS_MNT_POINT}/dev"
   sudo mount --bind /dev/pts "${FS_MNT_POINT}/dev/pts"
 
-  # Executing chroot script
-  info "Executing chroot script..."
-  sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
+    # ld.so.preload fix this is used only for the arm version of rpi, on rpi64 an error is expected
+    sed -i 's/^/#/g' "${FS_MNT_POINT}/etc/ld.so.preload"
 
-  # disable chroot
+    # Executing chroot script
+    info "Executing chroot script..."
+    sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands_skyraspbian.sh
+
+    # revert ld.so.preload fix this is used only for the arm version of rpi, on rpi64 an error is expected
+    sed -i 's/^#//g' "${FS_MNT_POINT}/etc/ld.so.preload"
+  else
+    # Executing chroot script
+    info "Executing chroot script..."
+    sudo chroot "${FS_MNT_POINT}" /tmp/chroot_commands.sh
+  fi
+
+	# Disable chroot
   info "Disabling the chroot jail..."
-  sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"
+
+  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
+    sudo rm "${FS_MNT_POINT}/usr/bin/qemu-arm-static"
+  else
+    sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"    
+  fi
+    
   sudo umount "${FS_MNT_POINT}/sys"
   sudo umount "${FS_MNT_POINT}/proc"
   sudo umount "${FS_MNT_POINT}/dev/pts"
@@ -399,31 +542,33 @@ chroot_actions()
 # calculate md5, sha1 and compress
 calc_sums_compress()
 {
+	  FINAL_IMG_DIR="${ROOT}/output/${BOARD}/final"
+  
   # change to final dest
-  cd "${FINAL_IMG_DIR}" ||
-    (error "Failed to cd." && return 1)
+    cd "${FINAL_IMG_DIR}" ||
+      (error "Failed to cd." && return 1)
 
   # info
-  info "Calculating the md5sum for the image, this may take a while"
+    info "Calculating the md5sum for the image, this may take a while"
 
   # cycle for each one
-  for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
+    for img in $(find -- *.img -maxdepth 1 -print0 | xargs --null) ; do
     # MD5
-    info "MD5 Sum for image: $img"
-    md5sum -b "${img}" > "${img}.md5"
+      info "MD5 Sum for image: $img"
+      md5sum -b "${img}" > "${img}.md5"
 
     # sha1
-    info "SHA1 Sum for image: $img"
-    sha1sum -b "${img}" > "${img}.sha1"
+      info "SHA1 Sum for image: $img"
+      sha1sum -b "${img}" > "${img}.sha1"
 
     # compress
-    info "Compressing, this will take a while..."
-    name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
-    tar -cvzf "${name}.tar.gz" "${img}"*
-  done
+      info "Compressing, this will take a while..."
+      name=$(echo "${img}" | rev | cut -d '.' -f 2- | rev)
+      tar -cvzf "${name}.tar.gz" "${img}"*
+    done
 
-  cd "${ROOT}" || return 1
-  info "Done!"
+    cd "${ROOT}" || return 1
+    info "Done!"
 }
 
 clean_image()
@@ -443,14 +588,11 @@ clean_image()
 
 clean_output_dir()
 {
-  # Clean parts.
-  cd "${PARTS_ARMBIAN_DIR}" && find . -type f ! -name '*.xz' -delete
+  cd "${PARTS_OS_DIR}" && find . -type f ! -name '*.xz' -delete
   cd "${PARTS_SKYWIRE_DIR}" && find . -type f ! -name '*.tar.gz' -delete && rm -rf bin
   cd "${FINAL_IMG_DIR}" && find . -type f ! -name '*.tar.gz' -delete
-
-  # Rm base image.
-  rm -v "${IMAGE_DIR}/base_image"
-
+  rm -v "${BASE_IMG}"
+  
   # cd to root.
   cd "${ROOT}" || return 1
 }
@@ -461,8 +603,7 @@ build_disk()
   # move to correct dir
   cd "${IMAGE_DIR}" || return 1
 
-  # final name
-  local NAME="Skybian-${VERSION}"
+  local NAME="Skybian-${BOARD}-${VERSION}"
 
   # info
   info "Building image for ${NAME}"
@@ -515,6 +656,11 @@ main_build()
 
     # download resources
     get_all || return 1
+
+    # enable ssh, hdmi and uart on raspbian
+    if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
+	    enable_ssh || return 1
+    fi
 
     # prepares and mounts base image
     prepare_base_image || return 1
