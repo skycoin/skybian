@@ -98,13 +98,13 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	remImgSky := fg.makeRemoteImgsWidget(TypeSkybian)
 	remImgRasp := fg.makeRemoteImgsWidget(TypeRaspbian)
 	remImgSky3 := fg.makeRemoteImgsWidget(TypeSkybianOPi3)
-	// remImgRasp64 := fg.makeRemoteImgsWidget(TypeRaspbian64)
+	remImgRasp64 := fg.makeRemoteImgsWidget(TypeRaspbian64)
 
 	imgTypes := []string{
 		"Skybian 64 bit (Orange Pi Prime)",
 		"Skybian 64 bit (Orange Pi 3)",
 		"SkyRaspbian 32 bit (Raspberry Pi)",
-		// "SkyRaspbian 64 bit (Raspberry Pi)",
+		"SkyRaspbian 64 bit (Raspberry Pi)",
 	}
 	// todo: implement selecting a correct remote
 	remoteTypeSelect := widget.NewSelect(imgTypes, func(s string) {
@@ -113,21 +113,26 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			fg.showRemoteSelect(remImgSky)
 			remImgRasp.Hide()
 			remImgSky3.Hide()
-			// remImgRasp64.Hide()
+			remImgRasp64.Hide()
 		case imgTypes[1]:
 			fg.showRemoteSelect(remImgSky3)
 			remImgSky.Hide()
 			remImgRasp.Hide()
-			// remImgRasp64.Hide()
+			remImgRasp64.Hide()
 		case imgTypes[2]:
 			fg.showRemoteSelect(remImgRasp)
 			remImgSky.Hide()
 			remImgSky3.Hide()
-			// case imgTypes[3]:
-			// 	remImgSky.Hide()
-			// 	remImgRasp.Hide()
-			// 	fg.showRemoteSelect(remImgRasp64)
-			//  remImgSky3.Hide()
+			case imgTypes[3]:
+				remImgSky.Hide()
+				remImgRasp.Hide()
+				fg.showRemoteSelect(remImgRasp64)
+			 remImgSky3.Hide()	
+			case imgTypes[3]:
+				remImgSky.Hide()
+				remImgRasp.Hide()
+				fg.showRemoteSelect(remImgRasp64)
+			 remImgSky3.Hide()
 		}
 	})
 	remoteTypeSelect.SetSelected(imgTypes[0])
@@ -140,14 +145,14 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			fsImgPicker.Show()
 			remImgSky.Hide()
 			remImgRasp.Hide()
-			// remImgRasp64.Hide()
+			remImgRasp64.Hide()
 			remImgSky3.Hide()
 			remoteTypeSelect.Hide()
 		default:
 			fsImgPicker.Hide()
 			remImgSky.Hide()
 			remImgRasp.Hide()
-			// remImgRasp64.Hide()
+			remImgRasp64.Hide()
 			remImgSky3.Hide()
 			remoteTypeSelect.Hide()
 		}
@@ -284,7 +289,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
 		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect, remImgSky, remImgSky3, remImgRasp,
-		// remImgRasp64,
+		remImgRasp64,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		enableWifi,
 		wifiWidgets,
