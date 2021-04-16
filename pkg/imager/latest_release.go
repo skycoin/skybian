@@ -25,7 +25,7 @@ func expectedBaseImgAssetName(t ImgType, tag string) string {
 	case TypeRaspbian:
 		filename = "Skybian-rpi"
 	case TypeSkybian:
-		filename = "Skybian"
+		filename = "Skybian-prime"
 	case TypeRaspbian64:
 		// todo: fill in proper image file name when this is supported
 		filename = "FILL ME"
