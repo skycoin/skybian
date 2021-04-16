@@ -149,5 +149,8 @@ install_ntp()
 }
 install_ntp || logger "Failed to setup ntp service"
 
+# Set time and date using google
+sudo date -s "$(curl -s --head http://google.com | grep ^Date: | sed 's/Date: //g')"
+
 sudo systemctl disable skybian-firstrun.service
 exit 0
