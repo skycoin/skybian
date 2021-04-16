@@ -67,18 +67,26 @@ func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
 	return box
 }
 
-func (fg *FyneUI) makeRemoteImgsWidget(t ImgType) *widget.Select {
+// remoteImgSelect is a wrapper around select widget with img type
+// and label attached to it
+type remoteImgSelect struct {
+	imgType ImgType
+	label   string
+	widget  *widget.Select
+}
+
+func (fg *FyneUI) makeRemoteSelect(t ImgType, label string) remoteImgSelect {
 	remImgs, latestImg := fg.listBaseImgs(t)
 	fg.log.Debugf("type: %s, latest: %s", t, latestImg)
-	remImg := widget.NewSelect(remImgs, func(s string) {
+	widget := widget.NewSelect(remImgs, func(s string) {
 		fg.remImg = s
 		fg.log.Debugf("Set: fg.remImg = %v", s)
 	})
-	if len(remImg.Options) > 0 {
-		remImg.SetSelected(remImg.Options[0])
+	if len(widget.Options) > 0 {
+		widget.SetSelected(widget.Options[0])
 	}
-	remImg.Hide()
-	return remImg
+	widget.Hide()
+	return remoteImgSelect{t, label, widget}
 }
 
 // showRemoteSelect and update remote image value to the selected
@@ -95,47 +103,28 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 
 	fsImgPicker := fg.makeFilePicker()
 	fsImgPicker.Hide()
-	remImgSky := fg.makeRemoteImgsWidget(TypeSkybian)
-	remImgRasp := fg.makeRemoteImgsWidget(TypeRaspbian)
-	remImgSky3 := fg.makeRemoteImgsWidget(TypeSkybianOPi3)
-	remImgRasp64 := fg.makeRemoteImgsWidget(TypeRaspbian64)
 
-	imgTypes := []string{
-		"Skybian 64 bit (Orange Pi Prime)",
-		"Skybian 64 bit (Orange Pi 3)",
-		"SkyRaspbian 32 bit (Raspberry Pi)",
-		"SkyRaspbian 64 bit (Raspberry Pi)",
+	remSky := fg.makeRemoteSelect(TypeSkybian, "Skybian 64 bit (Orange Pi Prime)")
+	remSky3 := fg.makeRemoteSelect(TypeSkybianOPi3, "Skybian 64 bit (Orange Pi 3)")
+	remRasp32 := fg.makeRemoteSelect(TypeRaspbian, "SkyRaspbian 32 bit (Raspberry Pi)")
+	remRasp64 := fg.makeRemoteSelect(TypeRaspbian64, "SkyRaspbian 64 bit (Raspberry Pi)")
+	remotes := []remoteImgSelect{remSky, remSky3, remRasp32, remRasp64}
+	var labels []string
+	for _, rem := range remotes {
+		labels = append(labels, rem.label)
 	}
-	// todo: implement selecting a correct remote
-	remoteTypeSelect := widget.NewSelect(imgTypes, func(s string) {
-		switch s {
-		case imgTypes[0]:
-			fg.showRemoteSelect(remImgSky)
-			remImgRasp.Hide()
-			remImgSky3.Hide()
-			remImgRasp64.Hide()
-		case imgTypes[1]:
-			fg.showRemoteSelect(remImgSky3)
-			remImgSky.Hide()
-			remImgRasp.Hide()
-			remImgRasp64.Hide()
-		case imgTypes[2]:
-			fg.showRemoteSelect(remImgRasp)
-			remImgSky.Hide()
-			remImgSky3.Hide()
-			case imgTypes[3]:
-				remImgSky.Hide()
-				remImgRasp.Hide()
-				fg.showRemoteSelect(remImgRasp64)
-			 remImgSky3.Hide()	
-			case imgTypes[3]:
-				remImgSky.Hide()
-				remImgRasp.Hide()
-				fg.showRemoteSelect(remImgRasp64)
-			 remImgSky3.Hide()
+
+	remoteTypeSelect := widget.NewSelect(labels, func(s string) {
+		for _, rem := range remotes {
+			if s == rem.label {
+				fg.showRemoteSelect(rem.widget)
+				fg.imgType = rem.imgType
+			} else {
+				rem.widget.Hide()
+			}
 		}
 	})
-	remoteTypeSelect.SetSelected(imgTypes[0])
+	remoteTypeSelect.SetSelected(labels[0])
 	imgLoc := widget.NewRadio(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
@@ -143,17 +132,9 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			remoteTypeSelect.Show()
 		case fg.locations[1]:
 			fsImgPicker.Show()
-			remImgSky.Hide()
-			remImgRasp.Hide()
-			remImgRasp64.Hide()
-			remImgSky3.Hide()
-			remoteTypeSelect.Hide()
-		default:
-			fsImgPicker.Hide()
-			remImgSky.Hide()
-			remImgRasp.Hide()
-			remImgRasp64.Hide()
-			remImgSky3.Hide()
+			for _, rem := range remotes {
+				rem.widget.Hide()
+			}
 			remoteTypeSelect.Hide()
 		}
 	})
@@ -288,8 +269,8 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect, remImgSky, remImgSky3, remImgRasp,
-		remImgRasp64,
+		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect,
+		remSky.widget, remSky3.widget, remRasp32.widget, remRasp64.widget,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		enableWifi,
 		wifiWidgets,

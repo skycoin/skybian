@@ -45,9 +45,9 @@ type FyneUI struct {
 	app fyne.App
 	w   fyne.Window
 
-	releases  []Release
+	releases  map[ImgType][]Release
 	locations []string
-	imgTypes  []ImgType
+
 	imgType   ImgType
 	wkDir     string
 	imgLoc    string
@@ -84,6 +84,7 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	w.SetContent(fg.Page1())
 	w.Resize(fyne.Size{Width: 800, Height: 600})
 	fg.w = w
+	fg.releases = make(map[ImgType][]Release)
 
 	return fg
 }
@@ -116,7 +117,7 @@ func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 		return nil, ""
 	}
 
-	fg.releases = append(fg.releases, rs...)
+	fg.releases[t] = append(rs)
 	return releaseStrings(rs), lr.String()
 }
 
@@ -153,7 +154,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 func (fg *FyneUI) build() {
 	bpsSlice := fg.bps
 
-	baseURL, err := releaseURL(fg.releases, fg.remImg)
+	baseURL, err := releaseURL(fg.releases[fg.imgType], fg.remImg)
 	if err != nil {
 		err = fmt.Errorf("failed to find download URL for base image: %v", err)
 		dialog.ShowError(err, fg.w)
