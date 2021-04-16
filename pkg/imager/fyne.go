@@ -24,6 +24,15 @@ import (
 	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
+type ImgType string
+
+const (
+	TypeSkybian     ImgType = "skybian"
+	TypeRaspbian            = "raspbian"
+	TypeRaspbian64          = "raspbian64"
+	TypeSkybianOPi3         = "skybian-opi3"
+)
+
 // DefaultImgNumber is the default number of visor boot parameters to generate.
 const DefaultImgNumber = 1
 
@@ -38,7 +47,8 @@ type FyneUI struct {
 
 	releases  []Release
 	locations []string
-
+	imgTypes  []ImgType
+	imgType   ImgType
 	wkDir     string
 	imgLoc    string
 	remImg    string
@@ -60,8 +70,8 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	fg.assets = assets
 
 	fg.locations = []string{
-		"From remote server.",
-		"From local filesystem.",
+		"From remote server",
+		"From local filesystem",
 	}
 	fg.resetPage2Values()
 
@@ -83,7 +93,7 @@ func (fg *FyneUI) Run() {
 	fg.w.ShowAndRun()
 }
 
-func (fg *FyneUI) listBaseImgs() ([]string, string) {
+func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -92,7 +102,7 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 	d := dialog.NewProgressInfinite(title, msg, fg.w)
 
 	d.Show()
-	rs, lr, err := ListReleases(ctx, fg.log)
+	rs, lr, err := ListReleases(ctx, t, fg.log)
 	d.Hide()
 
 	if err != nil {
@@ -106,7 +116,7 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 		return nil, ""
 	}
 
-	fg.releases = rs
+	fg.releases = append(fg.releases, rs...)
 	return releaseStrings(rs), lr.String()
 }
 

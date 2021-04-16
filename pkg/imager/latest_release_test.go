@@ -12,7 +12,7 @@ import (
 func TestListReleases(t *testing.T) {
 	ctx := context.Background()
 	log := logrus.New()
-	out, _, err := ListReleases(ctx, log)
+	out, _, err := ListReleases(ctx, TypeSkybian, log)
 	require.NoError(t, err)
 	for i, v := range out {
 		fmt.Printf("[%d]\n", i)
