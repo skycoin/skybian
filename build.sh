@@ -171,8 +171,8 @@ get_skywire()
 
   if [ ! -f "${_DST}" ] ; then
     if [ ${BOARD} == rpi ] ; then
-      notice "Downloading package from ${SKYWIRE_ARM_DOWNLOAD_URL} to ${_DST}..."
-      wget -c "${SKYWIRE_ARM_DOWNLOAD_URL}" -O "${_DST}" || return 1
+      notice "Downloading package from ${SKYWIRE_ARMV7_DOWNLOAD_URL} to ${_DST}..."
+      wget -c "${SKYWIRE_ARMV7_DOWNLOAD_URL}" -O "${_DST}" || return 1
     elif [ ${BOARD} == rpiw ] ; then
       notice "Downloading package from ${SKYWIRE_ARMV6_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARMV6_DOWNLOAD_URL}" -O "${_DST}" || return 1
