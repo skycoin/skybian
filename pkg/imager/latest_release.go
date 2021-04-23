@@ -19,12 +19,26 @@ const (
 	repoRequestTimeout = 5 * time.Second
 )
 
-func expectedBaseImgAssetName(tag string) string {
-	return fmt.Sprintf("Skybian-%s%s", tag, ExtTarGz)
+func expectedBaseImgAssetName(t ImgType, tag string) string {
+	var filename string
+	switch t {
+	case TypeRaspbian:
+		filename = "Skybian-rpi"
+	case TypeSkybian:
+		filename = "Skybian-prime"
+	case TypeRaspbian64:
+		// todo: fill in proper image file name when this is supported
+		filename = "FILL ME"
+	case TypeSkybianOPi3:
+		filename = "Skybian-opi3"
+	default:
+		panic(fmt.Sprintf("unknown image type: %v", t))
+	}
+	return fmt.Sprintf("%s-%s%s", filename, tag, ExtTarGz)
 }
 
 // LatestBaseImgURL returns the latest stable base image download URL.
-func LatestBaseImgURL(ctx context.Context, log logrus.FieldLogger) (string, error) {
+func LatestBaseImgURL(ctx context.Context, t ImgType, log logrus.FieldLogger) (string, error) {
 	gh := github.NewClient(nil)
 	release, _, err := gh.Repositories.GetLatestRelease(ctx, ghOwner, ghRepo)
 	if err != nil {
@@ -35,7 +49,7 @@ func LatestBaseImgURL(ctx context.Context, log logrus.FieldLogger) (string, erro
 	log.WithField("tag", tag).
 		Debug("Got tag.")
 
-	name := expectedBaseImgAssetName(tag)
+	name := expectedBaseImgAssetName(t, tag)
 	log.WithField("expected_name", name).
 		Info("Expecting asset of name.")
 
@@ -72,7 +86,6 @@ func (r *Release) String() string {
 }
 
 func releaseURL(releases []Release, releaseStr string) (string, error) {
-
 	tag, err := bytes.NewBufferString(releaseStr).ReadString(' ')
 	if err != nil {
 		return "", err
@@ -102,7 +115,7 @@ var ErrNetworkConn = errors.New("Network connection error")
 
 // ListReleases obtains a list of base image releases.
 // The output 'latest' is non-nil when a latest release is found.
-func ListReleases(ctx context.Context, log logrus.FieldLogger) (rs []Release, latest *Release, err error) {
+func ListReleases(ctx context.Context, t ImgType, log logrus.FieldLogger) (rs []Release, latest *Release, err error) {
 	gh := github.NewClient(nil)
 	ctx, cancel := context.WithTimeout(ctx, repoRequestTimeout)
 	defer cancel()
@@ -125,7 +138,7 @@ func ListReleases(ctx context.Context, log logrus.FieldLogger) (rs []Release, la
 			continue
 		}
 
-		exp := expectedBaseImgAssetName(r.GetTagName())
+		exp := expectedBaseImgAssetName(t, r.GetTagName())
 		for _, asset := range r.Assets {
 			if asset.GetName() != exp {
 				continue

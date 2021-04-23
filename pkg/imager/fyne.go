@@ -24,6 +24,15 @@ import (
 	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
+type ImgType string
+
+const (
+	TypeSkybian     ImgType = "skybian"
+	TypeRaspbian            = "raspbian"
+	TypeRaspbian64          = "raspbian64"
+	TypeSkybianOPi3         = "skybian-opi3"
+)
+
 // DefaultImgNumber is the default number of visor boot parameters to generate.
 const DefaultImgNumber = 1
 
@@ -36,9 +45,10 @@ type FyneUI struct {
 	app fyne.App
 	w   fyne.Window
 
-	releases  []Release
+	releases  map[ImgType][]Release
 	locations []string
 
+	imgType   ImgType
 	wkDir     string
 	imgLoc    string
 	remImg    string
@@ -60,8 +70,8 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	fg.assets = assets
 
 	fg.locations = []string{
-		"From remote server.",
-		"From local filesystem.",
+		"From remote server",
+		"From local filesystem",
 	}
 	fg.resetPage2Values()
 
@@ -74,6 +84,7 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	w.SetContent(fg.Page1())
 	w.Resize(fyne.Size{Width: 800, Height: 600})
 	fg.w = w
+	fg.releases = make(map[ImgType][]Release)
 
 	return fg
 }
@@ -83,7 +94,7 @@ func (fg *FyneUI) Run() {
 	fg.w.ShowAndRun()
 }
 
-func (fg *FyneUI) listBaseImgs() ([]string, string) {
+func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -92,7 +103,7 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 	d := dialog.NewProgressInfinite(title, msg, fg.w)
 
 	d.Show()
-	rs, lr, err := ListReleases(ctx, fg.log)
+	rs, lr, err := ListReleases(ctx, t, fg.log)
 	d.Hide()
 
 	if err != nil {
@@ -106,7 +117,7 @@ func (fg *FyneUI) listBaseImgs() ([]string, string) {
 		return nil, ""
 	}
 
-	fg.releases = rs
+	fg.releases[t] = append(rs)
 	return releaseStrings(rs), lr.String()
 }
 
@@ -143,7 +154,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 func (fg *FyneUI) build() {
 	bpsSlice := fg.bps
 
-	baseURL, err := releaseURL(fg.releases, fg.remImg)
+	baseURL, err := releaseURL(fg.releases[fg.imgType], fg.remImg)
 	if err != nil {
 		err = fmt.Errorf("failed to find download URL for base image: %v", err)
 		dialog.ShowError(err, fg.w)

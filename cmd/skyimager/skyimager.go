@@ -29,7 +29,7 @@ func init() {
 var dlURL string
 
 func init() {
-	defaultDlURL, _ := imager.LatestBaseImgURL(context.Background(), log)
+	defaultDlURL, _ := imager.LatestBaseImgURL(context.Background(), imager.TypeSkybian, log)
 	flag.StringVar(&dlURL, "url", defaultDlURL, "url of skybian image archive")
 }
 

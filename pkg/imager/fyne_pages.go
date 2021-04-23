@@ -67,34 +67,75 @@ func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
 	return box
 }
 
+// remoteImgSelect is a wrapper around select widget with img type
+// and label attached to it
+type remoteImgSelect struct {
+	imgType ImgType
+	label   string
+	widget  *widget.Select
+}
+
+func (fg *FyneUI) makeRemoteSelect(t ImgType, label string) remoteImgSelect {
+	remImgs, latestImg := fg.listBaseImgs(t)
+	fg.log.Debugf("type: %s, latest: %s", t, latestImg)
+	widget := widget.NewSelect(remImgs, func(s string) {
+		fg.remImg = s
+		fg.log.Debugf("Set: fg.remImg = %v", s)
+	})
+	if len(widget.Options) > 0 {
+		widget.SetSelected(widget.Options[0])
+	}
+	widget.Hide()
+	return remoteImgSelect{t, label, widget}
+}
+
+// showRemoteSelect and update remote image value to the selected
+// value of the widget to be shown
+func (fg *FyneUI) showRemoteSelect(sel *widget.Select) {
+	sel.Show()
+	fg.remImg = sel.Selected
+	fg.log.Debugf("remImg = %s", fg.remImg)
+}
+
 // Page2 returns the canvas that draws page 2 of the Fyne interface.
 func (fg *FyneUI) Page2() fyne.CanvasObject {
 	wkDir := newLinkedEntry(&fg.wkDir)
 
-	remImgs, latestImg := fg.listBaseImgs()
-	remImg := widget.NewSelect(remImgs, func(s string) {
-		fg.remImg = s
-		fg.log.Debugf("Set: fg.remImg = %v", s)
-	})
-	if remImg.Selected = fg.remImg; remImg.Selected == "" && len(remImg.Options) > 0 {
-		remImg.SetSelected(latestImg)
-	}
-	remImg.Hide()
-
 	fsImgPicker := fg.makeFilePicker()
 	fsImgPicker.Hide()
 
+	remSky := fg.makeRemoteSelect(TypeSkybian, "Skybian 64 bit (Orange Pi Prime)")
+	remSky3 := fg.makeRemoteSelect(TypeSkybianOPi3, "Skybian 64 bit (Orange Pi 3)")
+	remRasp32 := fg.makeRemoteSelect(TypeRaspbian, "SkyRaspbian 32 bit (Raspberry Pi)")
+	remRasp64 := fg.makeRemoteSelect(TypeRaspbian64, "SkyRaspbian 64 bit (Raspberry Pi)")
+	remotes := []remoteImgSelect{remSky, remSky3, remRasp32, remRasp64}
+	var labels []string
+	for _, rem := range remotes {
+		labels = append(labels, rem.label)
+	}
+
+	remoteTypeSelect := widget.NewSelect(labels, func(s string) {
+		for _, rem := range remotes {
+			if s == rem.label {
+				fg.showRemoteSelect(rem.widget)
+				fg.imgType = rem.imgType
+			} else {
+				rem.widget.Hide()
+			}
+		}
+	})
+	remoteTypeSelect.SetSelected(labels[0])
 	imgLoc := widget.NewRadio(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
-			remImg.Show()
 			fsImgPicker.Hide()
+			remoteTypeSelect.Show()
 		case fg.locations[1]:
-			remImg.Hide()
 			fsImgPicker.Show()
-		default:
-			remImg.Hide()
-			fsImgPicker.Hide()
+			for _, rem := range remotes {
+				rem.widget.Hide()
+			}
+			remoteTypeSelect.Hide()
 		}
 	})
 	imgLoc.SetSelected(fg.imgLoc)
@@ -228,7 +269,8 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	}
 	return makePage(conf,
 		widget.NewLabel("Work Directory:"), wkDir,
-		widget.NewLabel("Base Image:"), imgLoc, remImg, fsImgPicker,
+		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect,
+		remSky.widget, remSky3.widget, remRasp32.widget, remRasp64.widget,
 		widget.NewLabel("Gateway IP:"), gwIP,
 		enableWifi,
 		wifiWidgets,

@@ -13,7 +13,10 @@ install:
 script:
   - make test # Can be 'make check' once that is working.
   - make integration
-  - make build-skybian-img
+  - make build-skybian-img 
+  - make build-skybian-img BOARD=opi3 ARCH=arm64
+  - make build-skybian-img BOARD=rpi ARCH=armhf
+  - make build-skybian-img BOARD=rpi64 ARCH=arm64
   - make build-skyimager-gui
 before_deploy:
   - bash build.sh -p
@@ -21,7 +24,10 @@ deploy:
   provider: releases
   file_glob: true
   file:
-  - output/final/*.tar.gz
+  - output/prime/final/*.tar.gz
+  - output/opi3/final/*.tar.gz
+  - output/rpi/final/*.tar.gz
+  - output/rpi64/final/*.tar.gz
   - fyne-cross/bin/*.tar.gz
   draft: true
   prerelease: true
