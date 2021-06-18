@@ -17,6 +17,10 @@ This is a note for developers about the recommended tags to keep track of the ch
 
 Dates must be YEAR-MONTH-DAY
 -->
+## [0.3.1] - 2021-06-17
+### Changed
+
+- Updated Skywire to `v0.4.1`.
 
 ## [0.2.1] - 2021-03-24
 
