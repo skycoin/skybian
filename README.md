@@ -21,12 +21,12 @@ Golang 1.13+ is requred.
 **Additional dependencies for building Skybian base image:**
 
 ```
-rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go
+rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk xorg-dev qemu-aarch64-static qemu-arm-static go
 ```
 
 For Debian-based linux distributions, you can install these via:
 ```bash
-$ sudo apt update && sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+$ sudo apt update && sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64 xorg-dev
 ```
 
 On Arch-based distributions, to satisfy the `qemu-aarch64-static` dependency, one can install the `qemu-arm-static` AUR package.
