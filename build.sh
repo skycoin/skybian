@@ -199,7 +199,7 @@ download_os()
 {
   if [ ${BOARD} == prime ] ; then
 	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL}..."
-    wget -c "${ARMBIAN_DOWNLOAD_URL}.img.xz" ||
+    wget -c "${ARMBIAN_DOWNLOAD_URL}" ||
       (error "Image download failed." && return 1)
 
     info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL}.sha..."
@@ -207,7 +207,7 @@ download_os()
       (error "Checksum download failed." && return 1)
   elif [ ${BOARD} == opi3 ] ; then
 	  info "Downloading image from ${ARMBIAN_DOWNLOAD_URL_OPI3}..."
-    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.img.xz" ||
+    wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}" ||
       (error "Image download failed." && return 1)
 
     info "Downloading checksum from ${ARMBIAN_DOWNLOAD_URL_OPI3}.sha..."
