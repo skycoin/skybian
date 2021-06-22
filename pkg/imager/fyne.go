@@ -106,7 +106,7 @@ func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 
 	title := "Please Wait"
 	msg := "Obtaining base image releases from GitHub..."
-	d := dialog.NewProgressInfinite(title, msg, fg.w)
+	d := dialog.NewCustom(title, msg, widget.NewProgressBarInfinite(), fg.w)
 
 	d.Show()
 	rs, lr, err := ListReleases(ctx, t, fg.log)
@@ -123,7 +123,7 @@ func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 		return nil, ""
 	}
 
-	fg.releases[t] = append(rs)
+	fg.releases[t] = rs
 	return releaseStrings(rs), lr.String()
 }
 
@@ -217,7 +217,8 @@ func (fg *FyneUI) build() {
 		}
 
 		// Extract section.
-		extDialog := dialog.NewProgressInfinite("Extracting Archive", builder.DownloadPath(), fg.w)
+
+		extDialog := dialog.NewCustom("Extracting Archive", builder.DownloadPath(), widget.NewProgressBarInfinite(), fg.w)
 		extDialog.Show()
 		err = builder.ExtractArchive()
 		extDialog.Hide()
@@ -260,7 +261,7 @@ func (fg *FyneUI) build() {
 	}
 
 	// Finalize section.
-	finDialog := dialog.NewProgressInfinite("Building Final Images", builder.finalDir, fg.w)
+	finDialog := dialog.NewCustom("Building Final Images", builder.finalDir, widget.NewProgressBarInfinite(), fg.w)
 	finDialog.Show()
 	err = builder.MakeFinalImages(imgs[0], bpsSlice)
 	finDialog.Hide()

@@ -41,13 +41,21 @@ type skydialog struct {
 }
 
 func (d *skydialog) wait() {
-	select {
-	case response := <-d.response:
+	// select {
+	// case response := <-d.response:
+	// 	d.responded = true
+	// 	d.win.Hide()
+	// 	if d.callback != nil {
+	// 		d.callback(response)
+	// 	}
+	// }
+	for response := range d.response {
 		d.responded = true
 		d.win.Hide()
 		if d.callback != nil {
 			d.callback(response)
 		}
+
 	}
 }
 
