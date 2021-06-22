@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"sync"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/dialog"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	fyne "fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 // fyne resource mutex
@@ -81,8 +82,9 @@ type pageConfig struct {
 
 func makePage(conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {
 	const totalPages = 3
-	makeButton := func(label string, icon fyne.Resource, fn func(), check bool) *widget.Button {
+	makeButton := func(label string, icon fyne.Resource, fn func(), _ bool) *widget.Button {
 		b := widget.NewButtonWithIcon(label, icon, fn)
+		// maybe bool should be doing this
 		if fn == nil {
 			b.Disable()
 			return b
@@ -97,15 +99,24 @@ func makePage(conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {
 	if conf.NextText != "" {
 		nextText = conf.NextText
 	}
-	footer := fyne.NewContainerWithLayout(layout.NewGridLayout(3),
+	footer := container.New(layout.NewGridLayout(3),
 		makeButton("Previous", theme.MediaSkipPreviousIcon(), conf.Prev, true),
 		makeButton(resetText, theme.ViewRefreshIcon(), conf.Reset, false),
 		makeButton(nextText, theme.MediaSkipNextIcon(), conf.Next, true),
 	)
+
+	makeCards := func(pageTxt string, objs []fyne.CanvasObject, footer *fyne.Container) (b []fyne.CanvasObject) {
+		for _, obj := range objs {
+			b = append(b, widget.NewCard(pageTxt, "", obj))
+		}
+		b = append(b, widget.NewCard(pageTxt, "", widget.NewLabel("")))
+		b = append(b, footer)
+		return b
+	}
+
 	pageTxt := fmt.Sprintf("%s (%d/%d)", conf.Name, conf.I, totalPages)
-	cont := fyne.NewContainerWithLayout(
+	cont := container.New(
 		layout.NewBorderLayout(nil, footer, nil, nil),
-		widget.NewGroupWithScroller(pageTxt, append(objs, widget.NewLabel(""))...),
-		footer)
+		makeCards(pageTxt, objs, footer)...)
 	return cont
 }

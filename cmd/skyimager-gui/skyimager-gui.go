@@ -2,10 +2,7 @@ package main //nolint:typecheck
 
 import (
 	"flag"
-	"fmt"
-	"os"
 
-	"fyne.io/fyne"
 	"github.com/rakyll/statik/fs"
 	"github.com/skycoin/skycoin/src/util/logging"
 
@@ -25,16 +22,16 @@ func init() {
 
 var uiScale float64
 
-func init() {
-	const defaultUIScale = float64(fyne.SettingsScaleAuto)
-	usage := fmt.Sprintf("Scale of FYNE interface. If set to %v, FYNE will scale according to DPI.", defaultUIScale)
-	flag.Float64Var(&uiScale, "scale", defaultUIScale, usage)
-}
+// func init() {
+// 	const defaultUIScale = float64(fyne.SettingsScaleAuto)
+// 	usage := fmt.Sprintf("Scale of FYNE interface. If set to %v, FYNE will scale according to DPI.", defaultUIScale)
+// 	flag.Float64Var(&uiScale, "scale", defaultUIScale, usage)
+// }
 
 func main() {
 	flag.Parse()
 
-	_ = os.Setenv("FYNE_SCALE", fmt.Sprint(uiScale))
+	// _ = os.Setenv("FYNE_SCALE", fmt.Sprint(uiScale))
 
 	assets, err := fs.New()
 	if err != nil {

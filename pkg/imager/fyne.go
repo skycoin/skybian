@@ -11,11 +11,12 @@ import (
 	"path/filepath"
 	"time"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/app"
-	"fyne.io/fyne/dialog"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/widget"
+	fyne "fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 	"github.com/sirupsen/logrus"
 	"github.com/skratchdot/open-golang/open"
 	"github.com/skycoin/dmsg/cipher"
@@ -24,13 +25,18 @@ import (
 	"github.com/skycoin/skybian/pkg/imager/widgets"
 )
 
+// ImgType indicates the OS the timage is being built for
 type ImgType string
 
 const (
-	TypeSkybian     ImgType = "skybian"
-	TypeRaspbian            = "raspbian"
-	TypeRaspbian64          = "raspbian64"
-	TypeSkybianOPi3         = "skybian-opi3"
+	// TypeSkybian represents the OS skybian for orange prime
+	TypeSkybian ImgType = "skybian"
+	// TypeRaspbian represents the OS raspbian
+	TypeRaspbian = "raspbian"
+	// TypeRaspbian64 represents the 64-bit OS raspbian64
+	TypeRaspbian64 = "raspbian64"
+	// TypeSkybianOPi3 represents the OS skybian for orange pi 3
+	TypeSkybianOPi3 = "skybian-opi3"
 )
 
 // DefaultImgNumber is the default number of visor boot parameters to generate.
@@ -147,7 +153,7 @@ func (fg *FyneUI) generateBPS() (string, error) {
 		bpsSlice = append(bpsSlice, vBps)
 	}
 	fg.bps = bpsSlice
-	jsonStr, _ := json.MarshalIndent(bpsSlice, "", "    ")
+	jsonStr, _ := json.MarshalIndent(bpsSlice, "", "    ") //nolint
 	return string(jsonStr), nil
 }
 
@@ -265,12 +271,12 @@ func (fg *FyneUI) build() {
 
 	// Inform user of completion.
 	createREADME(fg.log, filepath.Join(builder.finalDir, "README.txt"))
-	cont := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
+	cont := container.New(layout.NewVBoxLayout(),
 		widget.NewLabel("Successfully built images!"),
 		widget.NewLabel("Images are built to: "+builder.finalDir),
-		widget.NewButton("Open Folder", func() { _ = open.Run(builder.finalDir) }),
+		widget.NewButton("Open Folder", func() { _ = open.Run(builder.finalDir) }), //nolint
 		widget.NewLabel("To flash the images, use a tool such as balenaEtcher:"),
-		widget.NewButton("Open URL", func() { _ = open.Run("https://www.balena.io/etcher") }),
+		widget.NewButton("Open URL", func() { _ = open.Run("https://www.balena.io/etcher") }), //nolint
 	)
 	dialog.ShowCustom("Success", "Close", cont, fg.w)
 }
