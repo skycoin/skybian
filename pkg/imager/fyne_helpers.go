@@ -2,8 +2,8 @@ package imager
 
 import (
 	"fmt"
+	"io/fs"
 	"io/ioutil"
-	"net/http"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -18,7 +18,7 @@ import (
 var frMx = new(sync.Mutex)
 
 type fyneResource struct {
-	f http.File
+	f fs.File
 }
 
 func (fr fyneResource) Name() string {
@@ -33,9 +33,9 @@ func (fr fyneResource) Content() []byte {
 	frMx.Lock()
 	defer frMx.Unlock()
 
-	if _, err := fr.f.Seek(0, 0); err != nil {
-		panic(err)
-	}
+	// if _, err := fr.f.Seek(0, 0); err != nil {
+	// 	panic(err)
+	// }
 	b, err := ioutil.ReadAll(fr.f)
 	if err != nil {
 		panic(err)
@@ -43,7 +43,7 @@ func (fr fyneResource) Content() []byte {
 	return b
 }
 
-func loadResource(assets http.FileSystem, name string) fyne.Resource {
+func loadResource(assets fs.FS, name string) fyne.Resource {
 	f, err := assets.Open(name)
 	if err != nil {
 		panic(err)

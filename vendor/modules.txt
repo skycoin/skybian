@@ -1,6 +1,5 @@
-# fyne.io/fyne v1.4.0
-fyne.io/fyne
 # fyne.io/fyne/v2 v2.0.3
+## explicit
 fyne.io/fyne/v2
 fyne.io/fyne/v2/app
 fyne.io/fyne/v2/canvas
@@ -85,6 +84,7 @@ github.com/goki/freetype/truetype
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
 # github.com/google/go-github v17.0.0+incompatible
+## explicit
 github.com/google/go-github/github
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
@@ -103,6 +103,7 @@ github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
 # github.com/mholt/archiver v3.1.1+incompatible
+## explicit
 github.com/mholt/archiver
 # github.com/mmcloughlin/avo v0.0.0-20200523190732-4439b6b2c061
 github.com/mmcloughlin/avo/attr
@@ -131,8 +132,6 @@ github.com/pierrec/lz4/internal/xxh32
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/rakyll/statik v0.1.7
-github.com/rakyll/statik/fs
 # github.com/shirou/gopsutil v2.20.5+incompatible
 github.com/shirou/gopsutil/cpu
 github.com/shirou/gopsutil/internal/common
@@ -140,10 +139,13 @@ github.com/shirou/gopsutil/mem
 github.com/shirou/gopsutil/net
 github.com/shirou/gopsutil/process
 # github.com/sirupsen/logrus v1.7.0
+## explicit
 github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
+## explicit
 github.com/skratchdot/open-golang/open
 # github.com/skycoin/dmsg v0.0.0-20201216183836-dae8a7acfc14
+## explicit
 github.com/skycoin/dmsg
 github.com/skycoin/dmsg/cipher
 github.com/skycoin/dmsg/disc
@@ -156,6 +158,7 @@ github.com/skycoin/dmsg/servermetrics
 # github.com/skycoin/noise v0.0.0-20180327030543-2492fe189ae6
 github.com/skycoin/noise
 # github.com/skycoin/skycoin v0.27.1
+## explicit
 github.com/skycoin/skycoin/src/cipher
 github.com/skycoin/skycoin/src/cipher/base58
 github.com/skycoin/skycoin/src/cipher/ripemd160
@@ -163,6 +166,7 @@ github.com/skycoin/skycoin/src/cipher/secp256k1-go
 github.com/skycoin/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/skycoin/skycoin/src/util/logging
 # github.com/skycoin/skywire v0.2.4-0.20201222094854-2e3d9f8fb380
+## explicit
 github.com/skycoin/skywire/internal/httpauth
 github.com/skycoin/skywire/internal/netutil
 github.com/skycoin/skywire/internal/packetfilter
@@ -208,6 +212,7 @@ github.com/srwiley/rasterx
 # github.com/stretchr/objx v0.1.1
 github.com/stretchr/objx
 # github.com/stretchr/testify v1.6.1
+## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
 github.com/stretchr/testify/require
@@ -257,6 +262,7 @@ golang.org/x/image/math/f64
 golang.org/x/image/math/fixed
 golang.org/x/image/vector
 # golang.org/x/net v0.0.0-20200625001655-4c5254603344
+## explicit
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/html

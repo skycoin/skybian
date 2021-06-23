@@ -67,9 +67,7 @@ run-skyimager: ## Run skyimager
 
 run-skyimager-gui: ## Builds skyimager GUI
 	mkdir -p ./bin
-	${OPTS} GOBIN=${PWD}/bin go get github.com/rakyll/statik
-	./bin/statik -src=./cmd/skyimager-gui/assets -dest ./cmd/skyimager-gui -f
-	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -debug
+	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go
 
 tag: ## Make git tag using VERSION in build.conf
 	./tag.sh

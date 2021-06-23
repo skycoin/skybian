@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
@@ -45,7 +45,7 @@ const DefaultImgNumber = 1
 // FyneUI is a UI to handle the image creation process (using Fyne).
 type FyneUI struct {
 	log    logrus.FieldLogger
-	assets http.FileSystem
+	assets fs.FS
 
 	// Fyne parts.
 	app fyne.App
@@ -70,10 +70,10 @@ type FyneUI struct {
 }
 
 // NewFyneUI creates a new Fyne UI.
-func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
+func NewFyneUI(log logrus.FieldLogger, icon *fyne.StaticResource) *FyneUI {
 	fg := new(FyneUI)
 	fg.log = log
-	fg.assets = assets
+	// fg.assets = assets
 
 	fg.locations = []string{
 		"From remote server",
@@ -82,7 +82,7 @@ func NewFyneUI(log logrus.FieldLogger, assets http.FileSystem) *FyneUI {
 	fg.resetPage2Values()
 
 	fa := app.New()
-	fa.SetIcon(loadResource(fg.assets, "/icon.png"))
+	fa.SetIcon(icon)
 	fg.app = fa
 
 	w := fa.NewWindow("skyimager-gui")
