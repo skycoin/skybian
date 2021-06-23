@@ -108,11 +108,13 @@ func makePage(conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {
 	header := container.New(layout.NewGridLayout(1),
 		widget.NewLabel(pageTxt),
 	)
-
+	content := container.NewVScroll(container.NewVBox(objs...))
+	if len(objs) == 1 {
+		content = container.NewVScroll(container.NewGridWithRows(len(objs), objs...))
+	}
 	cont := container.New(
 		layout.NewBorderLayout(header, footer, nil, nil),
-		container.NewScroll(container.NewVBox(objs...)),
-		footer, header,
+		content, footer, header,
 	)
 	return cont
 }
