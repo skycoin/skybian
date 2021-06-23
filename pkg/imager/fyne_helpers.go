@@ -104,19 +104,15 @@ func makePage(conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {
 		makeButton(resetText, theme.ViewRefreshIcon(), conf.Reset, false),
 		makeButton(nextText, theme.MediaSkipNextIcon(), conf.Next, true),
 	)
-
-	makeCards := func(pageTxt string, objs []fyne.CanvasObject, footer *fyne.Container) (b []fyne.CanvasObject) {
-		for _, obj := range objs {
-			b = append(b, widget.NewCard(pageTxt, "", obj))
-		}
-		b = append(b, widget.NewCard(pageTxt, "", widget.NewLabel("")))
-		b = append(b, footer)
-		return b
-	}
-
 	pageTxt := fmt.Sprintf("%s (%d/%d)", conf.Name, conf.I, totalPages)
+	header := container.New(layout.NewGridLayout(1),
+		widget.NewLabel(pageTxt),
+	)
+
 	cont := container.New(
-		layout.NewBorderLayout(nil, footer, nil, nil),
-		makeCards(pageTxt, objs, footer)...)
+		layout.NewBorderLayout(header, footer, nil, nil),
+		container.NewVScroll(container.NewVBox(objs...)),
+		footer, header,
+	)
 	return cont
 }
