@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	fyne "fyne.io/fyne/v2"
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -111,7 +111,7 @@ func makePage(conf pageConfig, objs ...fyne.CanvasObject) fyne.CanvasObject {
 
 	cont := container.New(
 		layout.NewBorderLayout(header, footer, nil, nil),
-		container.NewVScroll(container.NewVBox(objs...)),
+		container.NewScroll(container.NewVBox(objs...)),
 		footer, header,
 	)
 	return cont
