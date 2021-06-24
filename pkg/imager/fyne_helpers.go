@@ -2,9 +2,6 @@ package imager
 
 import (
 	"fmt"
-	"io/fs"
-	"io/ioutil"
-	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -13,43 +10,6 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
-
-// fyne resource mutex
-var frMx = new(sync.Mutex)
-
-type fyneResource struct {
-	f fs.File
-}
-
-func (fr fyneResource) Name() string {
-	fi, err := fr.f.Stat()
-	if err != nil {
-		panic(err)
-	}
-	return fi.Name()
-}
-
-func (fr fyneResource) Content() []byte {
-	frMx.Lock()
-	defer frMx.Unlock()
-
-	// if _, err := fr.f.Seek(0, 0); err != nil {
-	// 	panic(err)
-	// }
-	b, err := ioutil.ReadAll(fr.f)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func loadResource(assets fs.FS, name string) fyne.Resource {
-	f, err := assets.Open(name)
-	if err != nil {
-		panic(err)
-	}
-	return &fyneResource{f: f}
-}
 
 func newEntry(s string, fn func(s string)) *widget.Entry {
 	entry := widget.NewEntry()

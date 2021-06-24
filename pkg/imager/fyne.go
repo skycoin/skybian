@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
@@ -44,8 +43,7 @@ const DefaultImgNumber = 1
 
 // FyneUI is a UI to handle the image creation process (using Fyne).
 type FyneUI struct {
-	log    logrus.FieldLogger
-	assets fs.FS
+	log logrus.FieldLogger
 
 	// Fyne parts.
 	app fyne.App
