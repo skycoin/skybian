@@ -9,13 +9,27 @@ GOBIN=$(pwd)/bin
 export GOBIN
 
 # Run fyne-cross
-
 go get github.com/fyne-io/fyne-cross || exit 1
 
 ./bin/fyne-cross \
-  -appID com.skycoin.skyimager \
-  -targets=linux/amd64,darwin/amd64,windows/amd64 \
-  -icon=./cmd/skyimager-gui/assets/icon.png -v \
+  linux \
+  -app-id com.skycoin.skyimager \
+  -arch amd64 \
+  -icon ./cmd/skyimager-gui/static/icon.png \
+  ./cmd/skyimager-gui || exit 1
+  
+./bin/fyne-cross \
+  windows \
+  -app-id com.skycoin.skyimager \
+  -arch amd64 \
+  -icon ./cmd/skyimager-gui/static/icon.png \
+  ./cmd/skyimager-gui || exit 1
+
+./bin/fyne-cross \
+  darwin \
+  -app-id com.skycoin.skyimager \
+  -arch amd64 \
+  -icon ./cmd/skyimager-gui/static/icon.png \
   ./cmd/skyimager-gui || exit 1
 
 # Compress bins.
