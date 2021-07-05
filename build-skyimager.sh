@@ -10,7 +10,7 @@ export GOBIN
 
 # Run fyne-cross
 
-go get github.com/lucor/fyne-cross/cmd/fyne-cross || exit 1
+go get github.com/fyne-io/fyne-cross || exit 1
 
 ./bin/fyne-cross \
   -appID com.skycoin.skyimager \

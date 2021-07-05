@@ -4,8 +4,9 @@ import (
 	_ "embed"
 
 	"fyne.io/fyne/v2"
-	"github.com/skycoin/skybian/pkg/imager"
 	"github.com/skycoin/skycoin/src/util/logging"
+
+	"github.com/skycoin/skybian/pkg/imager"
 )
 
 //go:embed static/icon.png

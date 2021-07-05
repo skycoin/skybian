@@ -46,6 +46,8 @@ github.com/dsnet/compress/internal/prefix
 github.com/fredbi/uri
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
+# github.com/fyne-io/fyne-cross v1.1.0
+## explicit
 # github.com/fyne-io/mobile v0.1.3-0.20210412090810-650a3139866a
 github.com/fyne-io/mobile/app
 github.com/fyne-io/mobile/app/internal/callfn

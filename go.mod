@@ -5,6 +5,7 @@ go 1.16
 
 require (
 	fyne.io/fyne/v2 v2.0.3
+	github.com/fyne-io/fyne-cross v1.1.0 // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/sirupsen/logrus v1.7.0
