@@ -35,7 +35,7 @@ go get github.com/fyne-io/fyne-cross || exit 1
 
 # Compress bins.
 FYNE=$(pwd)/fyne-cross/bin
-TARGETS=("linux-amd64" "darwin-amd64" "windows-amd64")
+TARGETS=("linux-amd64" "windows-amd64")
 
 for target in "${TARGETS[@]}"; do
   cd "$FYNE" || exit 1
