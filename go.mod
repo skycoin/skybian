@@ -14,9 +14,7 @@ require (
 	github.com/skycoin/skycoin v0.27.1
 	github.com/skycoin/skywire v0.2.4-0.20201222094854-2e3d9f8fb380
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
-	golang.org/x/tools v0.1.4 // indirect
+	golang.org/x/net v0.0.0-20200625001655-4c5254603344
 )
 
 // Uncomment it for tests with alternative branches and run `make dep`
