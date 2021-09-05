@@ -20,12 +20,18 @@ go get github.com/lucor/fyne-cross/cmd/fyne-cross || exit 1
 
 # Compress bins.
 FYNE=$(pwd)/fyne-cross/bin
-TARGETS=("linux-amd64" "darwin-amd64" "windows-amd64")
-
+TARGETS=("linux-amd64")
 for target in "${TARGETS[@]}"; do
   cd "$FYNE" || exit 1
   dst="./skyimager-$target-$VERSION"
   tar -czf "$dst.tar.gz" "$target"/* || exit 1
+done
+# use .zip for windows and mac
+TARGETS=("darwin-amd64" "windows-amd64")
+for target in "${TARGETS[@]}"; do
+  cd "$FYNE" || exit 1
+  dst="./skyimager-$target-$VERSION"
+  zip "$dst.zip" "$target"/* || exit 1
 done
 
 cd "$(pwd)" || 0
