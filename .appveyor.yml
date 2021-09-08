@@ -65,7 +65,8 @@ for:
         - job_name: Windows
 
     install:
-      - choco install make
+      - choco install make -y
+      - choco install mingw -y
       - go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.0
     
     build_script:
