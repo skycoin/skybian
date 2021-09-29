@@ -1,4 +1,4 @@
-# fyne.io/fyne/v2 v2.0.3
+# fyne.io/fyne/v2 v2.1.0
 ## explicit
 fyne.io/fyne/v2
 fyne.io/fyne/v2/app
@@ -11,10 +11,23 @@ fyne.io/fyne/v2/driver/mobile
 fyne.io/fyne/v2/internal
 fyne.io/fyne/v2/internal/animation
 fyne.io/fyne/v2/internal/app
+fyne.io/fyne/v2/internal/async
 fyne.io/fyne/v2/internal/cache
+fyne.io/fyne/v2/internal/color
 fyne.io/fyne/v2/internal/driver
+fyne.io/fyne/v2/internal/driver/common
 fyne.io/fyne/v2/internal/driver/glfw
-fyne.io/fyne/v2/internal/driver/gomobile
+fyne.io/fyne/v2/internal/driver/mobile
+fyne.io/fyne/v2/internal/driver/mobile/app
+fyne.io/fyne/v2/internal/driver/mobile/app/internal/callfn
+fyne.io/fyne/v2/internal/driver/mobile/event/key
+fyne.io/fyne/v2/internal/driver/mobile/event/lifecycle
+fyne.io/fyne/v2/internal/driver/mobile/event/paint
+fyne.io/fyne/v2/internal/driver/mobile/event/size
+fyne.io/fyne/v2/internal/driver/mobile/event/touch
+fyne.io/fyne/v2/internal/driver/mobile/geom
+fyne.io/fyne/v2/internal/driver/mobile/gl
+fyne.io/fyne/v2/internal/driver/mobile/mobileinit
 fyne.io/fyne/v2/internal/painter
 fyne.io/fyne/v2/internal/painter/gl
 fyne.io/fyne/v2/internal/painter/software
@@ -46,26 +59,14 @@ github.com/dsnet/compress/internal/prefix
 github.com/fredbi/uri
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
-# github.com/fyne-io/fyne-cross v1.1.0
-## explicit
-# github.com/fyne-io/mobile v0.1.3-0.20210412090810-650a3139866a
-github.com/fyne-io/mobile/app
-github.com/fyne-io/mobile/app/internal/callfn
-github.com/fyne-io/mobile/event/key
-github.com/fyne-io/mobile/event/lifecycle
-github.com/fyne-io/mobile/event/paint
-github.com/fyne-io/mobile/event/size
-github.com/fyne-io/mobile/event/touch
-github.com/fyne-io/mobile/exp/f32
-github.com/fyne-io/mobile/geom
-github.com/fyne-io/mobile/gl
-github.com/fyne-io/mobile/internal/mobileinit
 # github.com/go-chi/chi v4.1.2+incompatible
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
-# github.com/go-gl/gl v0.0.0-20190320180904-bf2b1f2f34d7
+# github.com/go-gl/gl v0.0.0-20210813123233-e4099ee2221f
 github.com/go-gl/gl/v3.1/gles2
+github.com/go-gl/gl/v3.1/gles2/KHR
 github.com/go-gl/gl/v3.2-core/gl
+github.com/go-gl/gl/v3.2-core/gl/KHR
 # github.com/go-gl/glfw/v3.3/glfw v0.0.0-20210410170116-ea3d685f79fb
 github.com/go-gl/glfw/v3.3/glfw
 github.com/go-gl/glfw/v3.3/glfw/glfw/deps
@@ -74,7 +75,7 @@ github.com/go-gl/glfw/v3.3/glfw/glfw/deps/mingw
 github.com/go-gl/glfw/v3.3/glfw/glfw/deps/vs2008
 github.com/go-gl/glfw/v3.3/glfw/glfw/include/GLFW
 github.com/go-gl/glfw/v3.3/glfw/glfw/src
-# github.com/go-ole/go-ole v1.2.4
+# github.com/go-ole/go-ole v1.2.5
 github.com/go-ole/go-ole
 github.com/go-ole/go-ole/oleutil
 # github.com/godbus/dbus/v5 v5.0.4
@@ -237,6 +238,14 @@ github.com/valyala/histogram
 github.com/xi2/xz
 # github.com/xtaci/kcp-go v5.4.20+incompatible
 github.com/xtaci/kcp-go
+# github.com/yuin/goldmark v1.3.8
+github.com/yuin/goldmark
+github.com/yuin/goldmark/ast
+github.com/yuin/goldmark/parser
+github.com/yuin/goldmark/renderer
+github.com/yuin/goldmark/renderer/html
+github.com/yuin/goldmark/text
+github.com/yuin/goldmark/util
 # go.etcd.io/bbolt v1.3.5
 go.etcd.io/bbolt
 # golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
@@ -263,7 +272,9 @@ golang.org/x/image/font
 golang.org/x/image/math/f64
 golang.org/x/image/math/fixed
 golang.org/x/image/vector
-# golang.org/x/net v0.0.0-20200625001655-4c5254603344
+# golang.org/x/mod v0.4.2
+golang.org/x/mod/semver
+# golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -275,8 +286,9 @@ golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/nettest
-# golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e
+# golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
 golang.org/x/sys/cpu
+golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
@@ -284,7 +296,7 @@ golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
 # golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 golang.org/x/term
-# golang.org/x/text v0.3.2
+# golang.org/x/text v0.3.3
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -302,7 +314,7 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-# golang.org/x/tools v0.0.0-20200425043458-8463f397d07c
+# golang.org/x/tools v0.1.5
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
 golang.org/x/tools/go/internal/packagesdriver
@@ -313,7 +325,8 @@ golang.org/x/tools/internal/event/keys
 golang.org/x/tools/internal/event/label
 golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/packagesinternal
-# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+golang.org/x/tools/internal/typesinternal
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
