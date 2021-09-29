@@ -41,6 +41,10 @@ const (
 // DefaultImgNumber is the default number of visor boot parameters to generate.
 const DefaultImgNumber = 1
 
+//
+var lrCache = make(map[ImgType]*Release)
+var rsCache = make(map[ImgType][]Release)
+
 // FyneUI is a UI to handle the image creation process (using Fyne).
 type FyneUI struct {
 	log logrus.FieldLogger
@@ -99,6 +103,7 @@ func (fg *FyneUI) Run() {
 }
 
 func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
+	var err error
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
@@ -107,7 +112,9 @@ func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 	d := dialog.NewCustom(title, msg, widget.NewProgressBarInfinite(), fg.w)
 
 	d.Show()
-	rs, lr, err := ListReleases(ctx, t, fg.log)
+	if lrCache[t] == nil && rsCache[t] == nil {
+		rsCache[t], lrCache[t], err = ListReleases(ctx, t, fg.log)
+	}
 	d.Hide()
 
 	if err != nil {
@@ -121,8 +128,8 @@ func (fg *FyneUI) listBaseImgs(t ImgType) ([]string, string) {
 		return nil, ""
 	}
 
-	fg.releases[t] = rs
-	return releaseStrings(rs), lr.String()
+	fg.releases[t] = rsCache[t]
+	return releaseStrings(rsCache[t]), lrCache[t].String()
 }
 
 func (fg *FyneUI) generateBPS() (string, error) {
