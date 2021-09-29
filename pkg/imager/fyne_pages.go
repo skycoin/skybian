@@ -67,6 +67,31 @@ func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
 	return box
 }
 
+func (fg *FyneUI) makeFolderPicker() fyne.CanvasObject {
+	fsWkDir := widget.NewEntry()
+	fsWkDir.SetText(fg.wkDir)
+	fsWkDir.OnChanged = func(s string) {
+		fg.wkDir = s
+		fg.log.Debugf("Set: fg.wkDir = %v", s)
+	}
+	d := dialog.NewFolderOpen(func(f fyne.ListableURI, err error) {
+		if err != nil {
+			fg.log.Error(err)
+			return
+		}
+		if f == nil {
+			return
+		}
+		uri := f.Path()
+		// URI includes file:// scheme, and there is no other way to retrieve full file path
+		fg.wkDir = strings.TrimPrefix(uri, "file://")
+		fsWkDir.SetText(fg.wkDir)
+	}, fg.w)
+	btn := widget.NewButton("", d.Show)
+	box := container.NewPadded(fsWkDir, btn)
+	return box
+}
+
 // remoteImgSelect is a wrapper around select widget with img type
 // and label attached to it
 type remoteImgSelect struct {
@@ -99,7 +124,7 @@ func (fg *FyneUI) showRemoteSelect(sel *widget.Select) {
 
 // Page2 returns the canvas that draws page 2 of the Fyne interface.
 func (fg *FyneUI) Page2() fyne.CanvasObject {
-	wkDir := newLinkedEntry(&fg.wkDir)
+	wkDirPicker := fg.makeFolderPicker()
 
 	fsImgPicker := fg.makeFilePicker()
 	fsImgPicker.Hide()
@@ -124,7 +149,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			}
 		}
 	})
-	remoteTypeSelect.SetSelected(labels[0])
+	remoteTypeSelect.Hide()
 	imgLoc := widget.NewRadioGroup(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
@@ -138,6 +163,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			remoteTypeSelect.Hide()
 		}
 	})
+	imgLoc.Horizontal = true
 	imgLoc.SetSelected(fg.imgLoc)
 	imgLoc.OnChanged(fg.imgLoc)
 
@@ -268,7 +294,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		},
 	}
 	return makePage(conf,
-		widget.NewLabel("Work Directory:"), wkDir,
+		widget.NewLabel("Work Directory:"), wkDirPicker,
 		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect,
 		remSky.widget, remSky3.widget, remRasp32.widget, remRasp64.widget,
 		widget.NewLabel("Gateway IP:"), gwIP,
