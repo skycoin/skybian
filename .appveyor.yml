@@ -1,22 +1,20 @@
 version: "{build}"
 
+stack: go 1.16.7
+
 environment:
   matrix:
   # For regular jobs, such as push, pr and etc.
   - job_name: Linux
     appveyor_build_worker_image: ubuntu1804
-  - job_name: MacOS
-    appveyor_build_worker_image: macos
-  - job_name: Windows
-    appveyor_build_worker_image: Visual Studio 2019
+  # - job_name: MacOS
+  #   appveyor_build_worker_image: macos
+  # - job_name: Windows
+  #   appveyor_build_worker_image: Visual Studio 2019
   
   # For release, by pushing tag
-  # - job_name: linux-amd64
-  #   appveyor_build_worker_image: ubuntu1804
-  # - job_name: darwin-amd64
-  #   appveyor_build_worker_image: macos
-  # - job_name: windows-amd64
-  #   appveyor_build_worker_image: Visual Studio 2019
+  - job_name: release
+    appveyor_build_worker_image: ubuntu1804
   
 for:
   - # Linux
@@ -78,73 +76,44 @@ for:
       - make build-skybian-img BOARD=rpi64 ARCH=arm64
       - make build-skyimager-gui
 
-  # - # Linux and MacOS (Release)
-  #   skip_non_tags: true
-  #   matrix:
-  #     only:
-  #       - job_name: linux-arm
-  #       - job_name: linux-arm64
-  #       - job_name: linux-amd64
-  #       - job_name: linux-386
-  #       - job_name: darwin-amd64
+  - # Release
+    skip_non_tags: true
+    matrix:
+      only:
+        - job_name: release
 
-  #   install:
-  #     - make dep
-  #     - ci_scripts/create-ip-aliases.sh
-  #     - export GOARM=7
+    install:
+      - sudo apt update
+      - sudo apt install -y gcc libgl1-mesa-dev xorg-dev
+      - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
     
-  #   build_script:
-  #     - make build
+    build_script:
+      - make build-skybian-img 
+      - make build-skybian-img BOARD=opi3 ARCH=arm64
+      - make build-skybian-img BOARD=rpi ARCH=armhf
+      - make build-skybian-img BOARD=rpi64 ARCH=arm64
+      - make build-skyimager-gui
 
-  #   after_build:
-  #     - tar -cvzf skywire-$APPVEYOR_REPO_TAG_NAME-$APPVEYOR_JOB_NAME.tar.gz ./apps/* ./skywire-visor ./skywire-cli ./setup-node
+    after_build:
+      - mkdir artifacts
+      - ls output
+      - ls output/prime/final
+      - cp output/prime/final/*.tar.gz artifacts/
+      - cp output/opi3/final/*.tar.gz artifacts/
+      - cp output/rpi/final/*.tar.gz artifacts/
+      - cp output/rpi64/final/*.tar.gz artifacts/
+      - cp fyne-cross/bin/*.tar.gz artifacts/
 
-  #   artifacts:
-  #     - path: skywire-$(APPVEYOR_REPO_TAG_NAME)-$(APPVEYOR_JOB_NAME).tar.gz
-  #       name: deploy
+    artifacts:
+      - path: artifacts/*.tar.gz
+        name: deploy
 
-  #   deploy:
-  #     - provider: GitHub
-  #       release: $(APPVEYOR_REPO_TAG_NAME)
-  #       auth_token:
-  #         secure: ZrbNBE2wSfGvHzEq5GqEAUmNy7myDIl7KK05CKlZdQfieV7XdIAPXpkdHNEyZbvT
-  #       draft: true
-  #       artifact: deploy
-  #       on:
-  #         APPVEYOR_REPO_TAG: true
-          
-  # - # Windows (Release)
-  #   skip_non_tags: true
-  #   matrix:
-  #     only:
-  #       - job_name: windows-amd64
-
-  #   environment:
-  #     matrix:
-  #       - GOARCH: amd64
-
-  #   install:
-  #     - sh: curl -OL "https://golang.org/dl/go1.16.6.darwin-amd64.tar.gz" && sudo tar -C /usr/local -xzf go1.16.6.darwin-amd64.tar.gz && export GOPATH=$HOME/go && export GOROOT=/usr/local/go && export PATH=$GOROOT/bin:$GOPATH/bin:$PATH
-  #     - sh: ci_scripts/create-ip-aliases.sh
-  #     - cmd: choco install make
-  #     - make dep
-  
-  #   build_script:
-  #     - make build
-
-  #   after_build:
-  #     - sh: tar -cvzf skywire-$APPVEYOR_REPO_TAG_NAME-$APPVEYOR_JOB_NAME.tar.gz ./apps/* ./skywire-visor ./skywire-cli ./setup-node
-
-  #   artifacts:
-  #     - path: skywire-$(APPVEYOR_REPO_TAG_NAME)-$(APPVEYOR_JOB_NAME).tar.gz
-  #       name: deploy
-        
-  #   deploy:
-  #     - provider: GitHub
-  #       release: $(APPVEYOR_REPO_TAG_NAME)
-  #       auth_token:
-  #         secure: ZrbNBE2wSfGvHzEq5GqEAUmNy7myDIl7KK05CKlZdQfieV7XdIAPXpkdHNEyZbvT
-  #       draft: true
-  #       artifact: deploy
-  #       on:
-  #         APPVEYOR_REPO_TAG: true
+    deploy:
+      - provider: GitHub
+        release: $(APPVEYOR_REPO_TAG_NAME)
+        auth_token:
+          secure: ZrbNBE2wSfGvHzEq5GqEAUmNy7myDIl7KK05CKlZdQfieV7XdIAPXpkdHNEyZbvT
+        draft: true
+        artifact: deploy
+        on:
+          APPVEYOR_REPO_TAG: true
