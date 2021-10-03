@@ -7,10 +7,6 @@ environment:
   # For regular jobs, such as push, pr and etc.
   - job_name: Linux
     appveyor_build_worker_image: ubuntu1804
-  # - job_name: MacOS
-  #   appveyor_build_worker_image: macos
-  # - job_name: Windows
-  #   appveyor_build_worker_image: Visual Studio 2019
   
   # For release, by pushing tag
   - job_name: release
@@ -25,48 +21,9 @@ for:
 
     install:
       - sudo apt update
-      - sudo apt install -y gcc libgl1-mesa-dev xorg-dev
-      - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+      - sudo apt install -y gcc libgl1-mesa-dev xorg-dev p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.42.0
    
-    build_script:
-      - make test # Can be 'make check' once that is working.
-      - make integration
-      - make build-skybian-img 
-      - make build-skybian-img BOARD=opi3 ARCH=arm64
-      - make build-skybian-img BOARD=rpi ARCH=armhf
-      - make build-skybian-img BOARD=rpi64 ARCH=arm64
-      - make build-skyimager-gui
-  
-  - # MacOS
-    skip_tags: true
-    matrix:
-      only:
-        - job_name: MacOS
-
-    install:
-      - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.42.0
-   
-    build_script:
-      - make test # Can be 'make check' once that is working.
-      - make integration
-      - make build-skybian-img 
-      - make build-skybian-img BOARD=opi3 ARCH=arm64
-      - make build-skybian-img BOARD=rpi ARCH=armhf
-      - make build-skybian-img BOARD=rpi64 ARCH=arm64
-      - make build-skyimager-gui
-
-  - # Windows
-    skip_tags: true
-    matrix:
-      only:
-        - job_name: Windows
-
-    install:
-      - choco install make -y
-      - choco install mingw -y
-      - go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.0
-    
     build_script:
       - make test # Can be 'make check' once that is working.
       - make integration
@@ -84,8 +41,7 @@ for:
 
     install:
       - sudo apt update
-      - sudo apt install -y gcc libgl1-mesa-dev xorg-dev
-      - sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+      - sudo apt install -y gcc libgl1-mesa-dev xorg-dev p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
     
     build_script:
       - make build-skybian-img 
@@ -96,8 +52,6 @@ for:
 
     after_build:
       - mkdir artifacts
-      - ls output
-      - ls output/prime/final
       - cp output/prime/final/*.tar.gz artifacts/
       - cp output/opi3/final/*.tar.gz artifacts/
       - cp output/rpi/final/*.tar.gz artifacts/
