@@ -16,14 +16,14 @@ go get github.com/fyne-io/fyne-cross || exit 1
   -app-id com.skycoin.skyimager \
   -arch amd64 \
   -icon ./cmd/skyimager-gui/static/icon.png \
-  ./cmd/skyimager-gui || exit 1
+  ./cmd/skyimager-gui
   
-# ./bin/fyne-cross \
-#   windows \
-#   -app-id com.skycoin.skyimager \
-#   -arch amd64 \
-#   -icon ./cmd/skyimager-gui/static/icon.png \
-#   ./cmd/skyimager-gui || exit 1
+./bin/fyne-cross \
+  windows \
+  -app-id com.skycoin.skyimager \
+  -arch amd64 \
+  -icon ./cmd/skyimager-gui/static/icon.png \
+  ./cmd/skyimager-gui || exit 1
 
 # Darwin image needs to be built seperatly and can oly be with xcode
 # ./bin/fyne-cross \
