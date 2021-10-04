@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # fyne.io/fyne/v2 v2.1.0
 ## explicit
 fyne.io/fyne/v2
@@ -41,34 +40,7 @@ fyne.io/fyne/v2/storage/repository
 fyne.io/fyne/v2/test
 fyne.io/fyne/v2/theme
 fyne.io/fyne/v2/widget
-# github.com/AudriusButkevicius/pfilter v0.0.0-20190627213056-c55ef6137fc6
-=======
-# fyne.io/fyne v1.4.0
-fyne.io/fyne
-fyne.io/fyne/app
-fyne.io/fyne/canvas
-fyne.io/fyne/container
-fyne.io/fyne/dialog
-fyne.io/fyne/driver/desktop
-fyne.io/fyne/driver/mobile
-fyne.io/fyne/internal
-fyne.io/fyne/internal/app
-fyne.io/fyne/internal/cache
-fyne.io/fyne/internal/driver
-fyne.io/fyne/internal/driver/glfw
-fyne.io/fyne/internal/driver/gomobile
-fyne.io/fyne/internal/painter
-fyne.io/fyne/internal/painter/gl
-fyne.io/fyne/internal/painter/software
-fyne.io/fyne/internal/test
-fyne.io/fyne/internal/widget
-fyne.io/fyne/layout
-fyne.io/fyne/storage
-fyne.io/fyne/test
-fyne.io/fyne/theme
-fyne.io/fyne/widget
 # github.com/AudriusButkevicius/pfilter v0.0.0-20210515103320-4b4b86609d51
->>>>>>> develop
 github.com/AudriusButkevicius/pfilter
 # github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 github.com/StackExchange/wmi
@@ -89,6 +61,8 @@ github.com/dsnet/compress/internal/prefix
 github.com/fredbi/uri
 # github.com/fsnotify/fsnotify v1.4.9
 github.com/fsnotify/fsnotify
+# github.com/fyne-io/fyne-cross v1.1.1
+## explicit
 # github.com/go-chi/chi v4.1.2+incompatible
 github.com/go-chi/chi
 github.com/go-chi/chi/middleware
@@ -165,17 +139,8 @@ github.com/pierrec/lz4/internal/xxh32
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-<<<<<<< HEAD
-# github.com/shirou/gopsutil v2.20.5+incompatible
-github.com/shirou/gopsutil/cpu
-github.com/shirou/gopsutil/internal/common
-github.com/shirou/gopsutil/mem
-github.com/shirou/gopsutil/net
-github.com/shirou/gopsutil/process
-# github.com/sirupsen/logrus v1.7.0
-## explicit
-=======
 # github.com/rakyll/statik v0.1.7
+## explicit
 github.com/rakyll/statik/fs
 # github.com/shirou/gopsutil/v3 v3.21.4
 github.com/shirou/gopsutil/v3/cpu
@@ -184,17 +149,13 @@ github.com/shirou/gopsutil/v3/mem
 github.com/shirou/gopsutil/v3/net
 github.com/shirou/gopsutil/v3/process
 # github.com/sirupsen/logrus v1.8.1
->>>>>>> develop
+## explicit
 github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 ## explicit
 github.com/skratchdot/open-golang/open
-<<<<<<< HEAD
-# github.com/skycoin/dmsg v0.0.0-20201216183836-dae8a7acfc14
-## explicit
-=======
 # github.com/skycoin/dmsg v0.0.0-20210920120709-00d42a07e45a
->>>>>>> develop
+## explicit
 github.com/skycoin/dmsg
 github.com/skycoin/dmsg/buildinfo
 github.com/skycoin/dmsg/cipher
@@ -215,12 +176,8 @@ github.com/skycoin/skycoin/src/cipher/ripemd160
 github.com/skycoin/skycoin/src/cipher/secp256k1-go
 github.com/skycoin/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/skycoin/skycoin/src/util/logging
-<<<<<<< HEAD
-# github.com/skycoin/skywire v0.2.4-0.20201222094854-2e3d9f8fb380
-## explicit
-=======
 # github.com/skycoin/skywire v0.5.0-rc1.0.20210928121629-42a9d6fc03f1
->>>>>>> develop
+## explicit
 github.com/skycoin/skywire/internal/httpauth
 github.com/skycoin/skywire/internal/netutil
 github.com/skycoin/skywire/internal/packetfilter
@@ -326,10 +283,7 @@ golang.org/x/image/vector
 # golang.org/x/mod v0.4.2
 golang.org/x/mod/semver
 # golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
-<<<<<<< HEAD
 ## explicit
-=======
->>>>>>> develop
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/html
@@ -339,12 +293,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-<<<<<<< HEAD
-golang.org/x/net/nettest
 # golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c
-=======
-# golang.org/x/sys v0.0.0-20210608053332-aa57babbf139
->>>>>>> develop
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
@@ -354,11 +303,7 @@ golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
 # golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 golang.org/x/term
-<<<<<<< HEAD
-# golang.org/x/text v0.3.3
-=======
 # golang.org/x/text v0.3.6
->>>>>>> develop
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -376,11 +321,7 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-<<<<<<< HEAD
 # golang.org/x/tools v0.1.5
-=======
-# golang.org/x/tools v0.1.2
->>>>>>> develop
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
 golang.org/x/tools/go/internal/packagesdriver
