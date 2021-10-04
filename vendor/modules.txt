@@ -22,12 +22,14 @@ fyne.io/fyne/storage
 fyne.io/fyne/test
 fyne.io/fyne/theme
 fyne.io/fyne/widget
-# github.com/AudriusButkevicius/pfilter v0.0.0-20190627213056-c55ef6137fc6
+# github.com/AudriusButkevicius/pfilter v0.0.0-20210515103320-4b4b86609d51
 github.com/AudriusButkevicius/pfilter
 # github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 github.com/StackExchange/wmi
-# github.com/VictoriaMetrics/metrics v1.12.3
+# github.com/VictoriaMetrics/metrics v1.17.2
 github.com/VictoriaMetrics/metrics
+# github.com/ccding/go-stun/stun v0.0.0-20200514191101-4dc67bcdb029
+github.com/ccding/go-stun/stun
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/dsnet/compress v0.0.1
@@ -82,7 +84,7 @@ github.com/google/go-github/github
 github.com/google/go-querystring/query
 # github.com/google/uuid v1.1.1
 github.com/google/uuid
-# github.com/json-iterator/go v1.1.10
+# github.com/json-iterator/go v1.1.11
 github.com/json-iterator/go
 # github.com/klauspost/cpuid v1.2.4
 github.com/klauspost/cpuid
@@ -90,7 +92,7 @@ github.com/klauspost/cpuid
 github.com/klauspost/reedsolomon
 # github.com/mattn/go-colorable v0.1.8
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.12
+# github.com/mattn/go-isatty v0.0.13
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
@@ -125,18 +127,19 @@ github.com/pkg/errors
 github.com/pmezard/go-difflib/difflib
 # github.com/rakyll/statik v0.1.7
 github.com/rakyll/statik/fs
-# github.com/shirou/gopsutil v2.20.5+incompatible
-github.com/shirou/gopsutil/cpu
-github.com/shirou/gopsutil/internal/common
-github.com/shirou/gopsutil/mem
-github.com/shirou/gopsutil/net
-github.com/shirou/gopsutil/process
-# github.com/sirupsen/logrus v1.7.0
+# github.com/shirou/gopsutil/v3 v3.21.4
+github.com/shirou/gopsutil/v3/cpu
+github.com/shirou/gopsutil/v3/internal/common
+github.com/shirou/gopsutil/v3/mem
+github.com/shirou/gopsutil/v3/net
+github.com/shirou/gopsutil/v3/process
+# github.com/sirupsen/logrus v1.8.1
 github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 github.com/skratchdot/open-golang/open
-# github.com/skycoin/dmsg v0.0.0-20201216183836-dae8a7acfc14
+# github.com/skycoin/dmsg v0.0.0-20210920120709-00d42a07e45a
 github.com/skycoin/dmsg
+github.com/skycoin/dmsg/buildinfo
 github.com/skycoin/dmsg/cipher
 github.com/skycoin/dmsg/disc
 github.com/skycoin/dmsg/httputil
@@ -154,7 +157,7 @@ github.com/skycoin/skycoin/src/cipher/ripemd160
 github.com/skycoin/skycoin/src/cipher/secp256k1-go
 github.com/skycoin/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/skycoin/skycoin/src/util/logging
-# github.com/skycoin/skywire v0.2.4-0.20201222094854-2e3d9f8fb380
+# github.com/skycoin/skywire v0.5.0-rc1.0.20210928121629-42a9d6fc03f1
 github.com/skycoin/skywire/internal/httpauth
 github.com/skycoin/skywire/internal/netutil
 github.com/skycoin/skywire/internal/packetfilter
@@ -165,6 +168,7 @@ github.com/skycoin/skywire/pkg/app/appnet
 github.com/skycoin/skywire/pkg/app/appserver
 github.com/skycoin/skywire/pkg/app/idmanager
 github.com/skycoin/skywire/pkg/app/launcher
+github.com/skycoin/skywire/pkg/dmsgc
 github.com/skycoin/skywire/pkg/restart
 github.com/skycoin/skywire/pkg/routefinder/rfclient
 github.com/skycoin/skywire/pkg/router
@@ -172,20 +176,14 @@ github.com/skycoin/skywire/pkg/routing
 github.com/skycoin/skywire/pkg/servicedisc
 github.com/skycoin/skywire/pkg/setup/setupclient
 github.com/skycoin/skywire/pkg/skyenv
-github.com/skycoin/skywire/pkg/snet
-github.com/skycoin/skywire/pkg/snet/arclient
-github.com/skycoin/skywire/pkg/snet/directtp
-github.com/skycoin/skywire/pkg/snet/directtp/noisewrapper
-github.com/skycoin/skywire/pkg/snet/directtp/pktable
-github.com/skycoin/skywire/pkg/snet/directtp/porter
-github.com/skycoin/skywire/pkg/snet/directtp/tpconn
-github.com/skycoin/skywire/pkg/snet/directtp/tphandshake
-github.com/skycoin/skywire/pkg/snet/directtp/tplistener
-github.com/skycoin/skywire/pkg/snet/directtp/tptypes
-github.com/skycoin/skywire/pkg/snet/snettest
 github.com/skycoin/skywire/pkg/transport
-github.com/skycoin/skywire/pkg/util/buildinfo
+github.com/skycoin/skywire/pkg/transport/network
+github.com/skycoin/skywire/pkg/transport/network/addrresolver
+github.com/skycoin/skywire/pkg/transport/network/handshake
+github.com/skycoin/skywire/pkg/transport/network/porter
+github.com/skycoin/skywire/pkg/transport/network/stcp
 github.com/skycoin/skywire/pkg/util/deadline
+github.com/skycoin/skywire/pkg/util/netutil
 github.com/skycoin/skywire/pkg/util/pathutil
 github.com/skycoin/skywire/pkg/util/rename
 github.com/skycoin/skywire/pkg/util/rpcutil
@@ -209,6 +207,10 @@ github.com/templexxx/cpufeat
 github.com/templexxx/xor
 # github.com/tjfoc/gmsm v1.3.2
 github.com/tjfoc/gmsm/sm4
+# github.com/tklauser/go-sysconf v0.3.4
+github.com/tklauser/go-sysconf
+# github.com/tklauser/numcpus v0.2.1
+github.com/tklauser/numcpus
 # github.com/ulikunitz/xz v0.5.6
 github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
@@ -224,7 +226,7 @@ github.com/xi2/xz
 github.com/xtaci/kcp-go
 # go.etcd.io/bbolt v1.3.5
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20201208171446-5f87f3452ae9
+# golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blake2s
 golang.org/x/crypto/blowfish
@@ -232,6 +234,7 @@ golang.org/x/crypto/cast5
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/curve25519
+golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/poly1305
@@ -241,14 +244,16 @@ golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/tea
 golang.org/x/crypto/twofish
 golang.org/x/crypto/xtea
-# golang.org/x/image v0.0.0-20200430140353-33d19683fad8
+# golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 golang.org/x/image/colornames
 golang.org/x/image/draw
 golang.org/x/image/font
 golang.org/x/image/math/f64
 golang.org/x/image/math/fixed
 golang.org/x/image/vector
-# golang.org/x/net v0.0.0-20200625001655-4c5254603344
+# golang.org/x/mod v0.4.2
+golang.org/x/mod/semver
+# golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 golang.org/x/net/bpf
 golang.org/x/net/context
 golang.org/x/net/html
@@ -258,17 +263,17 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-golang.org/x/net/nettest
-# golang.org/x/sys v0.0.0-20201214210602-f9fddec55a1e
+# golang.org/x/sys v0.0.0-20210608053332-aa57babbf139
 golang.org/x/sys/cpu
+golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
+# golang.org/x/term v0.0.0-20210503060354-a79de5458b56
 golang.org/x/term
-# golang.org/x/text v0.3.2
+# golang.org/x/text v0.3.6
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -286,7 +291,7 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
-# golang.org/x/tools v0.0.0-20200425043458-8463f397d07c
+# golang.org/x/tools v0.1.2
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
 golang.org/x/tools/go/internal/packagesdriver
@@ -297,7 +302,8 @@ golang.org/x/tools/internal/event/keys
 golang.org/x/tools/internal/event/label
 golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/packagesinternal
-# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+golang.org/x/tools/internal/typesinternal
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c

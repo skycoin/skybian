@@ -4,10 +4,10 @@
 
 Skybian is an [Armbian-based](https://www.armbian.com/) and a [Raspbian-based](https://www.raspberrypi.org/) Operating System that contains the Skycoin's Skywire software and it's dependencies.
 
-Currently, the supported SBCs, [Single Board Computer](https://en.wikipedia.org/wiki/Single-board_computer) are:
-[Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/).
-[Orange Pi 3](http://www.orangepi.org/Orange%20Pi%203/)
-[Raspberry Pi](https://www.raspberrypi.org/products/)
+Currently, the following SBCs ([Single Board Computer](https://en.wikipedia.org/wiki/Single-board_computer)) are supported:
+- [Orange Pi Prime](http://www.orangepi.org/OrangePiPrime/)
+- [Orange Pi 3](http://www.orangepi.org/Orange%20Pi%203/)
+- Raspberry Pi 1, 2, 3 and 4 (32-bit and 64-bit images are available)
 
 This repository has two main components. The first is a script for building a base Skybian image for each supported SBC type. The second is a tool named `skyimager`, that downloads a base Skybian image, and generates a number of final Skybian images (based on the provided options by the user).
 

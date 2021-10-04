@@ -170,13 +170,13 @@ get_skywire()
   local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
   if [ ! -f "${_DST}" ] ; then
-    if [ ${BOARD} == rpi ] ; then
+    if [ ${ARCH} == armhf ] ; then
       notice "Downloading package from ${SKYWIRE_ARM_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARM_DOWNLOAD_URL}" -O "${_DST}" || return 1
-    elif [ ${BOARD} == rpiw ] ; then
+    elif [ ${ARCH} == armv6 ] ; then
       notice "Downloading package from ${SKYWIRE_ARMV6_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARMV6_DOWNLOAD_URL}" -O "${_DST}" || return 1
-    else
+    elif [ ${ARCH} == arm64 ] ; then
       notice "Downloading package from ${SKYWIRE_ARM64_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARM64_DOWNLOAD_URL}" -O "${_DST}" || return 1
     fi
@@ -478,8 +478,15 @@ copy_to_img()
 
   # Copy systemd units
   info "Copying systemd unit services..."
+
+ # Set Skybian Version on skywire-visor.service static file
+  sed -i "9i\Environment=SKYBIAN_BUILD_VERSION=${VERSION}" "${ROOT}"/static/skywire-visor.service
+
   local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
   sudo cp -f "${ROOT}"/static/*.service "${SYSTEMD_DIR}" || return 1
+
+  # Remove Skybian Version on skywire-visor.service static file
+  sed -i '9d' "${ROOT}"/static/skywire-visor.service
 
   info "Done!"
 }
@@ -490,7 +497,7 @@ chroot_actions()
   # enable chroot
   info "Seting up chroot jail..."
 
-  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
+  if [ ${ARCH} == armhf ] || [ ${ARCH} == armv6 ] ; then
     sudo cp "$(command -v qemu-arm-static)" "${FS_MNT_POINT}/usr/bin/"
   else
     sudo cp "$(command -v qemu-aarch64-static)" "${FS_MNT_POINT}/usr/bin/"
@@ -521,7 +528,7 @@ chroot_actions()
 	# Disable chroot
   info "Disabling the chroot jail..."
 
-  if [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
+  if [ ${ARCH} == armhf ] || [ ${ARCH} == armv6 ] ; then
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-arm-static"
   else
     sudo rm "${FS_MNT_POINT}/usr/bin/qemu-aarch64-static"    

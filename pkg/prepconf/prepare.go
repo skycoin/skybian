@@ -104,19 +104,13 @@ func generateConfig(conf Config) (*visorconfig.V1, error) {
 	//if out.STCP, err = visor.DefaultSTCPConfig(); err != nil {
 	//	return nil, err
 	//}
-	out.Dmsgpty.AuthFile = "/var/skywire-visor/dsmgpty/whitelist.json"
 	out.Dmsgpty.CLIAddr = "/run/skywire-visor/dmsgpty/cli.sock"
-	out.Transport.LogStore.Type = "file"
-	out.Transport.LogStore.Location = "/var/skywire-visor/transports"
 	out.Hypervisors = bp.HypervisorPKs
 	out.LogLevel = skyenv.DefaultLogLevel
 	out.ShutdownTimeout = visorconfig.DefaultTimeout
 	out.RestartCheckDelay = visorconfig.Duration(restart.DefaultCheckDelay)
 	out.Launcher = &visorconfig.V1Launcher{
-		Discovery: &visorconfig.V1AppDisc{
-			ServiceDisc:    skyenv.DefaultServiceDiscAddr,
-			UpdateInterval: visorconfig.Duration(skyenv.AppDiscUpdateInterval),
-		},
+		ServiceDisc: skyenv.DefaultServiceDiscAddr,
 		Apps: []launcher.AppConfig{
 			{
 				Name:      skyenv.SkychatName,
@@ -149,7 +143,6 @@ func generateConfig(conf Config) (*visorconfig.V1, error) {
 		},
 		ServerAddr: skyenv.DefaultAppSrvAddr,
 		BinPath:    "/usr/bin/apps",
-		LocalPath:  "/var/skywire-visor/apps",
 	}
 	return out, nil
 }
