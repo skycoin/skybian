@@ -479,11 +479,14 @@ copy_to_img()
   # Copy systemd units
   info "Copying systemd unit services..."
 
- # Set Skybian Version on skywire-visor.service
+ # Set Skybian Version on skywire-visor.service static file
   sed -i "9i\Environment=SKYBIAN_BUILD_VERSION=${VERSION}" "${ROOT}"/static/skywire-visor.service
 
   local SYSTEMD_DIR=${FS_MNT_POINT}/etc/systemd/system/
   sudo cp -f "${ROOT}"/static/*.service "${SYSTEMD_DIR}" || return 1
+
+  # Remove Skybian Version on skywire-visor.service static file
+  sed -i '9d' "${ROOT}"/static/skywire-visor.service
 
   info "Done!"
 }
