@@ -399,6 +399,7 @@ func GetsockoptXucred(fd, level, opt int) (*Xucred, error) {
 	return x, err
 }
 
+<<<<<<< HEAD
 func SysctlKinfoProcSlice(name string) ([]KinfoProc, error) {
 	mib, err := sysctlmib(name)
 	if err != nil {
@@ -431,6 +432,8 @@ func SysctlKinfoProcSlice(name string) ([]KinfoProc, error) {
 	return buf[:n/SizeofKinfoProc], nil
 }
 
+=======
+>>>>>>> develop
 //sys	sendfile(infd int, outfd int, offset int64, len *int64, hdtr unsafe.Pointer, flags int) (err error)
 
 /*
