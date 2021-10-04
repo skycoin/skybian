@@ -187,10 +187,8 @@ func (fg *FyneUI) build() {
 		ctx, cancel := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
-		dlDialog := widgets.NewProgress(dlTitle, dlMsg, fg.w, cancel, "Cancel")
-
-		dlDialog.Show()
-
+		dlWindow := widgets.NewProgressWindow(dlTitle, dlMsg, fg.app, cancel, "Cancel")
+		dlWindow.Show()
 		// Download section.
 		dlDone := make(chan struct{})
 		go func() {
@@ -200,7 +198,7 @@ func (fg *FyneUI) build() {
 				case <-t.C:
 					dlC, dlT := float64(builder.DownloadCurrent()), float64(builder.DownloadTotal())
 					if pc := dlC / dlT; pc > 0 && pc <= 1 {
-						dlDialog.SetValue(pc)
+						dlWindow.SetValue(pc)
 					}
 				case <-dlDone:
 					t.Stop()
@@ -210,7 +208,7 @@ func (fg *FyneUI) build() {
 		}()
 		err = builder.Download(ctx, baseURL)
 		close(dlDone)
-		dlDialog.Hide()
+		dlWindow.Close()
 		if err != nil {
 			if !errors.Is(err, errDownloadCanceled) {
 				fg.log.Errorf("Error when downloading image %v", err)
