@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -240,53 +239,4 @@ func NewProgress(title, message string, parent fyne.Window, cancelF func(), canc
 	content := container.NewVBox(bar, cancelBtn)
 	d.setButtons(content)
 	return &ProgressDialog{d, bar}
-}
-
-// ProgressWindow is a simple splash windows that displays text and a progress bar
-type ProgressWindow struct {
-	fyne.Window
-	bar *widget.ProgressBar
-}
-
-// SetValue is a handler to set value on progress bar
-func (p *ProgressWindow) SetValue(v float64) {
-	p.bar.SetValue(v)
-}
-
-// NewProgressWindow creates a progress windows and returns the handle.
-// Using the returned type you should call Show() and then set its value through SetValue()
-// cancelF will be called upon pressing the cancel button
-// cancelText will be shown on the cancel button.
-// We use this function, because Close button not work on PopUps in NewProgress function
-func NewProgressWindow(title, message string, app fyne.App, cancelFunc func(), cancelText string) *ProgressWindow {
-	driv := app.Driver()
-	if drv, ok := driv.(desktop.Driver); ok {
-		w := drv.CreateSplashWindow()
-
-		bar := widget.NewProgressBar()
-		cancelBtn := &widget.Button{Text: cancelText, Icon: theme.CancelIcon(),
-			OnTapped: func() {
-				cancelFunc()
-			}}
-		windowsSize := fyne.NewSize(newLabel(message).MinSize().Width+10, container.NewVBox(bar, cancelBtn).MinSize().Height+newLabel(message).MinSize().Height+10)
-		content := container.NewCenter(
-			container.NewVBox(
-				widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-				newLabel(message),
-				bar,
-				cancelBtn,
-			),
-		)
-
-		w.SetPadded(true)
-		w.SetTitle(title)
-		w.SetContent(content)
-		w.Resize(windowsSize)
-
-		return &ProgressWindow{
-			Window: w,
-			bar:    bar,
-		}
-	}
-	return nil
 }

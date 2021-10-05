@@ -181,16 +181,16 @@ func (fg *FyneUI) build() {
 
 	// Final images to obtain.
 	var imgs []string
-
+	buildImageStepDone := make(chan bool, 1)
 	switch fg.imgLoc {
 	case fg.locations[0]:
 		ctx, cancel := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
-		dlWindow := widgets.NewProgressWindow(dlTitle, dlMsg, fg.app, cancel, "Cancel")
-		dlWindow.Show()
+		dlDialog := widgets.NewProgress(dlTitle, dlMsg, fg.w, cancel, "Cancel")
+		dlDialog.Show()
 		// Download section.
-		dlDone := make(chan struct{})
+		dlDone := make(chan struct{}, 1)
 		go func() {
 			t := time.NewTicker(time.Second)
 			for {
@@ -198,7 +198,7 @@ func (fg *FyneUI) build() {
 				case <-t.C:
 					dlC, dlT := float64(builder.DownloadCurrent()), float64(builder.DownloadTotal())
 					if pc := dlC / dlT; pc > 0 && pc <= 1 {
-						dlWindow.SetValue(pc)
+						dlDialog.SetValue(pc)
 					}
 				case <-dlDone:
 					t.Stop()
@@ -206,40 +206,52 @@ func (fg *FyneUI) build() {
 				}
 			}
 		}()
-		err = builder.Download(ctx, baseURL)
-		close(dlDone)
-		dlWindow.Close()
-		if err != nil {
-			if !errors.Is(err, errDownloadCanceled) {
-				fg.log.Errorf("Error when downloading image %v", err)
-				dialog.ShowError(err, fg.w)
-			} else {
-				fg.log.Info("Download canceled by user")
+
+		downloadStepDone := make(chan bool, 1)
+		go func() {
+			if err := builder.Download(ctx, baseURL); err != nil {
+				if !errors.Is(err, errDownloadCanceled) {
+					fg.log.Errorf("Error when downloading image %v", err)
+					dialog.ShowError(err, fg.w)
+				} else {
+					fg.log.Info("Download canceled by user")
+				}
+				return
 			}
-			return
-		}
+			downloadStepDone <- true
+			dlDialog.Hide()
+		}()
 
 		// Extract section.
+		extractStepDone := make(chan bool, 1)
+		go func() {
+			if <-downloadStepDone {
+				extDialog := dialog.NewCustom("Extracting Archive", builder.DownloadPath(), widget.NewProgressBarInfinite(), fg.w)
+				extDialog.Show()
+				err = builder.ExtractArchive()
+				extDialog.Hide()
+				if err != nil {
+					dialog.ShowError(err, fg.w)
+					return
+				}
+				extractStepDone <- true
+			}
+		}()
+		go func() {
+			if <-extractStepDone {
+				imgs = builder.Images()
+				fg.log.
+					WithField("n", len(imgs)).
+					WithField("imgs", imgs).
+					Info("Obtained base images.")
 
-		extDialog := dialog.NewCustom("Extracting Archive", builder.DownloadPath(), widget.NewProgressBarInfinite(), fg.w)
-		extDialog.Show()
-		err = builder.ExtractArchive()
-		extDialog.Hide()
-		if err != nil {
-			dialog.ShowError(err, fg.w)
-			return
-		}
-
-		imgs = builder.Images()
-		fg.log.
-			WithField("n", len(imgs)).
-			WithField("imgs", imgs).
-			Info("Obtained base images.")
-
-		if len(imgs) == 0 {
-			dialog.ShowError(errors.New("no valid images in archive"), fg.w)
-			return
-		}
+				if len(imgs) == 0 {
+					dialog.ShowError(errors.New("no valid images in archive"), fg.w)
+					return
+				}
+				buildImageStepDone <- true
+			}
+		}()
 
 	case fg.locations[1]:
 		// TODO(evanlinjin): The following is very hacky. Please fix.
@@ -256,6 +268,7 @@ func (fg *FyneUI) build() {
 			ExpectedMD5:  [16]byte{},
 			ExpectedSHA1: [20]byte{},
 		}
+		buildImageStepDone <- true
 
 	default:
 		err := errors.New("no base image selected")
@@ -264,23 +277,33 @@ func (fg *FyneUI) build() {
 	}
 
 	// Finalize section.
-	finDialog := dialog.NewCustom("Building Final Images", builder.finalDir, widget.NewProgressBarInfinite(), fg.w)
-	finDialog.Show()
-	err = builder.MakeFinalImages(imgs[0], bpsSlice)
-	finDialog.Hide()
-	if err != nil {
-		dialog.ShowError(err, fg.w)
-		return
-	}
+	finalSectionDone := make(chan bool, 1)
+	go func() {
+		if <-buildImageStepDone {
+			finDialog := dialog.NewCustom("Building Final Images", builder.finalDir, widget.NewProgressBarInfinite(), fg.w)
+			finDialog.Show()
+			err = builder.MakeFinalImages(imgs[0], bpsSlice)
+			finDialog.Hide()
+			if err != nil {
+				dialog.ShowError(err, fg.w)
+				return
+			}
+		}
+		finalSectionDone <- true
+	}()
 
-	// Inform user of completion.
-	createREADME(fg.log, filepath.Join(builder.finalDir, "README.txt"))
-	cont := container.New(layout.NewVBoxLayout(),
-		widget.NewLabel("Successfully built images!"),
-		widget.NewLabel("Images are built to: "+builder.finalDir),
-		widget.NewButton("Open Folder", func() { _ = open.Run(builder.finalDir) }), //nolint
-		widget.NewLabel("To flash the images, use a tool such as balenaEtcher:"),
-		widget.NewButton("Open URL", func() { _ = open.Run("https://www.balena.io/etcher") }), //nolint
-	)
-	dialog.ShowCustom("Success", "Close", cont, fg.w)
+	go func() {
+		if <-finalSectionDone {
+			// Inform user of completion.
+			createREADME(fg.log, filepath.Join(builder.finalDir, "README.txt"))
+			cont := container.New(layout.NewVBoxLayout(),
+				widget.NewLabel("Successfully built images!"),
+				widget.NewLabel("Images are built to: "+builder.finalDir),
+				widget.NewButton("Open Folder", func() { _ = open.Run(builder.finalDir) }), //nolint
+				widget.NewLabel("To flash the images, use a tool such as balenaEtcher:"),
+				widget.NewButton("Open URL", func() { _ = open.Run("https://www.balena.io/etcher") }), //nolint
+			)
+			dialog.ShowCustom("Success", "Close", cont, fg.w)
+		}
+	}()
 }
