@@ -26,16 +26,18 @@ go get github.com/fyne-io/fyne-cross || exit 1
   ./cmd/skyimager-gui || exit 1
 
 # Darwin image needs to be built seperatly and can oly be with xcode
-# ./bin/fyne-cross \
-#   darwin \
-#   -app-id com.skycoin.skyimager \
-#   -arch amd64 \
-#   -icon ./cmd/skyimager-gui/static/icon.png \
-#   ./cmd/skyimager-gui || exit 1
+docker pull skycoin/fyne-cross:latest
+docker tag skycoin/fyne-cross:latest fyneio/fyne-cross:1.1-darwin
+./bin/fyne-cross \
+  darwin \
+  -app-id com.skycoin.skyimager \
+  -arch amd64 \
+  -icon ./cmd/skyimager-gui/static/icon.png \
+  ./cmd/skyimager-gui || exit 1
 
 # Compress bins.
 FYNE=$(pwd)/fyne-cross/bin
-TARGETS=("linux-amd64" "windows-amd64")
+TARGETS=("linux-amd64" "windows-amd64" "darwin-amd64")
 
 for target in "${TARGETS[@]}"; do
   cd "$FYNE" || exit 1
