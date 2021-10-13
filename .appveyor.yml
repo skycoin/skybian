@@ -62,7 +62,7 @@ for:
       - cp fyne-cross/bin/*.zip artifacts/
 
     artifacts:
-      - path: artifacts/*.tar.gz
+      - path: artifacts/*
         name: deploy
 
     deploy:
