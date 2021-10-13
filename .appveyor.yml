@@ -8,9 +8,10 @@ environment:
   - job_name: Linux
     appveyor_build_worker_image: ubuntu1804
   
-  # For release, by pushing tag
+  # For release, by pushing tags
   - job_name: release
     appveyor_build_worker_image: ubuntu1804
+    appveyor_artifact_upload_timeout: 6000
   
 for:
   - # Linux
