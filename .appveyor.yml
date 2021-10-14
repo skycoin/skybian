@@ -27,11 +27,7 @@ for:
    
     build_script:
       - make test # Can be 'make check' once that is working.
-      - make integration
       - make build-skybian-img 
-      - make build-skybian-img BOARD=opi3 ARCH=arm64
-      - make build-skybian-img BOARD=rpi ARCH=armhf
-      - make build-skybian-img BOARD=rpi64 ARCH=arm64
       - make build-skyimager-gui
 
   - # Release
