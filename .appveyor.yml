@@ -24,8 +24,7 @@ for:
       - sudo apt update
       - sudo apt install -y gcc libgl1-mesa-dev xorg-dev p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.42.0
-      - docker login -u $(DOCKER_USERNAME)-p $(DOCKER_PASSWORD)
-   
+      - docker login -u="$env:DOCKER_USERNAME" -p="$env:DOCKER_PASSWORD"
     build_script:
       - make test # Can be 'make check' once that is working.
       - make integration
@@ -44,7 +43,7 @@ for:
     install:
       - sudo apt update
       - sudo apt install -y gcc libgl1-mesa-dev xorg-dev p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
-      - docker login -u $(DOCKER_USERNAME) -p $(DOCKER_PASSWORD)
+      - docker login -u="$env:DOCKER_USERNAME" -p="$env:DOCKER_PASSWORD"
     
     build_script:
       - make build-skybian-img 
