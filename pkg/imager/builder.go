@@ -29,7 +29,7 @@ const (
 
 // DefaultRootDir returns the default root (or work) directory.
 func DefaultRootDir() string {
-	homeDir, _ := os.UserHomeDir()
+	homeDir, _ := os.UserHomeDir() //nolint
 	return filepath.Join(homeDir, "skyimager")
 }
 
@@ -93,7 +93,7 @@ func (b *Builder) Download(ctx context.Context, url string) error {
 	b.mx.Lock()
 	defer b.mx.Unlock()
 
-	err := Download(ctx, b.log, url, b.DownloadPath(), &b.dlTotal, &b.dlCurrent)
+	err := download(ctx, b.log, url, b.DownloadPath(), &b.dlTotal, &b.dlCurrent)
 	if errors.Is(err, context.Canceled) {
 		return errDownloadCanceled
 	}

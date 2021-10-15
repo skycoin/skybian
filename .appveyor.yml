@@ -8,9 +8,10 @@ environment:
   - job_name: Linux
     appveyor_build_worker_image: ubuntu1804
   
-  # For release, by pushing tag
+  # For release, by pushing tags
   - job_name: release
     appveyor_build_worker_image: ubuntu1804
+    appveyor_artifact_upload_timeout: 6000
   
 for:
   - # Linux
@@ -26,11 +27,7 @@ for:
    
     build_script:
       - make test # Can be 'make check' once that is working.
-      - make integration
       - make build-skybian-img 
-      - make build-skybian-img BOARD=opi3 ARCH=arm64
-      - make build-skybian-img BOARD=rpi ARCH=armhf
-      - make build-skybian-img BOARD=rpi64 ARCH=arm64
       - make build-skyimager-gui
 
   - # Release
@@ -42,6 +39,7 @@ for:
     install:
       - sudo apt update
       - sudo apt install -y gcc libgl1-mesa-dev xorg-dev p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+      - docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
     
     build_script:
       - make build-skybian-img 
@@ -57,9 +55,10 @@ for:
       - cp output/rpi/final/*.tar.gz artifacts/
       - cp output/rpi64/final/*.tar.gz artifacts/
       - cp fyne-cross/bin/*.tar.gz artifacts/
+      - cp fyne-cross/bin/*.zip artifacts/
 
     artifacts:
-      - path: artifacts/*.tar.gz
+      - path: artifacts/*
         name: deploy
 
     deploy:

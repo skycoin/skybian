@@ -11,7 +11,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-func Download(ctx context.Context, log logrus.FieldLogger, url, dst string, total, current *int64) error {
+func download(ctx context.Context, log logrus.FieldLogger, url, dst string, total, current *int64) error {
 	log = log.WithField("func", "Download")
 
 	// Prepare temp destination file.

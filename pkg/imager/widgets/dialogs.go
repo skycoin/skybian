@@ -3,11 +3,12 @@ package widgets
 import (
 	"image/color"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 // This package has been mostly copied from fyne/dialog
@@ -40,13 +41,21 @@ type skydialog struct {
 }
 
 func (d *skydialog) wait() {
-	select {
-	case response := <-d.response:
+	// select {
+	// case response := <-d.response:
+	// 	d.responded = true
+	// 	d.win.Hide()
+	// 	if d.callback != nil {
+	// 		d.callback(response)
+	// 	}
+	// }
+	for response := range d.response {
 		d.responded = true
 		d.win.Hide()
 		if d.callback != nil {
 			d.callback(response)
 		}
+
 	}
 }
 
@@ -56,7 +65,7 @@ func (d *skydialog) setButtons(buttons fyne.CanvasObject) {
 
 	var content fyne.CanvasObject
 	if d.icon == nil {
-		content = fyne.NewContainerWithLayout(d,
+		content = container.New(d,
 			&canvas.Image{},
 			d.bg,
 			d.content,
@@ -65,7 +74,7 @@ func (d *skydialog) setButtons(buttons fyne.CanvasObject) {
 		)
 	} else {
 		bgIcon := canvas.NewImageFromResource(d.icon)
-		content = fyne.NewContainerWithLayout(d,
+		content = container.New(d,
 			bgIcon,
 			d.bg,
 			d.content,
@@ -86,7 +95,7 @@ func (d *skydialog) Layout(obj []fyne.CanvasObject, size fyne.Size) {
 	d.bg.Resize(size.Add(fyne.NewSize(theme.Padding()*2, theme.Padding()*2)))
 
 	textMin := obj[2].MinSize()
-	btnMin := obj[3].MinSize().Union(obj[3].Size())
+	btnMin := obj[3].MinSize().Max(obj[3].Size())
 
 	// icon
 	iconHeight := padHeight*2 + textMin.Height + d.label.MinSize().Height - theme.Padding()
@@ -108,7 +117,7 @@ func (d *skydialog) Layout(obj []fyne.CanvasObject, size fyne.Size) {
 
 func (d *skydialog) MinSize(obj []fyne.CanvasObject) fyne.Size {
 	textMin := obj[2].MinSize()
-	btnMin := obj[3].MinSize().Union(obj[3].Size())
+	btnMin := obj[3].MinSize().Max(obj[3].Size())
 
 	width := fyne.Max(fyne.Max(textMin.Width, btnMin.Width), obj[4].MinSize().Width) + padWidth*2
 	height := textMin.Height + btnMin.Height + d.label.MinSize().Height + theme.Padding() + padHeight*2
@@ -151,7 +160,7 @@ func (d *skydialog) Hide() {
 // SetDismissText allows custom text to be set in the confirmation button
 func (d *skydialog) SetDismissText(label string) {
 	d.dismiss.SetText(label)
-	widget.Refresh(d.win)
+	d.win.Refresh()
 }
 
 // ShowCustom shows a dialog over the specified application using custom
@@ -166,7 +175,7 @@ func ShowCustom(title, dismiss string, content fyne.CanvasObject, parent fyne.Wi
 			d.response <- false
 		},
 	}
-	d.setButtons(widget.NewHBox(layout.NewSpacer(), d.dismiss, layout.NewSpacer()))
+	d.setButtons(container.NewHBox(layout.NewSpacer(), d.dismiss, layout.NewSpacer()))
 	d.Show()
 }
 
@@ -193,12 +202,12 @@ func ShowCustomConfirm(title, confirm, dismiss string, content fyne.CanvasObject
 			d.response <- false
 		},
 	}
-	ok := &widget.Button{Text: confirm, Icon: theme.ConfirmIcon(), Style: widget.PrimaryButton,
+	ok := &widget.Button{Text: confirm, Icon: theme.ConfirmIcon(), Importance: widget.HighImportance,
 		OnTapped: func() {
 			d.response <- true
 		},
 	}
-	d.setButtons(widget.NewHBox(layout.NewSpacer(), d.dismiss, ok, layout.NewSpacer()))
+	d.setButtons(container.NewHBox(layout.NewSpacer(), d.dismiss, ok, layout.NewSpacer()))
 
 	d.Show()
 }
@@ -227,7 +236,7 @@ func NewProgress(title, message string, parent fyne.Window, cancelF func(), canc
 			cancelF()
 			d.response <- false
 		}}
-	content := widget.NewVBox(bar, cancelBtn)
+	content := container.NewVBox(bar, cancelBtn)
 	d.setButtons(content)
 	return &ProgressDialog{d, bar}
 }

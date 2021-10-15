@@ -1,10 +1,11 @@
 module github.com/skycoin/skybian
 
 // go 1.14 presents problems for fyne so 1.13 is used.
-go 1.13
+go 1.16
 
 require (
-	fyne.io/fyne v1.4.0
+	fyne.io/fyne/v2 v2.1.0
+	github.com/fyne-io/fyne-cross v1.1.2 // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/rakyll/statik v0.1.7
