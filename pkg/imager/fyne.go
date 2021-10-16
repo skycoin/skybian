@@ -159,13 +159,6 @@ func (fg *FyneUI) generateBPS() (string, error) {
 func (fg *FyneUI) build() {
 	bpsSlice := fg.bps
 
-	baseURL, err := releaseURL(fg.releases[fg.imgType], fg.remImg)
-	if err != nil {
-		err = fmt.Errorf("failed to find download URL for base image: %v", err)
-		dialog.ShowError(err, fg.w)
-		return
-	}
-
 	// Prepare builder.
 	builder, err := NewBuilder(fg.log, fg.wkDir)
 	if err != nil {
@@ -178,6 +171,12 @@ func (fg *FyneUI) build() {
 	buildImageStepDone := make(chan bool, 1)
 	switch fg.imgLoc {
 	case fg.locations[0]:
+		baseURL, err := releaseURL(fg.releases[fg.imgType], fg.remImg)
+		if err != nil {
+			err = fmt.Errorf("failed to find download URL for base image: %v", err)
+			dialog.ShowError(err, fg.w)
+			return
+		}
 		ctx, cancel := context.WithCancel(context.Background())
 		dlTitle := "Downloading Base Image"
 		dlMsg := fg.remImg + "\n" + baseURL
