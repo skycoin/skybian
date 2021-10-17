@@ -61,9 +61,6 @@ build-skybian-img: ## builds skybian base image.
 build-skyimager-gui: ## builds skyimager GUI
 	./build-skyimager.sh
 
-run-skyimager: ## Run skyimager
-	echo ${IMG_BOOT_PARAMS} | go run ./cmd/skyimager/skyimager.go
-
 run-skyimager-gui: ## Builds skyimager GUI
 	mkdir -p ./bin
 	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go
