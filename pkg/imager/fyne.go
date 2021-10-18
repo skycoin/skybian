@@ -301,3 +301,24 @@ func (fg *FyneUI) build() {
 		}
 	}()
 }
+
+const readmeTxt = `These skybian images are ready to be flashed to disk!
+
+Use a tool such as balenaEtcher: https://www.balena.io/etcher/
+
+Enjoy!
+`
+
+func createREADME(log logrus.FieldLogger, path string) {
+	readme, err := os.Create(path)
+	if err != nil {
+		log.WithError(err).Error("Failed to create README.txt")
+		return
+	}
+	if _, err := readme.WriteString(readmeTxt); err != nil {
+		log.WithError(err).Error("Failed to write README.txt")
+	}
+	if err := readme.Close(); err != nil {
+		log.WithError(err).Error("Failed to close README.txt")
+	}
+}
