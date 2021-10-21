@@ -170,12 +170,9 @@ get_skywire()
   local _DST=${PARTS_SKYWIRE_DIR}/skywire.tar.gz # Download destination file name.
 
   if [ ! -f "${_DST}" ] ; then
-    if [ ${ARCH} == armhf ] ; then
+    if [ ${ARCH} == armv6 ] || [ ${ARCH} == armv7] || [ ${ARCH} == armhf ]; then
       notice "Downloading package from ${SKYWIRE_ARM_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARM_DOWNLOAD_URL}" -O "${_DST}" || return 1
-    elif [ ${ARCH} == armv6 ] ; then
-      notice "Downloading package from ${SKYWIRE_ARMV6_DOWNLOAD_URL} to ${_DST}..."
-      wget -c "${SKYWIRE_ARMV6_DOWNLOAD_URL}" -O "${_DST}" || return 1
     elif [ ${ARCH} == arm64 ] ; then
       notice "Downloading package from ${SKYWIRE_ARM64_DOWNLOAD_URL} to ${_DST}..."
       wget -c "${SKYWIRE_ARM64_DOWNLOAD_URL}" -O "${_DST}" || return 1
@@ -214,12 +211,12 @@ download_os()
     wget -c "${ARMBIAN_DOWNLOAD_URL_OPI3}.sha" ||
       (error "Checksum download failed." && return 1)
   elif [ ${BOARD} == rpi ] || [ ${BOARD} == rpiw ] ; then
-    info "Downloading image from ${RASPBIAN_ARMHF_DOWNLOAD_URL} to ${_DST} ..."
-    wget -c "${RASPBIAN_ARMHF_DOWNLOAD_URL}" ||
+    info "Downloading image from ${RASPBIAN_ARM_DOWNLOAD_URL} to ${_DST} ..."
+    wget -c "${RASPBIAN_ARM_DOWNLOAD_URL}" ||
       (error "Download failed." && return 1)
 
-    info "Downloading checksum from ${RASPBIAN_ARMHF_DOWNLOAD_URL}.sha..."
-    wget -c "${RASPBIAN_ARMHF_DOWNLOAD_URL}.sha256" ||
+    info "Downloading checksum from ${RASPBIAN_ARM_DOWNLOAD_URL}.sha..."
+    wget -c "${RASPBIAN_ARM_DOWNLOAD_URL}.sha256" ||
       (error "Checksum download failed." && return 1)
   elif [ ${BOARD} == rpi64 ] ; then
     info "Downloading image from ${RASPBIAN_ARM64_DOWNLOAD_URL} to ${_DST} ..."
