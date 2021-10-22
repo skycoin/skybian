@@ -2,8 +2,8 @@ package imager
 
 import (
 	"bytes"
-	"crypto/md5"
-	"crypto/sha1"
+	"crypto/md5"  // nolint
+	"crypto/sha1" // nolint
 	"errors"
 	"fmt"
 	"hash"
@@ -30,8 +30,8 @@ func (bi *BaseImage) Init(filename string) error {
 			return fmt.Errorf("failed to create img file: %v", err)
 		}
 		bi.File = osF
-		bi.MD5 = md5.New()
-		bi.SHA1 = sha1.New()
+		bi.MD5 = md5.New()   // nolint
+		bi.SHA1 = sha1.New() // nolint
 	}
 	return nil
 }

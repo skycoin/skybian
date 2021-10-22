@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"strings"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/container"
-	"fyne.io/fyne/dialog"
-	"fyne.io/fyne/layout"
-	"fyne.io/fyne/theme"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 	"github.com/skycoin/dmsg/cipher"
 
 	"github.com/skycoin/skybian/pkg/boot"
@@ -35,7 +35,7 @@ func (fg *FyneUI) Page1() fyne.CanvasObject {
 		Name: "Introduction",
 		Next: func() { fg.w.SetContent(fg.Page2()) },
 	}
-	return makePage(conf, widget.NewVBox(
+	return makePage(conf, container.NewVBox(
 		widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabelWithStyle(body, fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})))
 }
@@ -64,6 +64,31 @@ func (fg *FyneUI) makeFilePicker() fyne.CanvasObject {
 	}, fg.w)
 	btn := widget.NewButton("Open", d.Show)
 	box := container.NewHBox(btn, fsImg)
+	return box
+}
+
+func (fg *FyneUI) makeFolderPicker() fyne.CanvasObject {
+	fsWkDir := widget.NewEntry()
+	fsWkDir.SetText(fg.wkDir)
+	fsWkDir.OnChanged = func(s string) {
+		fg.wkDir = s
+		fg.log.Debugf("Set: fg.wkDir = %v", s)
+	}
+	d := dialog.NewFolderOpen(func(f fyne.ListableURI, err error) {
+		if err != nil {
+			fg.log.Error(err)
+			return
+		}
+		if f == nil {
+			return
+		}
+		uri := f.Path()
+		// URI includes file:// scheme, and there is no other way to retrieve full file path
+		fg.wkDir = strings.TrimPrefix(uri, "file://")
+		fsWkDir.SetText(fg.wkDir)
+	}, fg.w)
+	btn := widget.NewButton("", d.Show)
+	box := container.NewPadded(fsWkDir, btn)
 	return box
 }
 
@@ -99,7 +124,7 @@ func (fg *FyneUI) showRemoteSelect(sel *widget.Select) {
 
 // Page2 returns the canvas that draws page 2 of the Fyne interface.
 func (fg *FyneUI) Page2() fyne.CanvasObject {
-	wkDir := newLinkedEntry(&fg.wkDir)
+	wkDirPicker := fg.makeFolderPicker()
 
 	fsImgPicker := fg.makeFilePicker()
 	fsImgPicker.Hide()
@@ -124,8 +149,8 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			}
 		}
 	})
-	remoteTypeSelect.SetSelected(labels[0])
-	imgLoc := widget.NewRadio(fg.locations, func(s string) {
+	remoteTypeSelect.Hide()
+	imgLoc := widget.NewRadioGroup(fg.locations, func(s string) {
 		switch fg.imgLoc = s; s {
 		case fg.locations[0]:
 			fsImgPicker.Hide()
@@ -138,6 +163,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 			remoteTypeSelect.Hide()
 		}
 	})
+	imgLoc.Horizontal = true
 	imgLoc.SetSelected(fg.imgLoc)
 	imgLoc.OnChanged(fg.imgLoc)
 
@@ -156,7 +182,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		fg.log.Debugf("Set: fg.wifiPass = %v", s)
 	})
 
-	wifiWidgets := fyne.NewContainerWithLayout(layout.NewVBoxLayout(), widget.NewLabel("Wifi access point name:"),
+	wifiWidgets := container.New(layout.NewVBoxLayout(), widget.NewLabel("Wifi access point name:"),
 		wifiName, widget.NewLabel("Wifi passcode:"), wifiPass)
 	wifiWidgets.Hide()
 
@@ -177,7 +203,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	socksPC.SetPlaceHolder("passcode")
 
 	imgNumber := newEntry(strconv.Itoa(fg.imgNumber), func(s string) {
-		fg.imgNumber, _ = strconv.Atoi(s)
+		fg.imgNumber, _ = strconv.Atoi(s) //nolint
 		fg.log.Debugf("Set: fg.visors = %v", s)
 	})
 
@@ -187,12 +213,12 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	})
 	genHvImg.SetChecked(fg.hvImg)
 
-	hvPKs := widget.NewVBox()
+	hvPKs := container.NewVBox()
 	hvPKs.Hide()
 	hvPKsRefresh := func() {
-		hvPKs.Children = nil
+		hvPKs.Objects = nil
 		for _, pk := range fg.hvPKs {
-			hvPKs.Append(widget.NewLabelWithStyle(pk.String(),
+			hvPKs.Add(widget.NewLabelWithStyle(pk.String(),
 				fyne.TextAlignLeading, fyne.TextStyle{Monospace: true}))
 		}
 	}
@@ -203,7 +229,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		dismiss := "Cancel"
 		input := widget.NewEntry()
 		input.SetPlaceHolder("public key")
-		cont := fyne.NewContainerWithLayout(layout.NewVBoxLayout(),
+		cont := container.New(layout.NewVBoxLayout(),
 			widget.NewLabel("Add trusted hypervisor public key:"), input)
 		dialog.ShowCustomConfirm(title, confirm, dismiss, cont, func(b bool) {
 			if !b {
@@ -252,7 +278,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 				return
 			}
 			proceed := func() {
-				os.Mkdir(fg.wkDir, os.FileMode(0755))
+				os.Mkdir(fg.wkDir, os.FileMode(0755)) //nolint
 				bpsStr, err := fg.generateBPS()
 				if err != nil {
 					dialog.ShowError(err, fg.w)
@@ -268,7 +294,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		},
 	}
 	return makePage(conf,
-		widget.NewLabel("Work Directory:"), wkDir,
+		widget.NewLabel("Work Directory:"), wkDirPicker,
 		widget.NewLabel("Base Image:"), imgLoc, fsImgPicker, remoteTypeSelect,
 		remSky.widget, remSky3.widget, remRasp32.widget, remRasp64.widget,
 		widget.NewLabel("Gateway IP:"), gwIP,
@@ -359,7 +385,7 @@ func (fg *FyneUI) Page3(bpsStr string) fyne.CanvasObject {
 			// Decode bps entry text to ensure changes are recorded.
 			dec := json.NewDecoder(strings.NewReader(bps.Text))
 			if err := dec.Decode(&fg.bps); err != nil {
-				dialog.ShowError(fmt.Errorf("invalid boot paramters: %v", err), fg.w)
+				dialog.ShowError(fmt.Errorf("invalid boot parameters: %v", err), fg.w)
 				return
 			}
 			dialog.ShowConfirm("Confirmation", "Start build?", func(b bool) {

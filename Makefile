@@ -61,14 +61,9 @@ build-skybian-img: ## builds skybian base image.
 build-skyimager-gui: ## builds skyimager GUI
 	./build-skyimager.sh
 
-run-skyimager: ## Run skyimager
-	echo ${IMG_BOOT_PARAMS} | go run ./cmd/skyimager/skyimager.go
-
 run-skyimager-gui: ## Builds skyimager GUI
 	mkdir -p ./bin
-	${OPTS} GOBIN=${PWD}/bin go get github.com/rakyll/statik
-	./bin/statik -src=./cmd/skyimager-gui/assets -dest ./cmd/skyimager-gui -f
-	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go -debug -scale "-1.0"
+	${OPTS} go run ./cmd/skyimager-gui/skyimager-gui.go
 
 tag: ## Make git tag using VERSION in build.conf
 	./tag.sh

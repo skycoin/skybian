@@ -12,11 +12,36 @@ import (
 	"github.com/skycoin/dmsg/cipher"
 )
 
+// Skybian base image needs to be modified with user-set "boot params". These params are
+// user-specific and include ip and wi-fi settings, visor keys, passcodes etc.
+// We need a way to easily store these parameters in the base image, and retrieve them automatically
+// at runtime.
+
+// Boot parameters are stored as raw binary data in the image file at a known offset. This allows
+// to quickly read and write data without interpreting the contents of the OS image file (would be much
+// slower and require a lot of dependencies)
+
+// Initially, boot parameters were stored in the first sector of the image file, in Master Boot Record (MBR)
+// in the bootstrap code area 2
+
+// This isn't enough anymore, and the new place to store them is empty space after MBR and before the first
+// partition of the disk.
+
+// todo:
+// This space can be occupied by GPT partitions or boot.img file of GRUB, so for now this is experimental
+// we will try to use space as far from MBR as possible to minimize the chance of clashing with some
+// other data
+
+// Empty spaces in the image
+// 0xe0, 216bytes long (old place to store params, bootstrap area 2 of MBR)
+// 0x200, 7680 bytes long (0x2000 is the address of the first sector) - empty space before the first sector
+
 // Offset and size of boot parameters.
+
 const (
-	offset = int64(0xe0) // offset to where boot params are located.
-	size   = 216         // size of boot param data.
-	sep    = 0x1f        // unit separator to separate values of boot params.
+	offset = int64(0x1800) // offset to where boot params are located.
+	size   = 2048          // size of boot param data.
+	sep    = 0x1f          // unit separator to separate values of boot params.
 )
 
 // Errors.
