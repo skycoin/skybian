@@ -1,6 +1,6 @@
 version: "{build}"
 
-stack: go 1.16.7
+stack: go 1.16.10
 
 environment:
   matrix:
