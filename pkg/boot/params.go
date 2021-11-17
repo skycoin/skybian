@@ -2,9 +2,11 @@ package boot
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"strings"
@@ -62,6 +64,8 @@ const (
 	SocksPassEnv     = "SS"
 	WifiNameEnv      = "WFN"
 	WifiPassEnv      = "WFP"
+	// DSMGHTTP
+	DMSGHTTPEnv = "DH"
 )
 
 // Modes.
@@ -118,13 +122,26 @@ type Params struct {
 	LocalPK          cipher.PubKey `json:"local_pk"` // Not actually encoded to bps.
 	LocalSK          cipher.SecKey `json:"local_sk"`
 
+	// only on dmsghttp
+	DMSGHTTP string `json:"dmsghttp,omitempty"`
+
 	// only valid if mode == "0x00" (hypervisor)
 	HypervisorPKs    cipher.PubKeys `json:"hypervisor_pks,omitempty"`
 	SkysocksPasscode string         `json:"skysocks_passcode,omitempty"`
 }
 
+type dmsgHTTPServers struct {
+	DMSGServers        []string `json:"dmsg_servers"`
+	DMSGDiscovery      string   `json:"dmsg_discovery"`
+	TransportDiscovery string   `json:"transport_discovery"`
+	AddressResolver    string   `json:"address_resolver"`
+	RouteFinder        string   `json:"route_finder"`
+	UptimeTracker      string   `json:"uptime_tracker"`
+	ServiceDiscovery   string   `json:"service_discovery"`
+}
+
 // MakeHypervisorParams is a convenience function for creating boot parameters for a hypervisor.
-func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass string) (Params, error) {
+func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass, dmsgHTTPPath string) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -140,6 +157,15 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass stri
 		LocalPK:   pk,
 		LocalSK:   sk,
 	}
+
+	if len(dmsgHTTPPath) > 0 {
+		stringData, err := dmsgHTTPHandler(dmsgHTTPPath)
+		if err != nil {
+			return Params{}, err
+		}
+		params.DMSGHTTP = stringData
+	}
+
 	if wifiName != "" || wifiPass != "" {
 		params.WifiEndpointName = wifiName
 		params.WifiEndpointPass = wifiPass
@@ -150,7 +176,7 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass stri
 
 // MakeVisorParams is a convenience function for creating boot parameters for a visor.
 func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey,
-	socksPC string, wifiName, wifiPass string) (Params, error) {
+	socksPC, wifiName, wifiPass, dmsgHTTPPath string) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -168,12 +194,35 @@ func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKe
 		HypervisorPKs:    hvPKs,
 		SkysocksPasscode: socksPC,
 	}
+
+	if len(dmsgHTTPPath) > 0 {
+		stringData, err := dmsgHTTPHandler(dmsgHTTPPath)
+		if err != nil {
+			return Params{}, err
+		}
+		params.DMSGHTTP = stringData
+	}
+
 	if wifiName != "" || wifiPass != "" {
 		params.WifiEndpointName = wifiName
 		params.WifiEndpointPass = wifiPass
 	}
 	_, err = params.Encode()
 	return params, err
+}
+
+func dmsgHTTPHandler(dmsgHTTPPath string) (string, error) {
+	var dmsgHTTPServersData dmsgHTTPServers
+	serversListJSON, err := ioutil.ReadFile(dmsgHTTPPath)
+	if err != nil {
+		return "", err
+	}
+	err = json.Unmarshal(serversListJSON, &dmsgHTTPServersData)
+	if err != nil {
+		return "", err
+	}
+	dmsgHTTPJSON, _ := json.Marshal(dmsgHTTPServersData)
+	return string(dmsgHTTPJSON), nil
 }
 
 // MakeParams is a convenience function for creating a slice of boot parameters.
@@ -265,6 +314,12 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 			return err
 		}
 	}
+	// DMSGHTTP
+	if len(bp.DMSGHTTP) > 0 {
+		if err := PrintEnv(w, DMSGHTTPEnv, bp.DMSGHTTP); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -277,7 +332,7 @@ func (bp Params) PrintEnvs(w io.Writer) error {
 func (bp Params) Encode() ([]byte, error) {
 	keys := bp.LocalSK[:]
 	toEncode := [][]byte{{byte(bp.Mode)}, bp.LocalIP, bp.GatewayIP,
-		[]byte(bp.SkysocksPasscode), []byte(bp.WifiEndpointName), []byte(bp.WifiEndpointPass)}
+		[]byte(bp.SkysocksPasscode), []byte(bp.WifiEndpointName), []byte(bp.WifiEndpointPass), []byte(bp.DMSGHTTP)}
 	for _, hvPK := range bp.HypervisorPKs {
 		keys = append(keys, hvPK[:]...)
 	}
@@ -294,21 +349,21 @@ func (bp Params) Encode() ([]byte, error) {
 
 // Decode decodes the boot parameters from the given raw bytes.
 func (bp *Params) Decode(raw []byte) error {
-	split := bytes.SplitN(raw, []byte{sep}, 7)
-	// 5 for a regular config, 7 for wifi-enabled config
-	if len(split) != 7 {
+	split := bytes.SplitN(raw, []byte{sep}, 8)
+
+	if len(split) != 8 {
 		return ErrCannotReadParams
 	}
 
 	bp.Mode, bp.LocalIP, bp.GatewayIP, bp.SkysocksPasscode =
 		Mode(split[0][0]), split[1], split[2], string(split[3])
 
-	if len(split) == 7 {
-		bp.WifiEndpointName = string(split[4])
-		bp.WifiEndpointPass = string(split[5])
-	}
+	bp.WifiEndpointName = string(split[4])
+	bp.WifiEndpointPass = string(split[5])
 
-	keys := split[6]
+	bp.DMSGHTTP = string(split[6])
+
+	keys := split[7]
 	keys = keys[copy(bp.LocalSK[:], keys):]
 	for {
 		var pk cipher.PubKey

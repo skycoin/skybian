@@ -21,12 +21,12 @@ Golang 1.13+ is requred.
 **Additional dependencies for building Skybian base image:**
 
 ```
-rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk qemu-aarch64-static qemu-arm-static go
+rsync wget 7z cut awk sha256sum gzip tar e2fsck losetup resize2fs truncate sfdisk xorg-dev qemu-aarch64-static qemu-arm-static go
 ```
 
 For Debian-based linux distributions, you can install these via:
 ```bash
-$ sudo apt update && sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64
+$ sudo apt update && sudo apt install -y p7zip-full qemu-user-static build-essential crossbuild-essential-arm64 xorg-dev
 ```
 
 On Arch-based distributions, to satisfy the `qemu-aarch64-static` dependency, one can install the `qemu-arm-static` AUR package.
@@ -90,6 +90,7 @@ Values of the boot parameters are separated by `0x1F` characters. The values are
 - `GW`: The gateway IP address. Only IPv4 compatible addresses are supported.
 - `SS`: The passcode for the `skysocks` app (Only valid if `MD=0x01` - Visor).
 - `HVS`: Delegated hypervisor public keys. (Only valid of `MD=0x01` - Visor).
+- `DH`: DMSGHTTP Servers List. (Only available if dmsghttp checked and selected related json file).
 
 These values can be written by the `skyimager-gui` (provided in this repo) with user-provided options.
 

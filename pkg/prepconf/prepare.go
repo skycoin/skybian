@@ -144,5 +144,30 @@ func generateConfig(conf Config) (*visorconfig.V1, error) {
 		ServerAddr: skyenv.DefaultAppSrvAddr,
 		BinPath:    "/usr/bin/apps",
 	}
+
+	if len(bp.DMSGHTTP) > 0 {
+		var dmsghttpData dmsgHTTPServersData
+		err := json.Unmarshal([]byte(bp.DMSGHTTP), &dmsghttpData)
+		if err != nil {
+			return out, nil
+		}
+		out.Dmsg.Servers = dmsghttpData.DMSGServers
+		out.Dmsg.Discovery = dmsghttpData.DMSGDiscovery
+		out.Transport.Discovery = dmsghttpData.TransportDiscovery
+		out.Transport.AddressResolver = dmsghttpData.AddressResolver
+		out.Routing.RouteFinder = dmsghttpData.RouteFinder
+		out.UptimeTracker.Addr = dmsghttpData.UptimeTracker
+		out.Launcher.ServiceDisc = dmsghttpData.ServiceDiscovery
+	}
 	return out, nil
+}
+
+type dmsgHTTPServersData struct {
+	DMSGServers        []string `json:"dmsg_servers"`
+	DMSGDiscovery      string   `json:"dmsg_discovery"`
+	TransportDiscovery string   `json:"transport_discovery"`
+	AddressResolver    string   `json:"address_resolver"`
+	RouteFinder        string   `json:"route_finder"`
+	UptimeTracker      string   `json:"uptime_tracker"`
+	ServiceDiscovery   string   `json:"service_discovery"`
 }

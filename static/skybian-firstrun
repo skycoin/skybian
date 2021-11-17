@@ -32,7 +32,7 @@ setup_skywire()
   fi
 
   # Obtains the following ENVs from boot params:
-  # MD IP GW PK SK HVS SS SUCCESS LOGFILE
+  # MD IP GW PK SK HVS SS DH SUCCESS LOGFILE
   echo "-----BEGIN BOOT PARAMS-----"
   echo "$BOOT_PARAMS"
   echo "-----END BOOT PARAMS-----"

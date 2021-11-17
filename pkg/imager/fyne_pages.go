@@ -92,6 +92,33 @@ func (fg *FyneUI) makeFolderPicker() fyne.CanvasObject {
 	return box
 }
 
+func (fg *FyneUI) makeDmsgHTTPPicker() fyne.CanvasObject {
+	fsDmsgHTTP := widget.NewEntry()
+	fsDmsgHTTP.SetPlaceHolder("path to .json file")
+	fsDmsgHTTP.OnChanged = func(s string) {
+		fg.dmsgHTTPPath = s
+		fg.log.Debugf("Set: fg.fsDmsgHTTP = %v", s)
+	}
+	fsDmsgHTTP.SetText(fg.dmsgHTTPPath)
+	d := dialog.NewFileOpen(func(f fyne.URIReadCloser, err error) {
+		if err != nil {
+			fg.log.Error(err)
+			return
+		}
+		if f == nil {
+			return
+		}
+		uri := f.URI().String()
+		// URI includes file:// scheme, and there is no other way to retrieve full file path
+		filePath := strings.TrimPrefix(uri, "file://")
+		fg.dmsgHTTPPath = filePath
+		fsDmsgHTTP.SetText(filePath)
+	}, fg.w)
+	btn := widget.NewButton("Open", d.Show)
+	box := container.NewHBox(btn, fsDmsgHTTP)
+	return box
+}
+
 // remoteImgSelect is a wrapper around select widget with img type
 // and label attached to it
 type remoteImgSelect struct {
@@ -213,6 +240,17 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	})
 	genHvImg.SetChecked(fg.hvImg)
 
+	fsDMSGHTTPPicker := fg.makeDmsgHTTPPicker()
+	fsDMSGHTTPPicker.Hide()
+
+	useDMSGHTTP := widget.NewCheck("Use dmsgHTTP.", func(b bool) {
+		if b {
+			fsDMSGHTTPPicker.Show()
+		} else {
+			fsDMSGHTTPPicker.Hide()
+		}
+	})
+
 	hvPKs := container.NewVBox()
 	hvPKs.Hide()
 	hvPKsRefresh := func() {
@@ -302,7 +340,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		wifiWidgets,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
 		widget.NewLabel("Number of images:"), imgNumber,
-		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
+		genHvImg, useDMSGHTTP, fsDMSGHTTPPicker, enableHvPKs, hvPKs, hvPKsAdd)
 }
 
 func (fg *FyneUI) resetPage2Values() {
@@ -312,6 +350,7 @@ func (fg *FyneUI) resetPage2Values() {
 	fg.socksPC = ""
 	fg.imgNumber = DefaultImgNumber
 	fg.hvImg = true
+	fg.dmsgHTTPPath = ""
 	fg.hvPKs = nil
 }
 
