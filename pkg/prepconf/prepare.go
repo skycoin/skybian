@@ -146,7 +146,7 @@ func generateConfig(conf Config) (*visorconfig.V1, error) {
 	}
 
 	if len(bp.DMSGHTTP) > 0 {
-		var dmsghttpData dmsgHTTPServersData
+		var dmsghttpData visorconfig.DmsgHTTPServersData
 		err := json.Unmarshal([]byte(bp.DMSGHTTP), &dmsghttpData)
 		if err != nil {
 			return out, nil
@@ -160,14 +160,4 @@ func generateConfig(conf Config) (*visorconfig.V1, error) {
 		out.Launcher.ServiceDisc = dmsghttpData.ServiceDiscovery
 	}
 	return out, nil
-}
-
-type dmsgHTTPServersData struct {
-	DMSGServers        []string `json:"dmsg_servers"`
-	DMSGDiscovery      string   `json:"dmsg_discovery"`
-	TransportDiscovery string   `json:"transport_discovery"`
-	AddressResolver    string   `json:"address_resolver"`
-	RouteFinder        string   `json:"route_finder"`
-	UptimeTracker      string   `json:"uptime_tracker"`
-	ServiceDiscovery   string   `json:"service_discovery"`
 }

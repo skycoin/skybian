@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/skycoin/dmsg/cipher"
+	"github.com/skycoin/skywire/pkg/visor/visorconfig"
 )
 
 // Skybian base image needs to be modified with user-set "boot params". These params are
@@ -130,16 +131,6 @@ type Params struct {
 	SkysocksPasscode string         `json:"skysocks_passcode,omitempty"`
 }
 
-type dmsgHTTPServers struct {
-	DMSGServers        []string `json:"dmsg_servers"`
-	DMSGDiscovery      string   `json:"dmsg_discovery"`
-	TransportDiscovery string   `json:"transport_discovery"`
-	AddressResolver    string   `json:"address_resolver"`
-	RouteFinder        string   `json:"route_finder"`
-	UptimeTracker      string   `json:"uptime_tracker"`
-	ServiceDiscovery   string   `json:"service_discovery"`
-}
-
 // MakeHypervisorParams is a convenience function for creating boot parameters for a hypervisor.
 func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass, dmsgHTTPPath string) (Params, error) {
 	pk, err := sk.PubKey()
@@ -212,7 +203,7 @@ func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKe
 }
 
 func dmsgHTTPHandler(dmsgHTTPPath string) (string, error) {
-	var dmsgHTTPServersData dmsgHTTPServers
+	var dmsgHTTPServersData visorconfig.DmsgHTTPServersData
 	serversListJSON, err := ioutil.ReadFile(dmsgHTTPPath)
 	if err != nil {
 		return "", err
@@ -221,7 +212,10 @@ func dmsgHTTPHandler(dmsgHTTPPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	dmsgHTTPJSON, _ := json.Marshal(dmsgHTTPServersData)
+	dmsgHTTPJSON, err := json.Marshal(dmsgHTTPServersData)
+	if err != nil {
+		return "", err
+	}
 	return string(dmsgHTTPJSON), nil
 }
 
