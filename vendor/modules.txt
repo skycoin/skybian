@@ -174,7 +174,7 @@ github.com/skycoin/skycoin/src/cipher/ripemd160
 github.com/skycoin/skycoin/src/cipher/secp256k1-go
 github.com/skycoin/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/skycoin/skycoin/src/util/logging
-# github.com/skycoin/skywire v0.5.2-0.20211117112105-25406ce9ef63
+# github.com/skycoin/skywire v0.5.2-0.20211124111242-1d90a0492f62
 ## explicit
 github.com/skycoin/skywire/internal/httpauth
 github.com/skycoin/skywire/internal/netutil

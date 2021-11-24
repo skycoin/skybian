@@ -311,8 +311,8 @@ github.com/skycoin/noise v0.0.0-20180327030543-2492fe189ae6/go.mod h1:UXghlricA7
 github.com/skycoin/skycoin v0.26.0/go.mod h1:78nHjQzd8KG0jJJVL/j0xMmrihXi70ti63fh8vXScJw=
 github.com/skycoin/skycoin v0.27.1 h1:HatxsRwVSPaV4qxH6290xPBmkH/HgiuAoY2qC+e8C9I=
 github.com/skycoin/skycoin v0.27.1/go.mod h1:78nHjQzd8KG0jJJVL/j0xMmrihXi70ti63fh8vXScJw=
-github.com/skycoin/skywire v0.5.2-0.20211117112105-25406ce9ef63 h1:kHDwJV4O0ggN+8EeBKetxYwX9DNhjjNsp2tB+uU+esk=
-github.com/skycoin/skywire v0.5.2-0.20211117112105-25406ce9ef63/go.mod h1:H35tSOwurUtc25Pm2lr5vLQIm8tzrfJV92mSUb2dXvY=
+github.com/skycoin/skywire v0.5.2-0.20211124111242-1d90a0492f62 h1:rn4w5R7w+oJPfECHESeTBUBPKcMJYbmea+0nbtJ3gjY=
+github.com/skycoin/skywire v0.5.2-0.20211124111242-1d90a0492f62/go.mod h1:H35tSOwurUtc25Pm2lr5vLQIm8tzrfJV92mSUb2dXvY=
 github.com/skycoin/yamux v0.0.0-20200803175205-571ceb89da9f h1:A5dEM1OE9YhN3LciZU9qPjo7fJ46JeHNi3JCroDkK0Y=
 github.com/skycoin/yamux v0.0.0-20200803175205-571ceb89da9f/go.mod h1:48cleOxgkiLbgv322LOg2Vrxtu180Mb8GG1HbuhmFYM=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
