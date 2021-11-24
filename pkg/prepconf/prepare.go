@@ -145,19 +145,28 @@ func generateConfig(conf Config) (*visorconfig.V1, error) {
 		BinPath:    "/usr/bin/apps",
 	}
 
-	if len(bp.DMSGHTTP) > 0 {
-		var dmsghttpData visorconfig.DmsgHTTPServersData
-		err := json.Unmarshal([]byte(bp.DMSGHTTP), &dmsghttpData)
+	if bp.DMSGHTTP == "dmsghttp" {
+		var dmsghttpData visorconfig.DmsgHTTPServers
+		dmsghttpFile, err := os.Open("/etc/tmp/dmsghttp-config.json")
 		if err != nil {
 			return out, nil
 		}
-		out.Dmsg.Servers = dmsghttpData.DMSGServers
-		out.Dmsg.Discovery = dmsghttpData.DMSGDiscovery
-		out.Transport.Discovery = dmsghttpData.TransportDiscovery
-		out.Transport.AddressResolver = dmsghttpData.AddressResolver
-		out.Routing.RouteFinder = dmsghttpData.RouteFinder
-		out.UptimeTracker.Addr = dmsghttpData.UptimeTracker
-		out.Launcher.ServiceDisc = dmsghttpData.ServiceDiscovery
+		defer dmsghttpFile.Close()
+		dmsghttpByte, err := ioutil.ReadAll(dmsghttpFile)
+		if err != nil {
+			return out, nil
+		}
+		err = json.Unmarshal(dmsghttpByte, &dmsghttpData)
+		if err != nil {
+			return out, nil
+		}
+		out.Dmsg.Servers = dmsghttpData.Prod.DMSGServers
+		out.Dmsg.Discovery = dmsghttpData.Prod.DMSGDiscovery
+		out.Transport.Discovery = dmsghttpData.Prod.TransportDiscovery
+		out.Transport.AddressResolver = dmsghttpData.Prod.AddressResolver
+		out.Routing.RouteFinder = dmsghttpData.Prod.RouteFinder
+		out.UptimeTracker.Addr = dmsghttpData.Prod.UptimeTracker
+		out.Launcher.ServiceDisc = dmsghttpData.Prod.ServiceDiscovery
 	}
 	return out, nil
 }

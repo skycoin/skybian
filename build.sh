@@ -185,6 +185,9 @@ get_skywire()
   mkdir "${PARTS_SKYWIRE_DIR}/bin"
   tar xvzf "${_DST}" -C "${PARTS_SKYWIRE_DIR}/bin" || return 1
 
+  info "Downloading dmsghttp-config from ${DMSGHTTP_CONFIG_URL} to ${PARTS_SKYWIRE_DIR}"
+  wget -c "${DMSGHTTP_CONFIG_URL}" -O "${PARTS_SKYWIRE_DIR}/dmsghttp-config.json"
+
   info "Cleaning..."
   rm -rf "${PARTS_SKYWIRE_DIR}/bin/README.md" "${PARTS_SKYWIRE_DIR}/bin/CHANGELOG.md"  || return 1
 
@@ -444,6 +447,9 @@ copy_to_img()
 	sudo cp "$ROOT"/static/skybian-firstrun "$FS_MNT_POINT"/usr/bin/ || return 1
   sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
+  # Copy dsmghttp-config.json
+  sudo cp "${PARTS_SKYWIRE_DIR}/dmsghttp-config.json" "${FS_MNT_POINT}"/tmp/ || return 1
+ 
   if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
     
     # Copy scripts

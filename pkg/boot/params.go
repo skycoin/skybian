@@ -2,17 +2,14 @@ package boot
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"strings"
 
 	"github.com/skycoin/dmsg/cipher"
-	"github.com/skycoin/skywire/pkg/visor/visorconfig"
 )
 
 // Skybian base image needs to be modified with user-set "boot params". These params are
@@ -132,7 +129,7 @@ type Params struct {
 }
 
 // MakeHypervisorParams is a convenience function for creating boot parameters for a hypervisor.
-func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass, dmsgHTTPPath string) (Params, error) {
+func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass string, dmsghttp bool) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -149,12 +146,8 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass, dms
 		LocalSK:   sk,
 	}
 
-	if len(dmsgHTTPPath) > 0 {
-		stringData, err := dmsgHTTPHandler(dmsgHTTPPath)
-		if err != nil {
-			return Params{}, err
-		}
-		params.DMSGHTTP = stringData
+	if dmsghttp {
+		params.DMSGHTTP = "dmsghttp"
 	}
 
 	if wifiName != "" || wifiPass != "" {
@@ -167,7 +160,7 @@ func MakeHypervisorParams(gwIP net.IP, sk cipher.SecKey, wifiName, wifiPass, dms
 
 // MakeVisorParams is a convenience function for creating boot parameters for a visor.
 func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKey,
-	socksPC, wifiName, wifiPass, dmsgHTTPPath string) (Params, error) {
+	socksPC, wifiName, wifiPass string, dmsghttp bool) (Params, error) {
 	pk, err := sk.PubKey()
 	if err != nil {
 		return Params{}, err
@@ -186,12 +179,8 @@ func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKe
 		SkysocksPasscode: socksPC,
 	}
 
-	if len(dmsgHTTPPath) > 0 {
-		stringData, err := dmsgHTTPHandler(dmsgHTTPPath)
-		if err != nil {
-			return Params{}, err
-		}
-		params.DMSGHTTP = stringData
+	if dmsghttp {
+		params.DMSGHTTP = "dmsghttp"
 	}
 
 	if wifiName != "" || wifiPass != "" {
@@ -200,23 +189,6 @@ func MakeVisorParams(prevIP, gwIP net.IP, sk cipher.SecKey, hvPKs []cipher.PubKe
 	}
 	_, err = params.Encode()
 	return params, err
-}
-
-func dmsgHTTPHandler(dmsgHTTPPath string) (string, error) {
-	var dmsgHTTPServersData visorconfig.DmsgHTTPServersData
-	serversListJSON, err := ioutil.ReadFile(dmsgHTTPPath)
-	if err != nil {
-		return "", err
-	}
-	err = json.Unmarshal(serversListJSON, &dmsgHTTPServersData)
-	if err != nil {
-		return "", err
-	}
-	dmsgHTTPJSON, err := json.Marshal(dmsgHTTPServersData)
-	if err != nil {
-		return "", err
-	}
-	return string(dmsgHTTPJSON), nil
 }
 
 // MakeParams is a convenience function for creating a slice of boot parameters.
