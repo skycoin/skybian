@@ -448,7 +448,7 @@ copy_to_img()
   sudo chmod +x "$FS_MNT_POINT"/usr/bin/skybian-firstrun || return 1
 
   # Copy dsmghttp-config.json
-  sudo cp "${PARTS_SKYWIRE_DIR}/dmsghttp-config.json" "${FS_MNT_POINT}"/tmp/ || return 1
+  sudo cp "${PARTS_SKYWIRE_DIR}/dmsghttp-config.json" "${FS_MNT_POINT}"/etc/ || return 1
  
   if [ ${BOARD} == rpi ] || [ ${BOARD} == rpi64 ] || [ ${BOARD} == rpiw ] ; then
     
