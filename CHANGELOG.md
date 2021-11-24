@@ -17,6 +17,12 @@ This is a note for developers about the recommended tags to keep track of the ch
 
 Dates must be YEAR-MONTH-DAY
 -->
+## [0.3.2] - 2021-11-24
+
+### Added
+- Add using dmsgHTTP URLs for services on skyimager by chec `use dmsgHTTP.`.
+- Add dmsghttp-config.json file to builded image on `make build-skybian-img` process
+
 ## [0.3.1] - 2021-06-30
 ### Changed
 
