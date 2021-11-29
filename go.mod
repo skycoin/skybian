@@ -10,9 +10,9 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/sirupsen/logrus v1.8.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/skycoin/dmsg v0.0.0-20211007145032-962409e5845f
+	github.com/skycoin/dmsg v0.0.0-20211125122021-388f2fc645c9
 	github.com/skycoin/skycoin v0.27.1
-	github.com/skycoin/skywire v0.5.2-0.20211124111242-1d90a0492f62
+	github.com/skycoin/skywire v0.5.2-0.20211125164518-be38adb86ad3
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
 )

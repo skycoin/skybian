@@ -152,7 +152,7 @@ github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 ## explicit
 github.com/skratchdot/open-golang/open
-# github.com/skycoin/dmsg v0.0.0-20211007145032-962409e5845f
+# github.com/skycoin/dmsg v0.0.0-20211125122021-388f2fc645c9
 ## explicit
 github.com/skycoin/dmsg
 github.com/skycoin/dmsg/buildinfo
@@ -174,7 +174,7 @@ github.com/skycoin/skycoin/src/cipher/ripemd160
 github.com/skycoin/skycoin/src/cipher/secp256k1-go
 github.com/skycoin/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/skycoin/skycoin/src/util/logging
-# github.com/skycoin/skywire v0.5.2-0.20211124111242-1d90a0492f62
+# github.com/skycoin/skywire v0.5.2-0.20211125164518-be38adb86ad3
 ## explicit
 github.com/skycoin/skywire/internal/httpauth
 github.com/skycoin/skywire/internal/netutil
