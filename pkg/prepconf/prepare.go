@@ -147,12 +147,7 @@ func generateConfig(conf Config) (*visorconfig.V1, error) {
 
 	if bp.DMSGHTTP == "dmsghttp" {
 		var dmsghttpData visorconfig.DmsgHTTPServers
-		dmsghttpFile, err := os.Open("/etc/dmsghttp-config.json")
-		if err != nil {
-			return out, nil
-		}
-		defer dmsghttpFile.Close()
-		dmsghttpByte, err := ioutil.ReadAll(dmsghttpFile)
+		dmsghttpByte, err := os.ReadFile("/etc/dmsghttp-config.json")
 		if err != nil {
 			return out, nil
 		}
