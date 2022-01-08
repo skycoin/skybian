@@ -62,6 +62,7 @@ build() {
   sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
 	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
   sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
+## chroot modifications for apt repo & package
   _msg2 "CHROOT: configuring package repository in /etc/apt/sources.list"
   sudo arch-chroot ${srcdir}/mnt sudo add-apt-repository 'deb http://deb.magnetosphere.net sid main'
 	_msg2 "CHROOT: add the repository signing key to apt keyring"
@@ -73,6 +74,12 @@ build() {
   #activate systemd service for creating the config on first boot
 	#_msg2 "CHROOT: enabling config gen on boot"
   #sudo arch-chroot ${srcdir}/mnt "systemctl enable --now skywire-bootconfig"
+# included from chroot-commands.sh
+  _msg2 "CHROOT: Setting default root password to 'skybian'..."
+  sudo arch-chroot ${srcdir}/mnt sudo printf "skybian\nskybian\n" | passwd root
+  _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
+  sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
+
 	sudo umount ${srcdir}/mnt
 	sudo losetup -d /dev/loop0
   mv ${_imgfinal} ../${_imgfinal}
