@@ -1,0 +1,68 @@
+pkgname=skybian
+_pkgname=skybian
+pkgdesc="Packaged modifications to the skybian image "
+pkgver='0.4.0'
+_pkgver=${pkgver}
+pkgrel=1
+_pkgrel=${pkgrel}
+arch=( 'any' )
+_pkgarch="arm64"
+_pkgpath="github.com/skycoin/${_pkgname}"
+url="https://${_pkgpath}"
+makedepends=('dpkg')
+depends=()
+_rms="raw/master/static"
+source=(
+"${url}/${_rms}/10-skybian-header"
+"${url}/${_rms}/armbian-check-first-login.sh"
+"${url}/${_rms}/armbian-motd"
+)
+sha256sums=('1aae9938793bf2b8a9572c8c29dfb589cee1543b1ca1033116e27445402c5177'
+            'd35fb793968e8dfd1c452a4468225aab1138b883d37b451187e6e3536eea1a0a'
+            '63c9148474d4a6197e1f50b110bdb93abef79382a6c2335cd8e8381031d76b2e')
+#'SKIP')
+
+
+build() {
+  #create control file for the debian package
+  echo "Package: ${_pkgname}" > ${srcdir}/control
+  echo "Version: ${_pkgver}-${_pkgrel}" >> ${srcdir}/control
+  echo "Priority: optional" >> ${srcdir}/control
+  echo "Section: web" >> ${srcdir}/control
+  echo "Architecture: ${_pkgarch}" >> ${srcdir}/control
+  #echo "Depends: ${_debdeps}" >> ${srcdir}/control
+  echo "Maintainer: Skycoin" >> ${srcdir}/control
+  echo "Description: ${pkgdesc}" >> ${srcdir}/control
+}
+
+
+package() {
+
+  _msg2 'creating dirs'
+  #set up to create a .deb package
+  _debpkgdir="${_pkgname}-${pkgver}-${_pkgrel}-${_pkgarch}"
+  _pkgdir="${pkgdir}/${_debpkgdir}"
+  #########################################################################
+  #PACKAGE AS YOU NORMALLY WOULD HERE USING ${_pkgdir} instead of ${pkgdir}
+  mkdir -p ${_pkgdir}/etc/update-motd.d/
+  mkdir -p ${_pkgdir}/etc/default/
+  mkdir -p ${_pkgdir}/etc/profile.d/
+  install -Dm755 ${srcdir}/10-skybian-header ${_pkgdir}/etc/update-motd.d/
+  install -Dm755 ${srcdir}/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
+  install -Dm644 ${srcdir}/armbian-motd ${_pkgdir}/etc/default/
+  #########################################################################
+  _msg2 'installing control file'
+  install -Dm755 ${srcdir}/control ${_pkgdir}/DEBIAN/control
+  _msg2 'creating the debian package'
+  cd $pkgdir
+  dpkg-deb --build -z9 ${_debpkgdir}
+  mv *.deb ../../
+  #exit so the arch package doesn't get built
+  exit
+}
+
+_msg2() {
+	(( QUIET )) && return
+	local mesg=$1; shift
+	printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}
