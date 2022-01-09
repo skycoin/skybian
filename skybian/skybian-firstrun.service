@@ -1,6 +1,7 @@
 [Unit]
 Description=Skybian Firstboot
 After=NetworkManager.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service
+Before=skywire.service skywire-visor.service skywire-boot-config.service skywire-visor-boot-config.service
 Wants=NetworkManager.service
 
 [Service]

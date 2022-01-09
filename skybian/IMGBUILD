@@ -10,7 +10,7 @@ _xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_21.0
 _torrent="${_xzlink}.torrent"
 _imgfinal="skybian-${pkgver}.img"
 _skywiredeb="skywire-bin-0.5.1-11-arm64.deb"
-_skybiandeb="skybian-0.4.0-1-arm64.deb"
+_skybiandeb="skybian-0.4.0-2-arm64.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
@@ -26,7 +26,7 @@ noextract=("${_skywiredeb}")
 sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
             '8a6c128dde7137055332c693e23c8af9db3ba8ba847ee71df1c139d661c79c12'
-            'bcc79657c79b803ea6160e2d56248deee86c950e46ac6914c4cc9b62ab144c6a'
+            'cc1c927a19d224e0d7ec87e7a52ca407e2fcf9f6c59f5e8df337fb39c30f5662'
             'SKIP')
 
 #pkgver() {
