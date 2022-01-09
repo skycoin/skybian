@@ -11,3 +11,8 @@
 .DS_Store
 *.img
 *.code-workspace
+*.deb
+*.torrent
+*.md5
+/skybian/pkg
+/skybian/src
