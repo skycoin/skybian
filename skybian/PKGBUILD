@@ -13,13 +13,17 @@ makedepends=('dpkg')
 depends=()
 _rms="raw/master/static"
 source=(
-"${url}/${_rms}/10-skybian-header"
-"${url}/${_rms}/armbian-check-first-login.sh"
-"${url}/${_rms}/armbian-motd"
+"10-skybian-header"
+"armbian-check-first-login.sh"
+"armbian-motd"
+"skybian-firstrun.sh"
+"skybian-firstrun.service"
 )
 sha256sums=('1aae9938793bf2b8a9572c8c29dfb589cee1543b1ca1033116e27445402c5177'
             'd35fb793968e8dfd1c452a4468225aab1138b883d37b451187e6e3536eea1a0a'
-            '63c9148474d4a6197e1f50b110bdb93abef79382a6c2335cd8e8381031d76b2e')
+            '63c9148474d4a6197e1f50b110bdb93abef79382a6c2335cd8e8381031d76b2e'
+            'bed0e07099063664fb616372691b07d80a806d67f935e260dfe7729353c67641'
+            'e7de6671c3e803de4d2f1306653112165edc9b92601a8d586476035c10e67525')
 #'SKIP')
 
 
@@ -47,9 +51,13 @@ package() {
   mkdir -p ${_pkgdir}/etc/update-motd.d/
   mkdir -p ${_pkgdir}/etc/default/
   mkdir -p ${_pkgdir}/etc/profile.d/
+  mkdir -p ${_pkgdir}/etc/systemd/system/
+  mkdir -p ${_pkgdir}/usr/bin/
   install -Dm755 ${srcdir}/10-skybian-header ${_pkgdir}/etc/update-motd.d/
   install -Dm755 ${srcdir}/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
   install -Dm644 ${srcdir}/armbian-motd ${_pkgdir}/etc/default/
+  install -Dm755 ${srcdir}/skybian-firstrun.sh ${_pkgdir}/usr/bin/skybian-firstrun.sh
+  install -Dm644 ${srcdir}/skybian-firstrun.service ${_pkgdir}/etc/systemd/system/skybian-firstrun.service
   #########################################################################
   _msg2 'installing control file'
   install -Dm755 ${srcdir}/control ${_pkgdir}/DEBIAN/control
