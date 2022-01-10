@@ -10,7 +10,7 @@ _xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_21.0
 _torrent="${_xzlink}.torrent"
 _imgfinal="skybian-${pkgver}.img"
 _skywiredeb="skywire-bin-0.5.1-11-arm64.deb"
-_skybiandeb="skybian-0.4.0-4-arm64.deb"
+_skybiandeb="skybian-0.4.0-5-arm64.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
@@ -26,7 +26,7 @@ noextract=("${_skywiredeb}")
 sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
             '8a6c128dde7137055332c693e23c8af9db3ba8ba847ee71df1c139d661c79c12'
-            'fa0a84e40026ac454636c4fac53b757c8820cc388e82b9046bfc2231283b6c79'
+            '011ff774d478a683ce98bfda6200e226145394741e9c28a31214078954df1a37'
             'SKIP')
 
 #pkgver() {
@@ -89,8 +89,8 @@ build() {
   #sudo arch-chroot ${srcdir}/mnt sudo rm /opt/skywire/skywire.json
   #activate systemd service for creating the config on first boot
   # included from chroot-commands.sh
-  _msg2 "CHROOT: Setting default root password to 'skybian'..."
-  sudo arch-chroot ${srcdir}/mnt sudo printf "skybian\nskybian\n" | passwd root
+  #_msg2 "CHROOT: Setting default root password to 'skybian'..."
+  #sudo arch-chroot ${srcdir}/mnt sudo printf "skybian\nskybian\n" | passwd root ## This did not work right
   _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
   sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
 

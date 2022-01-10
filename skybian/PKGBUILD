@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image - debian package"
 pkgver='0.4.0'
 _pkgver=${pkgver}
-pkgrel=4
+pkgrel=5
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarch="arm64"
@@ -19,15 +19,15 @@ source=(
 "skybian-firstrun.sh"
 "skybian-firstrun.service"
 "postinst.sh"
-"skybian-autoconfig.sh"
+"skybian-chrootconfig.sh"
 )
 sha256sums=('1aae9938793bf2b8a9572c8c29dfb589cee1543b1ca1033116e27445402c5177'
             'd35fb793968e8dfd1c452a4468225aab1138b883d37b451187e6e3536eea1a0a'
             '63c9148474d4a6197e1f50b110bdb93abef79382a6c2335cd8e8381031d76b2e'
             '93d10da6eb9a1ce6c4757c65e96b42a3d678b6b7d47689afd375c0f97f769ad2'
             'cf6c04cc3b0d3ae7a048b04ab2c805fc1699da8f3d4c6dd2329295fc1fab6ef0'
-            '9181f240d5eed32e58b097f60ee0d1b020ab85ec52d724222976e44469761faf'
-            '0bc5efd0f33f761a71d88d31ba689be855f1957423e1a1e9612e54c3579015e0')
+            '53f76fe804b21b0e46110bb921ef7fcb2caee63915f29a65a5f677ed718ea8b1'
+            '39014a6125e5e6bb5dc83f71e3ead2bf345084a7ae26f075679cc2da29a82df1')
 #'SKIP')
 
 
@@ -61,7 +61,7 @@ package() {
   install -Dm755 ${srcdir}/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
   install -Dm644 ${srcdir}/armbian-motd ${_pkgdir}/etc/default/
   install -Dm755 ${srcdir}/skybian-firstrun.sh ${_pkgdir}/usr/bin/skybian-firstrun
-  install -Dm755 ${srcdir}/skybian-autoconfig.sh ${_pkgdir}/usr/bin/skybian-autoconfig
+  install -Dm755 ${srcdir}/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   install -Dm644 ${srcdir}/skybian-firstrun.service ${_pkgdir}/etc/systemd/system/skybian-firstrun.service
   #########################################################################
   _msg2 'installing control file and postinst script'
