@@ -213,6 +213,12 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 	})
 	genHvImg.SetChecked(fg.hvImg)
 
+	useDMSGHTTP := widget.NewCheck("Use dmsgHTTP.", func(b bool) {
+		if b {
+			fg.dmsghttp = b
+		}
+	})
+
 	hvPKs := container.NewVBox()
 	hvPKs.Hide()
 	hvPKsRefresh := func() {
@@ -302,7 +308,7 @@ func (fg *FyneUI) Page2() fyne.CanvasObject {
 		wifiWidgets,
 		widget.NewLabel("Skysocks Passcode:"), socksPC,
 		widget.NewLabel("Number of images:"), imgNumber,
-		genHvImg, enableHvPKs, hvPKs, hvPKsAdd)
+		genHvImg, useDMSGHTTP, enableHvPKs, hvPKs, hvPKsAdd)
 }
 
 func (fg *FyneUI) resetPage2Values() {
@@ -312,6 +318,7 @@ func (fg *FyneUI) resetPage2Values() {
 	fg.socksPC = ""
 	fg.imgNumber = DefaultImgNumber
 	fg.hvImg = true
+	fg.dmsghttp = false
 	fg.hvPKs = nil
 }
 

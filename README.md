@@ -90,6 +90,7 @@ Values of the boot parameters are separated by `0x1F` characters. The values are
 - `GW`: The gateway IP address. Only IPv4 compatible addresses are supported.
 - `SS`: The passcode for the `skysocks` app (Only valid if `MD=0x01` - Visor).
 - `HVS`: Delegated hypervisor public keys. (Only valid of `MD=0x01` - Visor).
+- `DH`: A dmsghttp flag to use dmsghttp-config URLs on generate skywire-config file. (Only available if dmsghttp checked and selected related json file).
 
 These values can be written by the `skyimager-gui` (provided in this repo) with user-provided options.
 

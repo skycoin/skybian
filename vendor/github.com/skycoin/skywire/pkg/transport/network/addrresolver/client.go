@@ -57,7 +57,6 @@ type APIClient interface {
 	BindSTCPR(ctx context.Context, port string) error
 	BindSUDPH(filter *pfilter.PacketFilter, handshake Handshake) (<-chan RemoteVisor, error)
 	Resolve(ctx context.Context, netType string, pk cipher.PubKey) (VisorData, error)
-	Health(ctx context.Context) (int, error)
 	Close() error
 }
 
@@ -88,7 +87,7 @@ type httpClient struct {
 // * SW-Public: The specified public key.
 // * SW-Nonce:  The nonce for that public key.
 // * SW-Sig:    The signature of the payload + the nonce.
-func NewHTTP(remoteAddr string, pk cipher.PubKey, sk cipher.SecKey, log *logging.Logger) (APIClient, error) {
+func NewHTTP(remoteAddr string, pk cipher.PubKey, sk cipher.SecKey, httpC http.Client, log *logging.Logger) (APIClient, error) {
 	remoteURL, err := url.Parse(remoteAddr)
 	if err != nil {
 		return nil, fmt.Errorf("parse URL: %w", err)
@@ -111,13 +110,13 @@ func NewHTTP(remoteAddr string, pk cipher.PubKey, sk cipher.SecKey, log *logging
 
 	client.log.Infof("Remote UDP server: %q", remoteUDP)
 
-	go client.initHTTPClient()
+	go client.initHTTPClient(httpC)
 
 	return client, nil
 }
 
-func (c *httpClient) initHTTPClient() {
-	httpAuthClient, err := httpauth.NewClient(context.Background(), c.remoteHTTPAddr, c.pk, c.sk)
+func (c *httpClient) initHTTPClient(httpC http.Client) {
+	httpAuthClient, err := httpauth.NewClient(context.Background(), c.remoteHTTPAddr, c.pk, c.sk, &httpC)
 	if err != nil {
 		c.log.WithError(err).
 			Warnf("Failed to connect to address resolver. STCPR/SUDPH services are temporarily unavailable. Retrying...")
@@ -126,7 +125,7 @@ func (c *httpClient) initHTTPClient() {
 		retry := dmsgnetutil.NewRetrier(retryLog, 1*time.Second, 10*time.Second, 0, 1)
 
 		err := retry.Do(context.Background(), func() error {
-			httpAuthClient, err = httpauth.NewClient(context.Background(), c.remoteHTTPAddr, c.pk, c.sk)
+			httpAuthClient, err = httpauth.NewClient(context.Background(), c.remoteHTTPAddr, c.pk, c.sk, &httpC)
 			return err
 		})
 
@@ -376,25 +375,6 @@ func (c *httpClient) Resolve(ctx context.Context, tType string, pk cipher.PubKey
 	}
 
 	return resolveResp, nil
-}
-
-func (c *httpClient) Health(ctx context.Context) (int, error) {
-	if !c.isReady() {
-		return http.StatusNotFound, nil
-	}
-
-	resp, err := c.Get(ctx, "/health")
-	if err != nil {
-		return 0, err
-	}
-
-	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			c.log.WithError(err).Warn("Failed to close response body")
-		}
-	}()
-
-	return resp.StatusCode, nil
 }
 
 func (c *httpClient) isReady() bool {
