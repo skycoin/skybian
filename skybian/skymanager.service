@@ -1,0 +1,14 @@
+[Unit]
+Description=skymanager service
+After=NetworkManager.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service networking.service network-online.target NetworkManager-wait-online.service
+Before=skywire.service skywire-visor.service skywire-autoconfig.service skywire-autoconfig-remote.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/skymanager
+
+[Install]
+WantedBy=multi-user.target

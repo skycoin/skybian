@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image - debian package"
 pkgver='0.4.0'
 _pkgver=${pkgver}
-pkgrel=5
+pkgrel=21
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarch="arm64"
@@ -11,23 +11,30 @@ _pkgpath="github.com/skycoin/${_pkgname}"
 url="https://${_pkgpath}"
 makedepends=('dpkg')
 depends=()
+_debdeps="skywire-bin"
 _rms="raw/master/static"
-source=(
+source=( #original to skybian
 "10-skybian-header"
 "armbian-check-first-login.sh"
-"armbian-motd"
-"skybian-firstrun.sh"
-"skybian-firstrun.service"
+"armbian-motd" #Below are scripts introduced by the maintainer
+"skymanager.sh"
+"skymanager.service"
+"skybian-patch-config.sh"
+"skybian-patch-config.service"
 "postinst.sh"
 "skybian-chrootconfig.sh"
+"skybian-reset.sh"
 )
 sha256sums=('1aae9938793bf2b8a9572c8c29dfb589cee1543b1ca1033116e27445402c5177'
             'd35fb793968e8dfd1c452a4468225aab1138b883d37b451187e6e3536eea1a0a'
             '63c9148474d4a6197e1f50b110bdb93abef79382a6c2335cd8e8381031d76b2e'
-            '93d10da6eb9a1ce6c4757c65e96b42a3d678b6b7d47689afd375c0f97f769ad2'
-            'cf6c04cc3b0d3ae7a048b04ab2c805fc1699da8f3d4c6dd2329295fc1fab6ef0'
+            'bf73259de6af038c314eab0ab55d2ef9ef985372b390009c50bdc252c55b2134'
+            '45a42d5e64f01547a1677d7785a74ed0fe8519266faf78f467d3aa6e268394b1'
+            '11903e36f9b1c0f3d55656b4f9c7caf7e3dbb3f3ba6a2ea19150e74f6beed111'
+            'e1486fb3f808ea4c6e8323e626a37a04b43c633076b80606bd68d4bbd04fa0b5'
             '53f76fe804b21b0e46110bb921ef7fcb2caee63915f29a65a5f677ed718ea8b1'
-            '39014a6125e5e6bb5dc83f71e3ead2bf345084a7ae26f075679cc2da29a82df1')
+            'e0cc12f1438f5a5fdbaf45cfb862f099b4843690182d85bbfca3ff32abd3746e'
+            '7da8720bb3732b1868998036ede0ce2047aeb9a825833e6778872f9b3f06d3b7')
 #'SKIP')
 
 
@@ -38,7 +45,7 @@ build() {
   echo "Priority: optional" >> ${srcdir}/control
   echo "Section: web" >> ${srcdir}/control
   echo "Architecture: ${_pkgarch}" >> ${srcdir}/control
-  #echo "Depends: ${_debdeps}" >> ${srcdir}/control
+  echo "Depends: ${_debdeps}" >> ${srcdir}/control
   echo "Maintainer: Skycoin" >> ${srcdir}/control
   echo "Description: ${pkgdesc}" >> ${srcdir}/control
 }
@@ -60,9 +67,13 @@ package() {
   install -Dm755 ${srcdir}/10-skybian-header ${_pkgdir}/etc/update-motd.d/
   install -Dm755 ${srcdir}/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
   install -Dm644 ${srcdir}/armbian-motd ${_pkgdir}/etc/default/
-  install -Dm755 ${srcdir}/skybian-firstrun.sh ${_pkgdir}/usr/bin/skybian-firstrun
+  install -Dm755 ${srcdir}/skymanager.sh ${_pkgdir}/usr/bin/skymanager
+  install -Dm755 ${srcdir}/skybian-patch-config.sh ${_pkgdir}/usr/bin/skybian-patch-config
+  install -Dm644 ${srcdir}/skybian-patch-config.service ${_pkgdir}/etc/systemd/system/skybian-patch-config.service
   install -Dm755 ${srcdir}/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
-  install -Dm644 ${srcdir}/skybian-firstrun.service ${_pkgdir}/etc/systemd/system/skybian-firstrun.service
+  install -Dm755 ${srcdir}/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
+  install -Dm755 ${srcdir}/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
+  install -Dm644 ${srcdir}/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
   #########################################################################
   _msg2 'installing control file and postinst script'
   install -Dm755 ${srcdir}/control ${_pkgdir}/DEBIAN/control

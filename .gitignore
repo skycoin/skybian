@@ -10,6 +10,7 @@
 
 .DS_Store
 *.img
+*.xz
 *.code-workspace
 *.deb
 *.torrent

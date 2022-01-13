@@ -1,0 +1,13 @@
+[Unit]
+Description=patch config file and restart skywire
+After=skywire-autoconfig.service
+
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/skybian-patch-config
+
+[Install]
+WantedBy=multi-user.target
