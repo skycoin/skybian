@@ -14,5 +14,6 @@
 *.deb
 *.torrent
 *.md5
+*.asc
 /skybian/pkg
 /skybian/src
