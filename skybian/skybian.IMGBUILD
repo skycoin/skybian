@@ -66,8 +66,8 @@ build() {
   _msg2 "mounting ${_root_partition} to mount point"
   sudo mount ${_root_partition} ${srcdir}/mnt
 	_msg2 "copy packages into image"
-  sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/root/${_skywiredeb}
-  sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/root/${_skybiandeb}
+  sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+  sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
 	_msg2 "copying repository signing key to root dir"
   sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
 	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
