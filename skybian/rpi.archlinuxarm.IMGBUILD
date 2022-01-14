@@ -1,0 +1,76 @@
+# Maintainer: Moses Narrow <moe_narrow@use.startmail.com>
+##options
+#""
+#"2"
+#"4"
+#"aarch64"
+_rpi="aarch64"
+pkgname=rpi-img
+pkgdesc="ArchlinuxARM image creator - rpi ${_rpi}"
+pkgver=20211017
+pkgrel=1
+arch=( 'any')
+_img="rpi-${_rpi}-arch-linux-${pkgver}.img"
+_img=${_img//"--"/"-"}
+url="http://os.archlinuxarm.org/os"
+#ArchLinuxARM-rpi-latest.tar.gz
+#ArchLinuxARM-rpi-2-latest.tar.gz
+#ArchLinuxARM-rpi-4-latest.tar.gz
+#ArchLinuxARM-rpi-aarch64-latest.tar.gz
+_gz="ArchLinuxARM-rpi-${_rpi}-latest.tar.gz"
+_gz=${_gz//"--"/"-"}
+makedepends=()
+depends=()
+source=("${url}/${_gz}"
+"${url}/${_gz}.md5")
+noextract=("${_gz}")
+sha256sums=('SKIP'
+'SKIP')
+
+pkgver() {
+echo $(date +%Y%m%d)
+}
+
+build() {
+  sudo losetup /dev/loop0 && exit 1 || true
+	[[ ${_rpi} != "aarch64" ]] && sudo truncate -s 1536M ${_img} || sudo truncate -s 1636M ${_img}
+	sudo losetup /dev/loop0 ${_img}
+	sudo parted -s /dev/loop0 mklabel msdos
+	sudo parted -s /dev/loop0 unit MiB mkpart primary fat32 -- 1 128
+	sudo parted -s /dev/loop0 set 1 boot on
+	sudo parted -s /dev/loop0 unit MiB mkpart primary ext2 -- 128 -1
+	sudo parted -s /dev/loop0 print
+	sudo mkfs.vfat -n SYSTEM /dev/loop0p1
+	sudo mkfs.ext4 -L root -b 4096 -E stride=4,stripe_width=1024 /dev/loop0p2
+	sudo mkdir -p arch-boot
+	sudo mount /dev/loop0p1 arch-boot
+	sudo mkdir -p arch-root
+	sudo mount /dev/loop0p2 arch-root
+	sudo bsdtar -xpf $_gz -C arch-root
+	sudo sed -i "s/ defaults / defaults,noatime /" arch-root/etc/fstab
+  ###CUSTOM CONFIGURATION GOES HERE###
+  ##Setting the hypervisor as a mirror
+  #sudo echo "Server = http://192.168.0.2:8079/" > arch-root/root/mirrorlist
+  #sudo cat arch-root/etc/pacman.d/mirrorlist >> arch-root/root/mirrorlist
+  #sudo mv arch-root/root/mirrorlist arch-root/etc/pacman.d/mirrorlist
+  ##setting custom local repo
+  #sudo cat arch-root/etc/pacman.conf > arch-root/root/pacman.conf
+  #sudo echo -e "[hypervisor]\nInclude = /etc/pacman.d/mirrorlist\nSigLevel = Never" >> arch-root/root/pacman.conf
+  #sudo mv arch-root/root/pacman.conf arch-root/etc/pacman.conf
+  ###END CUSTOM CONFIGURATION###
+	sudo mv arch-root/boot/* arch-boot/
+	sudo umount arch-boot arch-root
+	sudo losetup -d /dev/loop0
+  sudo rm -rf arch-root arch-boot
+  [[ -f ../${_img} ]] && yes | rm ../${_img}
+  mv ${_img} ../${_img}
+  rm -rf ${srcdir}
+}
+
+package() {
+  cd ..
+  echo "created image(s):"
+  ls *.img
+  rm -rf ${pkgdir}
+exit
+}

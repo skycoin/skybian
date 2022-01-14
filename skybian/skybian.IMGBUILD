@@ -1,0 +1,136 @@
+# Maintainer: Moses Narrow <moe_narrow@use.startmail.com>
+pkgname=skybian-img
+pkgdesc="Skybian image build"
+pkgver='0.5.0'
+pkgrel=1
+arch=('any')
+_img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
+_imgxz=${_img}.xz
+_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
+_torrent="${_xzlink}.torrent"
+_imgfinal="skybian-${pkgver}.img"
+_root_partition=/dev/loop0p1
+_aptrepo="http://deb.skywire.skycoin.com"
+_aptrepo_config="deb ${_aptrepo} sid main"
+_skywiredeb="skywire-bin-0.5.1-29-arm64.deb"
+_skybiandeb="skybian-0.4.0-21-arm64.deb"
+url="http://github.com/skycoin/skybian"
+#_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
+#_gz=${_gz//"--"/"-"}
+makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'file-roller' 'dpkg')
+depends=()
+source=("${_torrent}"
+"${_torrent}.md5"
+"${_aptrepo}/archive/${_skywiredeb}"
+"${_aptrepo}/archive/${_skybiandeb}"
+"${_aptrepo}/KEY.asc"
+)
+noextract=("${_skywiredeb}" "${_skybiandeb}")
+sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
+            'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
+            '2e8f28b5c4777e9f18c03e0aa40695468afdfc63963603b66a123dcab9f20851'
+            '50e170a9597c5265982a775dc77c629e9ad7bffc764d7c1be49ddf0224cd9d88'
+            'SKIP')
+
+#pkgver() {
+#echo $(date +%Y%m%d)
+#}
+
+prepare() {
+	cd "${srcdir}"
+  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
+		_msg2 "Downloading sources via torrent"
+	# Download the assets via torrent - very fast!
+	aria2c -V --seed-time=0 ${_torrent}
+  mv ${_imgxz} ../${_imgxz}
+else
+	_msg2 "found downloaded sources"
+fi
+
+}
+
+
+build() {
+  #only file-roller recognizes this archive for some reason.
+  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with file-roller" && file-roller -h ../${_imgxz}
+	#_msg2 "checking imaage integrity"
+  #md5sum -c *.md5 || exit 1
+	_msg2 "copying image.." #so we don't have to extract it every time
+  cp -b ../${_img} ${_imgfinal}
+  _msg2 "adding extra space" #may not be necessary
+  truncate -s +512M ${_imgfinal}
+  echo ", +" | sfdisk -N1 ${_imgfinal}
+	_msg2 "mounting image to loop device.."
+  gnome-disk-image-mounter -w ${_imgfinal}
+	_msg2 "creating mount dir"
+  mkdir -p ${srcdir}/mnt
+  _msg2 "mounting ${_root_partition} to mount point"
+  sudo mount ${_root_partition} ${srcdir}/mnt
+	_msg2 "copy packages into image"
+  sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/root/${_skywiredeb}
+  sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/root/${_skybiandeb}
+	_msg2 "copying repository signing key to root dir"
+  sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
+	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
+  sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
+################## chroot modifications for apt repo & package #################
+#sudo is used for all commands to give correct environmental vars in chroot
+  _msg2 "CHROOT: configuring package repository in /etc/apt/sources.list"
+  cp ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/sources.list
+  sudo rm ${srcdir}/mnt/etc/apt/sources.list
+  echo "${_aptrepo_config}" >> ${srcdir}/sources.list
+  sudo install -Dm644 ${srcdir}/sources.list ${srcdir}/mnt/etc/apt/sources.list
+	_msg2 "CHROOT: add the repository signing key to apt keyring"
+  sudo arch-chroot ${srcdir}/mnt sudo apt-key add /root/KEY.asc
+	_msg2 "CHROOT: installing skywire with dpkg"
+  sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skywiredeb}
+  sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skywiredeb}
+  _msg2 "CHROOT: installing skybian with dpkg" #the skybian package overwrites another package's file
+  sudo arch-chroot ${srcdir}/mnt sudo dpkg --force-overwrite -i /root/${_skybiandeb}
+  sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skybiandeb}
+  sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+## included from chroot-commands.sh
+  #_msg2 "CHROOT: Setting default root password to 'skybian'..."
+  #sudo arch-chroot ${srcdir}/mnt sudo printf "skybian\nskybian\n" | passwd root
+  ## ^^ This did not work right!! ^^
+  _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
+  sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
+  _msg2 "CHROOT: Generating locale en_US.UTF-8..."
+  sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
+##Fix bug in terminal not working right
+  _msg2 "CHROOT: setting TERM=linux in .bashrc..."
+  sudo arch-chroot ${srcdir}/mnt sudo echo "TERM=linux" | sudo tee ~/.bashrc
+##Updating in the chroot can be done from an archlinux host of the same architecture
+  _msg2 "Comparing host and chroot asrchitecture"
+  _targetarch=$(sudo arch-chroot ${srcdir}/mnt sudo dpkg --print-architecture)
+  _hostarch=$(dpkg --print-architecture)
+  if [[ ${_hostarch} == ${_targetarch} ]] ; then
+  _msg2 "CHROOT: updating image with apt..."
+  sudo arch-chroot ${srcdir}/mnt sudo apt update
+  sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
+  #sudo arch-chroot ${srcdir}/mnt sudo apt install skywire
+else
+  _msg2 "Not updating chroot because of DNS issues with incompatable architectures"
+
+fi
+##set password
+sudo arch-chroot ${srcdir}/mnt echo root:skybian | sudo chpasswd
+######################## end chroot modifications ##############################
+	sudo umount ${srcdir}/mnt
+	sudo losetup -d /dev/loop0
+  mv ${_imgfinal} ../${_imgfinal}
+}
+
+package() {
+  cd ..
+  echo "created image(s):"
+  ls $_imgfinal
+  rm -rf ${pkgdir}
+exit
+}
+
+_msg2() {
+(( QUIET )) && return
+local mesg=$1; shift
+printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}

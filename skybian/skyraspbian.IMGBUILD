@@ -1,32 +1,33 @@
 # Maintainer: Moses Narrow <moe_narrow@use.startmail.com>
-pkgname=skybian-img
-pkgdesc="Skybian image build"
+pkgname=skyraspbian-img
+pkgdesc="Skyraspbian image build"
 pkgver='0.5.0'
 pkgrel=1
 arch=('any')
-_img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
-_imgxz=${_img}.xz
-_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
+_img="2021-10-30-raspios-bullseye-armhf-lite.img"
+_imgxz="2021-10-30-raspios-bullseye-armhf-lite.zip"
+_xzlink="https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2021-11-08/2021-10-30-raspios-bullseye-armhf-lite.zip"
 _torrent="${_xzlink}.torrent"
-_imgfinal="skybian-${pkgver}.img"
-_skywiredeb="skywire-bin-0.5.1-29-arm64.deb"
-_skybiandeb="skybian-0.4.0-21-arm64.deb"
+_imgfinal="${pkgname}-${pkgver}.img"
+_root_partition=/dev/loop0p2
+_aptrepo="http://deb.skywire.skycoin.com"
+_aptrepo_config="deb ${_aptrepo} sid main"
+_skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
+_skybiandeb="skybian-0.4.0-22-armhf.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
 makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'file-roller' 'dpkg')
 depends=()
 source=("${_torrent}"
-"${_torrent}.md5"
-"https://deb.magnetosphere.net/archive/${_skywiredeb}"
-"https://deb.magnetosphere.net/archive/${_skybiandeb}"
-"https://deb.magnetosphere.net/KEY.asc"
+"${_aptrepo}/archive/${_skywiredeb}"
+"${_aptrepo}/archive/${_skybiandeb}"
+"${_aptrepo}/KEY.asc"
 )
-noextract=("${_skywiredeb}")
-sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
-            'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '2e8f28b5c4777e9f18c03e0aa40695468afdfc63963603b66a123dcab9f20851'
-            '50e170a9597c5265982a775dc77c629e9ad7bffc764d7c1be49ddf0224cd9d88'
+noextract=("${_skywiredeb}" "${_skybiandeb}")
+sha256sums=('8af378f1249781a489657d823938ac6d91d376ccf7ab6193c541fa2b63f781b7'
+            '33d0b3d56ddca44e328f033ca6a7dba406dd6d341b82ae349dc0e91033d04ad8'
+            '9126c4e7f49a2dcd9d30b001a8498367c1d3aec28cc96110706ec66981692a9d'
             'SKIP')
 
 #pkgver() {
@@ -54,18 +55,18 @@ build() {
   #md5sum -c *.md5 || exit 1
 	_msg2 "copying image.." #so we don't have to extract it every time
   cp -b ../${_img} ${_imgfinal}
-  _msg2 "adding extra space" #may not be necessary
-  truncate -s +512M ${_imgfinal}
-  echo ", +" | sfdisk -N1 ${_imgfinal}
+  #_msg2 "adding extra space" #may not be necessary
+  #truncate -s +512M ${_imgfinal}
+  #echo ", +" | sfdisk -N1 ${_imgfinal}
 	_msg2 "mounting image to loop device.."
   gnome-disk-image-mounter -w ${_imgfinal}
 	_msg2 "creating mount dir"
   mkdir -p ${srcdir}/mnt
-	_msg2 "mounting /dev/loop0p1 to mount point"
-  sudo mount /dev/loop0p1 ${srcdir}/mnt
+	_msg2 "mounting ${_root_partition} to mount point"
+  sudo mount ${_root_partition} ${srcdir}/mnt
 	_msg2 "copy packages into apt cache"
-  sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/mnt/var/cache/apt/archives/${_skywiredeb}
-  sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/mnt/var/cache/apt/archives/${_skybiandeb}
+  sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+  sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
 	_msg2 "copying repository signing key to root dir"
   sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
 	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
@@ -73,16 +74,22 @@ build() {
 ################## chroot modifications for apt repo & package #################
 #sudo is used for all commands to give correct environmental vars in chroot
   _msg2 "CHROOT: configuring package repository in /etc/apt/sources.list"
-  sudo arch-chroot ${srcdir}/mnt sudo add-apt-repository 'deb http://deb.magnetosphere.net sid main'
+  cp ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/sources.list
+  sudo rm ${srcdir}/mnt/etc/apt/sources.list
+  echo "${_aptrepo_config}" >> ${srcdir}/sources.list
+  sudo install -Dm644 ${srcdir}/sources.list ${srcdir}/mnt/etc/apt/sources.list
 	_msg2 "CHROOT: add the repository signing key to apt keyring"
   sudo arch-chroot ${srcdir}/mnt sudo apt-key add /root/KEY.asc
 	_msg2 "CHROOT: installing skywire with dpkg"
-  sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /var/cache/apt/archives/${_skywiredeb}
-  sudo arch-chroot ${srcdir}/mnt sudo rm /var/cache/apt/archives/${_skywiredeb}
-  _msg2 "CHROOT: installing skybian with dpkg" #the skybian package overwrites another package's file
-  sudo arch-chroot ${srcdir}/mnt sudo dpkg --force-overwrite -i /var/cache/apt/archives/${_skybiandeb}
-  sudo arch-chroot ${srcdir}/mnt sudo rm /var/cache/apt/archives/${_skybiandeb}
-  sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+  sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skywiredeb}
+  sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skywiredeb}
+  sudo arch-chroot ${srcdir}/mnt sudo systemctl disable skywire
+  sudo arch-chroot ${srcdir}/mnt sudo systemctl enable skywire-autoconfig
+  sudo rm ${srcdir}/mnt/opt/skywire/skywire.json
+  #_msg2 "CHROOT: installing skybian with dpkg" #the skybian package overwrites another package's file
+  #sudo arch-chroot ${srcdir}/mnt sudo dpkg --force-overwrite -i /root/${_skybiandeb}
+  #sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skybiandeb}
+  #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
 ## included from chroot-commands.sh
   #_msg2 "CHROOT: Setting default root password to 'skybian'..."
   #sudo arch-chroot ${srcdir}/mnt sudo printf "skybian\nskybian\n" | passwd root
@@ -105,8 +112,9 @@ build() {
   #sudo arch-chroot ${srcdir}/mnt sudo apt install skywire
 else
   _msg2 "Not updating chroot because of DNS issues with incompatable architectures"
-
 fi
+##set password
+sudo arch-chroot ${srcdir}/mnt echo root:skybian | sudo chpasswd
 ######################## end chroot modifications ##############################
 	sudo umount ${srcdir}/mnt
 	sudo losetup -d /dev/loop0
