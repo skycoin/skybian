@@ -9,7 +9,8 @@ _xzlink="https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lit
 _torrent="${_xzlink}.torrent"
 _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p2
-_defaultuser=pi
+_boot_partition=/dev/loop0p1
+_defaultuser=root
 _aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
@@ -61,69 +62,75 @@ build() {
 	_msg2 "mounting image to loop device.."
   gnome-disk-image-mounter -w ${_imgfinal}
 	_msg2 "creating mount dir"
-  mkdir -p ${srcdir}/mnt
+  _mntdir="${srcdir}/mnt"
+  mkdir -p ${_mntdir}
 	_msg2 "mounting ${_root_partition} to mount point"
-  sudo mount ${_root_partition} ${srcdir}/mnt
+  sudo mount ${_root_partition} ${_mntdir}
 	_msg2 "copy packages into apt cache"
-  sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
-  sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+  sudo cp -b ${srcdir}/${_skywiredeb} ${_mntdir}/root/${_skywiredeb}
+  sudo cp -b ${srcdir}/${_skybiandeb} ${_mntdir}/root/${_skybiandeb}
 	_msg2 "copying repository signing key to root dir"
-  sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
+  sudo cp -b ${srcdir}/KEY.asc ${_mntdir}/root/KEY.asc
 	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
   sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
 #sudo is used for all commands to give correct environmental vars in chroot
   _msg2 "CHROOT: configuring package repository in /etc/apt/sources.list"
-  cp ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/sources.list
-  sudo rm ${srcdir}/mnt/etc/apt/sources.list
+  cp ${_mntdir}/etc/apt/sources.list ${srcdir}/sources.list
+  sudo rm ${_mntdir}/etc/apt/sources.list
   echo "${_aptrepo_config}" >> ${srcdir}/sources.list
-  sudo install -Dm644 ${srcdir}/sources.list ${srcdir}/mnt/etc/apt/sources.list
+  sudo install -Dm644 ${srcdir}/sources.list ${_mntdir}/etc/apt/sources.list
 	_msg2 "CHROOT: add the repository signing key to apt keyring"
-  sudo arch-chroot ${srcdir}/mnt sudo apt-key add /root/KEY.asc
+  sudo arch-chroot ${_mntdir} sudo apt-key add /root/KEY.asc
 	_msg2 "CHROOT: installing skywire with dpkg"
-  sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skywiredeb}
-  sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skywiredeb}
-  sudo arch-chroot ${srcdir}/mnt sudo systemctl disable skywire
-  sudo arch-chroot ${srcdir}/mnt sudo systemctl enable skywire-autoconfig
-  sudo rm ${srcdir}/mnt/opt/skywire/skywire.json
+  sudo arch-chroot ${_mntdir} sudo dpkg -i /root/${_skywiredeb}
+  sudo arch-chroot ${_mntdir} sudo rm /root/${_skywiredeb}
+  sudo arch-chroot ${_mntdir} sudo systemctl disable skywire
+  sudo arch-chroot ${_mntdir} sudo systemctl enable skywire-autoconfig
+  sudo rm ${_mntdir}/opt/skywire/skywire.json
   #_msg2 "CHROOT: installing skybian with dpkg" #the skybian package overwrites another package's file
-  #sudo arch-chroot ${srcdir}/mnt sudo dpkg --force-overwrite -i /root/${_skybiandeb}
-  #sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skybiandeb}
-  #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+  #sudo arch-chroot ${_mntdir} sudo dpkg --force-overwrite -i /root/${_skybiandeb}
+  #sudo arch-chroot ${_mntdir} sudo rm /root/${_skybiandeb}
+  #sudo arch-chroot ${_mntdir} sudo skybian-reset
 ## included from chroot-commands.sh
   _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
-  sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
+  sudo arch-chroot ${_mntdir} sudo /sbin/fake-hwclock save force
   _msg2 "CHROOT: Generating locale en_US.UTF-8..."
-  sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
+  sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
 ##Fix bug in terminal not working right
   _msg2 "CHROOT: setting TERM=linux in .bashrc..."
-  sudo arch-chroot ${srcdir}/mnt sudo echo "TERM=linux" | sudo tee ~/.bashrc
+  sudo arch-chroot ${_mntdir} sudo echo "TERM=linux" | sudo tee ~/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot asrchitecture"
-  _targetarch=$(sudo arch-chroot ${srcdir}/mnt sudo dpkg --print-architecture)
+  _targetarch=$(sudo arch-chroot ${_mntdir} sudo dpkg --print-architecture)
   _hostarch=$(dpkg --print-architecture)
   if [[ ${_hostarch} == ${_targetarch} ]] ; then
   _msg2 "CHROOT: updating image with apt..."
-  sudo arch-chroot ${srcdir}/mnt sudo apt update
-  sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
-  #sudo arch-chroot ${srcdir}/mnt sudo apt install skywire
+  sudo arch-chroot ${_mntdir} sudo apt update
+  sudo arch-chroot ${_mntdir} sudo apt upgrade
+  #sudo arch-chroot ${_mntdir} sudo apt install skywire
 else
   _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
 fi
 ##set password for _defaultuser
-sudo arch-chroot ${srcdir}/mnt echo ${_defaultuser}:skybian | sudo chpasswd
-##SKYRASPBIAN SPECIFIC
-_msg2 "Enabling UART"
-sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${srcdir}/mnt/config.txt"
-
-_msg2 "Enabling HDMI"
-sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${srcdir}/mnt/config.txt"
-
-_msg2 "Enabling SSH"
-sudo touch "${srcdir}/mnt/SSH.txt"
-
+sudo arch-chroot ${_mntdir} echo ${_defaultuser}:skybian | sudo chpasswd
+sudo umount ${_mntdir}
 ######################## end chroot modifications ##############################
-	sudo umount ${srcdir}/mnt
+################# SKYRASPBIAN SPECIFIC BOOT CONFIG PARAMS ######################
+  _msg2 "creating mount dir"
+  _mntdir="${srcdir}/boot"
+  mkdir -p ${_mntdir}
+  sudo mount ${_boot_partition} ${_mntdir}
+  _msg2 "Enabling UART"
+  sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${_mntdir}/config.txt"
+
+  _msg2 "Enabling HDMI"
+  sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${_mntdir}/config.txt"
+
+  _msg2 "Enabling SSH"
+  sudo touch "${_mntdir}/SSH.txt"
+  sudo umount ${_mntdir}
+########################## end boot param modifications  #######################
 	sudo losetup -d /dev/loop0
   mv ${_imgfinal} ../${_imgfinal}
 }
