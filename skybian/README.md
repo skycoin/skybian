@@ -4,14 +4,29 @@ Builds requires archlinux host.
 
 install dependencies from AUR:
 ```
-yay -S gnome-disk-utility qemu-arm-static aria2 file-roller
+yay -S gnome-disk-utility qemu-arm-static aria2 file-roller pacman-contrib
 ```
 
 Note: be sure to install qemu-arm-static-bin if you don't have qemu-arm-static installed already
 
-Build:
+Build and create an archive:
 ```
- makepkg --skippgpcheck -p IMGBUILD
+ makepkg --skippgpcheck -p skybian.IMGBUILD
+```
+
+Note: the archive type that is created is specified in /etc/makepkg.conf
+
+Build only:
+```
+ makepkg --noarchive --skippgpcheck -p skybian.IMGBUILD
+```
+
+The image, when created, can be found in the pkg dir
+
+Update checksums on changes to source files:
+
+```
+updpkgsums skybian.IMGBUILD
 ```
 
 ### Skybian package:
@@ -26,40 +41,46 @@ Build:
 makepkg
 ```
 
+Update checksums on changes to source files:
+```
+updpkgsums
+```
+
 ### Autoconfiguration Explained
 
-The image achieves autoconfiguration by checking for any machine on the network at the .2 ip address.
+The image achieves autoconfiguration by checking for any machine on the network at the .2 ip address of the current subnet.
 
-If nothing is on that ip address, a static IP is set to that address, a hypervisor configuration is created, and skywire is started
+If nothing is on that ip address, a static IP is set to that address (via systemd-networkd), a hypervisor configuration is created (skywire-autoconfig), and skywire.service is started via systemd
 
-If a machine is on that ip address, the rpc server of the visor running on that ip address is queried for its public key
+If a machine is on that ip address, the rpc server of the visor running at the .2 ip address of the current subnet is queried for its public key
 
-The public key is then used to create a visor config with that public key as the remote hypervisor.
+The public key is then used to create a visor config with that public key as the remote hypervisor (skywire-autoconfig-remote).
 
 ### Using the image
 
 1) Download the image and extract it from the archive
 
-2) Use balena etcher, or the dd command on linux, to write the image to a microSD card
+2) Use balena etcher, or the dd / dcfldd command on linux, to write the image to a microSD card
 
 3) Power off every board in the skyminer with the individual switches
 
-4) Insert the card into the board which is designated hypervisor and power on that board. The board will reboot once during this process
+4) Insert the card into the board which you designate as hypervisor, and power on that board. The board will reboot once during this process.
 
-5) Wait until the hypervisor interface appears
+5) Wait until the hypervisor interface appears at the ip address of the skyminer, port :8000.
 
-6) repeat step 2 with the next microSD card
+6) repeat step 2 with the next microSD card, insert it in the next pi, and power on the board
 
-7) wait until the visor appears in the hypervisor user interface. The bboard will reboot once during this process
+7) wait until the visor appears in the hypervisor user interface. The board will reboot once during this process
 
 8) Repeat steps 6 and 7 for every node in the skyminer
 
+If you prefer instead to use a different computer as the hypervisor of your cluster, the easiest way is to connect that machine to the skyminer router and assign it the .2 ip address. Make sure your hypervisor is running and the RPC server is enabled in your configuration file (delete localhost but leave the port :3435)
 
-### Troubleshooting
+### Troubleshooting the image and skywire installation
 
 If for some reason the hypervisor is not accessible or the visor never shows up in the hypervisor, first try rebooting that board
 
-If the visor or hypervisor still does not show up online, ssh to the board.
+If the visor or hypervisor still does not show up online, ssh to the board or access it via keyboard and HDMI monitor
 
 run `skywire-autoconfig` to fix almost any issue with configuration and yield a running instance of skywire
 
@@ -71,17 +92,68 @@ apt update
 apt install skywire-bin
 ```
 
-To explicitly configure a visor to the hypervisor running at the .2 ip address on the network (assuming the rpc server of that visor accepts queries from the LAN)
+To explicitly configure a visor to the hypervisor running at the .2 ip address on the network (the rpc server of the hypervisor must accepts queries from the LAN)
 
 ```
 skywire-autoconfig-remote
 ```
 
+To set a remote htpervisor via public key, supply the public key as an argument to skywire-autoconfig
+
+```
+skywire-autoconfig <pk>
+```
 
 ### Additional notes
 
-the skybian package, when updated, will enable the skymanager systemd service and the skywire-autoconfig service and disable the skywire service. Keep this in mind when updating the package, until this is changed in the future (or don't include skybian.deb in the apt repo)
+**the skybian package**, when updated, will enable the skymanager systemd service and the skywire-autoconfig service and disable the skywire service.
+This will result in erroneous behavior of the skyminer, so this package is not included in the APT repo, but instead kept in the archive at
+[https://deb.skywire.skycoin.com/archive](https://deb.skywire.skycoin.com/archive)
 
-The apt repo needs to have a domain / subdomain set, and the repository configuration needs to change
 
-An image for testing can be found at https://deb.magnetosphere.net/skybian-0.5.0.img
+Images for testing can be found at [https://deb.skywire.skycoin.com/img/](https://deb.skywire.skycoin.com/img)
+
+
+### Script and systemd service reference
+
+#### Skybian
+* skymanager.sh (formerly skybian-firstrun)
+    - produces static IP configuration (hypervisor)
+    - sets hostname (hypervisor)
+    - enables either skywire-autoconfig or skywire-autoconfig-remote
+    - disables skymanager.service
+    - reboots the board
+* skymanager.service
+    - runs on skybian's first boot; wants network-online.target
+* skybian-chrootconfig.sh (expected to run in chroot)
+    - called by postinst of the skybian.deb package
+    - disables and enables required systemd services
+    - removes any autogenerated skywire config
+* skybian-patch-config.sh
+    - changes the skywire config for the hypervisor to serve rpc on lan
+    - restarts skywire and disables skywire-patch-config.service
+* skybian-patch-config.service
+    - runs on first boot if hypervisor is configured
+* skybian-reset.sh
+    - resets skybian except for the static ip configuration (script for testing)
+
+
+#### Skywire
+* skywire-autoconfig.sh
+    - produces or updates a skywire configuration
+    - determines the correct systemd service to enable and start by the presence of the config file
+    - can take public key as argument to create a visor configuration using that public key as hypervisor
+* skywire-autoconfig.service
+    - enabled by skymanager.service
+    - systemd service to produce skywire (hypervisor) config & start skywire on boot
+* skywire-autoconfig-remote.sh
+    - queries any node running at the .2 ip address of the current subnet for its public key
+    - calls `skywire-autoconfig <pk>` to set the remote hypervisor to that public key
+    - disables skywire-autoconfig-remote.service
+* skywire-autoconfig-remote.service
+    - enabled by skymanager.service
+    - runs after the initial reboot to set up remote hypervisor
+* skywire.service
+    - `skywire -c /opt/sykywire/skywire.json`
+* skywire-visor.service
+    - `skywire -c /opt/skywire/skywire-visor.json`

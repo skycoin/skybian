@@ -19,27 +19,26 @@ if [[ "$(ip neigh show ${_ip})" == "" ]] ; then
       echo "configuring hypervisor"
 
       #create static IP configuration - systemd-networkd - works on arch
-      #if [[ ! -f /etc/systemd/network/eth.network ]] ; then
-      #echo "[Match]
-      #Name=eth*
-      #
-      #[Network]
-      #Address=${_ip}
-      #Gateway=${_gateway}
-      #DNS=${_gateway}" | tee /etc/systemd/network/eth.network
-      #
+      if [[ ! -f /etc/systemd/network/eth.network ]] ; then
+echo "[Match]
+Name=eth*
 
+[Network]
+Address=${_ip}
+Gateway=${_gateway}
+DNS=${_gateway}" | tee /etc/systemd/network/eth.network
+      fi
+#
       ##static ip configuration - uses networking.service - possibly deprecated
-      if [[ ! -f /etc/network/interfaces.d/eth0 ]] ; then
-        echo "auto eth0
-iface eth0 inet static
-        address ${_ip}
-        netmask 255.255.255.0
-        gateway ${_gateway}
-        dns-nameservers ${_gateway}" | tee  /etc/network/interfaces.d/eth0
+#      if [[ ! -f /etc/network/interfaces.d/eth0 ]] ; then
+#        echo "auto eth0
+#iface eth0 inet static
+#        address ${_ip}
+#        netmask 255.255.255.0
+#        gateway ${_gateway}
+#        dns-nameservers ${_gateway}" | tee  /etc/network/interfaces.d/eth0
         #set hostname
         echo "hypervisor" | tee /etc/hostname
-      fi
       #remove any undesired configuration
       [[ -f /opt/skywire/skywire-visor.json ]] && rm /opt/skywire/skywire-visor.json && echo "removed a visor configuration"
       systemctl disable skymanager 2> /dev/null && echo "disabling skymanager.service"

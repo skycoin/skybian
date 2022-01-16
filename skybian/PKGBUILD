@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image - debian package"
 pkgver='0.4.0'
 _pkgver=${pkgver}
-pkgrel=22
+pkgrel=23
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('armhf' 'arm64')
@@ -28,12 +28,12 @@ source=( #original to skybian
 sha256sums=('1aae9938793bf2b8a9572c8c29dfb589cee1543b1ca1033116e27445402c5177'
             'd35fb793968e8dfd1c452a4468225aab1138b883d37b451187e6e3536eea1a0a'
             '63c9148474d4a6197e1f50b110bdb93abef79382a6c2335cd8e8381031d76b2e'
-            'bf73259de6af038c314eab0ab55d2ef9ef985372b390009c50bdc252c55b2134'
+            '7cfa22ffd13ed5c2833e7ca6b3c9aee661643dacce696365d09000c6cd4f18d6'
             '0c10a5b477131fc8b6ef413b4aeed6bb1efe89d45e45d0a834d31f9832ef7cb0'
             '11903e36f9b1c0f3d55656b4f9c7caf7e3dbb3f3ba6a2ea19150e74f6beed111'
             'e1486fb3f808ea4c6e8323e626a37a04b43c633076b80606bd68d4bbd04fa0b5'
             '53f76fe804b21b0e46110bb921ef7fcb2caee63915f29a65a5f677ed718ea8b1'
-            'e0cc12f1438f5a5fdbaf45cfb862f099b4843690182d85bbfca3ff32abd3746e'
+            'ccf5a1aa3f5180ca2ddeed62963d477571c7ffde1cd6609242bea6cdeb77a5fc'
             '7da8720bb3732b1868998036ede0ce2047aeb9a825833e6778872f9b3f06d3b7')
 #'SKIP')
 

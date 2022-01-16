@@ -14,7 +14,7 @@ _defaultuser=root
 _aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
-_skybiandeb="skybian-0.4.0-22-armhf.deb"
+#_skybiandeb="skybian-0.4.0-24-armhf.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
@@ -22,13 +22,12 @@ makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'file-roller' 'dpkg'
 depends=()
 source=("${_torrent}"
 "${_aptrepo}/archive/${_skywiredeb}"
-"${_aptrepo}/archive/${_skybiandeb}"
+#"${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('8af378f1249781a489657d823938ac6d91d376ccf7ab6193c541fa2b63f781b7'
             '33d0b3d56ddca44e328f033ca6a7dba406dd6d341b82ae349dc0e91033d04ad8'
-            '9126c4e7f49a2dcd9d30b001a8498367c1d3aec28cc96110706ec66981692a9d'
             'SKIP')
 
 #pkgver() {
@@ -68,7 +67,7 @@ build() {
   sudo mount ${_root_partition} ${_mntdir}
 	_msg2 "copy packages into apt cache"
   sudo cp -b ${srcdir}/${_skywiredeb} ${_mntdir}/root/${_skywiredeb}
-  sudo cp -b ${srcdir}/${_skybiandeb} ${_mntdir}/root/${_skybiandeb}
+  #sudo cp -b ${srcdir}/${_skybiandeb} ${_mntdir}/root/${_skybiandeb}
 	_msg2 "copying repository signing key to root dir"
   sudo cp -b ${srcdir}/KEY.asc ${_mntdir}/root/KEY.asc
 	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
@@ -136,13 +135,15 @@ sudo umount ${_mntdir}
 }
 
 package() {
-  cd ..
-  echo "created image(s):"
-  ls $_imgfinal
-
-  rm -rf ${pkgdir}
-exit
+  #Just let makepkg compress the archive as it does automatically for a package
+  #and then remove the metadata from the archive and change the extension
+  #avoid the compression step with makepkg --noarchive
+  #package only, assuming ${_imgfinal} exists with makepkg -R
+mv ${srcdir}/../${_imgfinal} ${pkgdir}/
+cd ${pkgdir}
+sha256sum ${_imgfinal} > ${_imgfinal}.sha
 }
+
 
 _msg2() {
 (( QUIET )) && return
