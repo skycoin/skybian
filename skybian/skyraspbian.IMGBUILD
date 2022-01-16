@@ -9,6 +9,7 @@ _xzlink="https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lit
 _torrent="${_xzlink}.torrent"
 _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p2
+_defaultuser=pi
 _aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
@@ -90,9 +91,6 @@ build() {
   #sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skybiandeb}
   #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
 ## included from chroot-commands.sh
-  #_msg2 "CHROOT: Setting default root password to 'skybian'..."
-  #sudo arch-chroot ${srcdir}/mnt sudo printf "skybian\nskybian\n" | passwd root
-  ## ^^ This did not work right!! ^^
   _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
   sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
   _msg2 "CHROOT: Generating locale en_US.UTF-8..."
@@ -110,10 +108,20 @@ build() {
   sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
   #sudo arch-chroot ${srcdir}/mnt sudo apt install skywire
 else
-  _msg2 "Not updating chroot because of DNS issues with incompatable architectures"
+  _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
 fi
-##set password
-sudo arch-chroot ${srcdir}/mnt echo root:skybian | sudo chpasswd
+##set password for _defaultuser
+sudo arch-chroot ${srcdir}/mnt echo ${_defaultuser}:skybian | sudo chpasswd
+##SKYRASPBIAN SPECIFIC
+_msg2 "Enabling UART"
+sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${srcdir}/mnt/config.txt"
+
+_msg2 "Enabling HDMI"
+sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${srcdir}/mnt/config.txt"
+
+_msg2 "Enabling SSH"
+sudo touch "${srcdir}/mnt/SSH.txt"
+
 ######################## end chroot modifications ##############################
 	sudo umount ${srcdir}/mnt
 	sudo losetup -d /dev/loop0
@@ -124,6 +132,7 @@ package() {
   cd ..
   echo "created image(s):"
   ls $_imgfinal
+
   rm -rf ${pkgdir}
 exit
 }
