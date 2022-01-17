@@ -55,7 +55,7 @@ If nothing is on that ip address, a static IP is set to that address (via system
 
 If a machine is on that ip address, the rpc server of the visor running at the .2 ip address of the current subnet is queried for its public key
 
-The public key is then used to create a visor config with that public key as the remote hypervisor (skywire-autoconfig-remote).
+The public key is then used to create a visor config with that public key as the remote hypervisor (skywire-autoconfig-remote) and the skywie-visor systemd service is started.
 
 ### Using the Skybian image
 
@@ -122,7 +122,7 @@ any remote hypervisor(s) set in the config file will not be retained.
 
 Skywire is now available as a package from the repository at [https://deb.skywire.skycoin.com](https://deb.skywire.skycoin.com)
 
-This package repository will work with any .deb based arm / arm64 / amd64 system.
+This package repository will work with any .deb based arm / arm64 / amd64 system and is pre-configured in the provided Skybian and Skyraspbian images.
 
 To install skywire from this repository
 (run all commands as root or use sudo)
