@@ -56,23 +56,28 @@ If a machine is on that ip address, the rpc server of the visor running at the .
 
 The public key is then used to create a visor config with that public key as the remote hypervisor (skywire-autoconfig-remote).
 
-### Using the image
+### Using the Skybian image
 
-1) Download the image and extract it from the archive
+* 1) [Download the image](https://deb.skywire.skycoin.com/img/) and extract it from the archive
+    - [Windows zst extraction utility](https://peazip.github.io/peazip-64bit.html)
+    - [MacOS zst extraction utility](https://peazip.github.io/peazip-macos.html)
+    - [linux:](https://man.archlinux.org/man/tar.1) `tar -xf /path/to/archive.tar.zst`
 
-2) Use balena etcher, or the dd / dcfldd command on linux, to write the image to a microSD card
+* 2) Use balena etcher, or the dd / dcfldd command on linux, to write the image to a microSD card
+    - [downlad balena etcher](https://www.balena.io/etcher/)
+    - [dd command](https://wiki.archlinux.org/title/Dd)
 
-3) Power off every board in the skyminer with the individual switches
+* 3) Power off every board in the skyminer with the individual switches
 
-4) Insert the card into the board which you designate as hypervisor, and power on that board. The board will reboot once during this process.
+* 4) Insert the card into the board which you designate as hypervisor, and power on that board. The board will reboot once during this process.
 
-5) Wait until the hypervisor interface appears at the ip address of the skyminer, port :8000.
+* 5) Wait until the hypervisor interface appears at the ip address of the skyminer, port :8000.
 
-6) repeat step 2 with the next microSD card, insert it in the next pi, and power on the board
+* 6) repeat step 2 with the next microSD card, insert it in the next pi, and power on the board
 
-7) wait until the visor appears in the hypervisor user interface. The board will reboot once during this process
+* 7) wait until the visor appears in the hypervisor user interface. The board will reboot once during this process
 
-8) Repeat steps 6 and 7 for every node in the skyminer
+* 8) Repeat steps 6 and 7 for every node in the skyminer
 
 If you prefer instead to use a different computer as the hypervisor of your cluster, the easiest way is to connect that machine to the skyminer router and assign it the .2 ip address. Make sure your hypervisor is running and the RPC server is enabled in your configuration file (delete localhost but leave the port :3435)
 
@@ -157,3 +162,8 @@ Images for testing can be found at [https://deb.skywire.skycoin.com/img/](https:
     - `skywire -c /opt/sykywire/skywire.json`
 * skywire-visor.service
     - `skywire -c /opt/skywire/skywire-visor.json`
+
+
+### ArchlinuxARM image
+
+An archlinuxARM image compatable with raspberry pis has been provided for advanced users. This image contains the unmodified archlinuxARM root filesystem. It is left to the user to install skywire or skywire-bin from the [AUR](aur.archlinux.org) after they havecompleted initial system configuration. It is recommended to use `yay` to install skywire-bin from the AUR.
