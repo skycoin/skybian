@@ -33,6 +33,6 @@ else
 fi
 
 #enable the wait online service
-#systemctl enable NetworkManager-wait-online
+systemctl enable NetworkManager-wait-online
 systemctl enable systemd-networkd
 systemctl enable systemd-networkd-wait-online

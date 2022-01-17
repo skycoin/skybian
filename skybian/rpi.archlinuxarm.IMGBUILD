@@ -1,7 +1,7 @@
 _rpi="aarch64"
 pkgname=rpi-img
 pkgdesc="ArchlinuxARM image creator - rpi ${_rpi}"
-pkgver=20211017
+pkgver=20220116
 pkgrel=1
 arch=( 'any')
 _img="rpi-${_rpi}-arch-linux-${pkgver}.img"
@@ -58,13 +58,17 @@ build() {
   sudo rm -rf arch-root arch-boot
   [[ -f ../${_img} ]] && yes | rm ../${_img}
   mv ${_img} ../${_img}
-  rm -rf ${srcdir}
+  cd ..
+  echo "created image(s):"
+  ls ${_img}
 }
 
 package() {
-  cd ..
-  echo "created image(s):"
-  ls *.img
-  rm -rf ${pkgdir}
-exit
+  #Just let makepkg compress the archive as it does automatically for a package
+  #and then remove the metadata from the archive and change the extension
+  #avoid the compression step with makepkg --noarchive
+  #package only, assuming ${_imgfinal} exists with makepkg -R
+mv ${srcdir}/../${_img} ${pkgdir}/
+cd ${pkgdir}
+sha256sum ${_img} > ${_img}.sha
 }
