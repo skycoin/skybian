@@ -28,7 +28,7 @@ source=("${_torrent}"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '01782fa71be0cc2ea2737798b7058ab4afb4a352111ce0c75cd658c18a093c41'
+            '2e8f28b5c4777e9f18c03e0aa40695468afdfc63963603b66a123dcab9f20851'
             'eb43b3ace1a10335b039ac2176d15e1afc56e44504010f0f34f957c5f2b0b794'
             'SKIP')
 
@@ -98,10 +98,10 @@ build() {
   _msg2 "CHROOT: setting TERM=linux in .bashrc..."
   sudo arch-chroot ${srcdir}/mnt echo "TERM=linux" | sudo tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
-  _msg2 "Comparing host and chroot asrchitecture"
-  _targetarch=$(sudo arch-chroot ${srcdir}/mnt sudo dpkg --print-architecture)
+  _msg2 "Comparing host and chroot architecture"
+
   _hostarch=$(dpkg --print-architecture)
-  if [[ ${_hostarch} == ${_targetarch} ]] ; then
+  if [[ ${_hostarch} == "arm64" ]] ; then
   _msg2 "CHROOT: updating image with apt..."
   sudo arch-chroot ${srcdir}/mnt sudo apt update
   sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
@@ -111,8 +111,15 @@ else
 
 fi
 ##set password for _defaultuser
+sudo umount ${srcdir}/mnt/proc || echo
+sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
+sudo umount ${srcdir}/mnt/sys || echo
+
 sudo arch-chroot ${srcdir}/mnt echo ${_defaultuser}:skybian | sudo chpasswd
 ######################## end chroot modifications ##############################
+sudo umount ${srcdir}/mnt/proc || echo
+sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
+sudo umount ${srcdir}/mnt/sys || echo
 	sudo umount ${srcdir}/mnt
 	sudo losetup -d /dev/loop0
   mv ${_imgfinal} ../${_imgfinal}
