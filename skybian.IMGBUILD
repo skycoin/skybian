@@ -28,8 +28,8 @@ source=("${_torrent}"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '2e8f28b5c4777e9f18c03e0aa40695468afdfc63963603b66a123dcab9f20851'
-            'eb43b3ace1a10335b039ac2176d15e1afc56e44504010f0f34f957c5f2b0b794'
+            '575df4ea8afa7920d5c475c74cf7bfbe9d92a2be5794b4af1d74cb92af797d55'
+            '575df4ea8afa7920d5c475c74cf7bfbe9d92a2be5794b4af1d74cb92af797d55'
             'SKIP')
 
 #pkgver() {
