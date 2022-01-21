@@ -41,7 +41,13 @@ Build:
 makepkg
 ```
 
-Update checksums on changes to source files:
+On changes to source files in `script` or `static` dir; re-create the source archive(s):
+```
+tar -czvf skybian-static.tar.gz static
+tar -czvf skybian-script.tar.gz script
+```
+
+Update checksums of source archives in the [PKGBUILD](PKGBUILD):
 ```
 updpkgsums
 ```
@@ -60,8 +66,8 @@ The public key is then used to create a visor config with that public key as the
 ### Using the Skybian image
 
 * [Download the image](https://deb.skywire.skycoin.com/img/) and extract it from the archive
-    - [Windows zst extraction utility](https://peazip.github.io/peazip-64bit.html)
-    - [MacOS zst extraction utility](https://peazip.github.io/peazip-macos.html)
+    - [Windows / MacOS zst extraction utility](https://peazip.github.io/)
+    - [MacOS:](https://www.unix.com/man-page/osx/1/bsdtar/) `bsdtar -xf /path/to/archive.tar.zst`
     - [linux:](https://man.archlinux.org/man/tar.1) `tar -xf /path/to/archive.tar.zst`
 
 * Use balena etcher, or the dd / dcfldd command on linux, to write the image to a microSD card

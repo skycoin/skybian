@@ -12,29 +12,17 @@ url="https://${_pkgpath}"
 makedepends=('dpkg')
 depends=()
 _debdeps="skywire-bin"
-source=( #original to skybian
-"static/10-skybian-header"
-"static/armbian-check-first-login.sh"
-"static/armbian-motd" #Below are scripts introduced by the maintainer
-"script/skymanager.sh"
-"script/skymanager.service"
-"script/skybian-patch-config.sh"
-"script/skybian-patch-config.service"
-"script/postinst.sh"
-"script/skybian-chrootconfig.sh"
-"script/skybian-reset.sh"
+source=(
+#original to skybian
+"skybian-static.tar.gz"
+#Below are scripts introduced by the maintainer
+"skybian-script.tar.gz"
 )
-sha256sums=('1aae9938793bf2b8a9572c8c29dfb589cee1543b1ca1033116e27445402c5177'
-            'd35fb793968e8dfd1c452a4468225aab1138b883d37b451187e6e3536eea1a0a'
-            '63c9148474d4a6197e1f50b110bdb93abef79382a6c2335cd8e8381031d76b2e'
-            '7cfa22ffd13ed5c2833e7ca6b3c9aee661643dacce696365d09000c6cd4f18d6'
-            '479194ce6b65c7ca5f87a18d891913af4e4160f21092c71171b37209ece9b49f'
-            '11903e36f9b1c0f3d55656b4f9c7caf7e3dbb3f3ba6a2ea19150e74f6beed111'
-            'e1486fb3f808ea4c6e8323e626a37a04b43c633076b80606bd68d4bbd04fa0b5'
-            '53f76fe804b21b0e46110bb921ef7fcb2caee63915f29a65a5f677ed718ea8b1'
-            'f36b0fd8f7332061aa2c8c2b03b82419a464c67bac925ae505c3d3b2d9402294'
-            '7da8720bb3732b1868998036ede0ce2047aeb9a825833e6778872f9b3f06d3b7')
-#'SKIP')
+#tar -czvf skybian-static.tar.gz static
+#tar -czvf skybian-script.tar.gz script
+sha256sums=('ce826193c89c5c5f7bd72673503913df650f8e95a64a0d79b5f9e903c85c9b6b'
+            'fb62153b9f21fb6174b81174cbb32a2ffd6bdc754b1993c1a118c79593f6930b')
+
 
 
 build() {
