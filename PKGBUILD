@@ -61,20 +61,20 @@ package() {
   mkdir -p ${_pkgdir}/etc/profile.d/
   mkdir -p ${_pkgdir}/etc/systemd/system/
   mkdir -p ${_pkgdir}/usr/bin/
-  install -Dm755 ${srcdir}/10-skybian-header ${_pkgdir}/etc/update-motd.d/
-  install -Dm755 ${srcdir}/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
-  install -Dm644 ${srcdir}/armbian-motd ${_pkgdir}/etc/default/
-  install -Dm755 ${srcdir}/skymanager.sh ${_pkgdir}/usr/bin/skymanager
-  install -Dm755 ${srcdir}/skybian-patch-config.sh ${_pkgdir}/usr/bin/skybian-patch-config
-  install -Dm644 ${srcdir}/skybian-patch-config.service ${_pkgdir}/etc/systemd/system/skybian-patch-config.service
-  install -Dm755 ${srcdir}/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
-  install -Dm755 ${srcdir}/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
-  install -Dm755 ${srcdir}/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
-  install -Dm644 ${srcdir}/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
+  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
+  install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
+  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
+  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
+  install -Dm755 ${srcdir}/script/skybian-patch-config.sh ${_pkgdir}/usr/bin/skybian-patch-config
+  install -Dm644 ${srcdir}/script/skybian-patch-config.service ${_pkgdir}/etc/systemd/system/skybian-patch-config.service
+  install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
+  install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
+  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
+  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
   #########################################################################
   _msg2 'installing control file and postinst script'
   install -Dm755 ${srcdir}/${_pkgarch}.control ${_pkgdir}/DEBIAN/control
-  install -Dm755 ${srcdir}/postinst.sh ${_pkgdir}/DEBIAN/postinst
+  install -Dm755 ${srcdir}/script/postinst.sh ${_pkgdir}/DEBIAN/postinst
   _msg2 'creating the debian package'
   cd $pkgdir
   dpkg-deb --build -z9 ${_debpkgdir}
