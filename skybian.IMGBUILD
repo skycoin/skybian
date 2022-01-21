@@ -10,26 +10,29 @@ _torrent="${_xzlink}.torrent"
 _imgfinal="skybian-${pkgver}.img"
 _root_partition=/dev/loop0p1
 _defaultuser=root
-_aptrepo="http://deb.skywire.skycoin.com"
+#_aptrepo="http://deb.skywire.skycoin.com"
+_aptrepo="http://176.9.28.105/"
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-0.5.1-29-arm64.deb"
 _skybiandeb="skybian-0.5.0-1-arm64.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
-makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'file-roller' 'dpkg')
+makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg')
 depends=()
 source=("${_torrent}"
 "${_torrent}.md5"
-"${_aptrepo}/archive/${_skywiredeb}"
-"${_aptrepo}/archive/${_skybiandeb}"
+#"${_aptrepo}/archive/${_skywiredeb}"
+"http://176.9.28.105/archive/${_skywiredeb}"
+#"${_aptrepo}/archive/${_skybiandeb}"
+"http://176.9.28.105/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '575df4ea8afa7920d5c475c74cf7bfbe9d92a2be5794b4af1d74cb92af797d55'
-            '575df4ea8afa7920d5c475c74cf7bfbe9d92a2be5794b4af1d74cb92af797d55'
+            '4a325b1d89d65f441dd35b3334155e88b9715ca8bbf208a5ade237d4f8b3fba8'
+            '946f339146b9c8e64c2e57d955aa2ef16f9223eb5e9c226d57a060121decdb31'
             'SKIP')
 
 #pkgver() {
@@ -51,8 +54,8 @@ fi
 
 
 build() {
-  #only file-roller recognizes this archive for some reason.
-  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with file-roller" && file-roller -h ../${_imgxz}
+  #standard extraction utilities don't recognizes this archive for some reason.
+  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
 	#_msg2 "checking imaage integrity"
   #md5sum -c *.md5 || exit 1
 	_msg2 "copying image.." #so we don't have to extract it every time
@@ -71,7 +74,7 @@ build() {
   sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
 	_msg2 "copying repository signing key to root dir"
   sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
-	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
+	_msg2 "copy qemu-aarch64-static command to chroot bin"
   sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
 #sudo is used for all commands to give correct environmental vars in chroot

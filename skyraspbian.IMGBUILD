@@ -18,7 +18,7 @@ _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
-makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'file-roller' 'dpkg')
+makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg')
 depends=()
 source=("${_torrent}"
 "${_aptrepo}/archive/${_skywiredeb}"
@@ -49,8 +49,8 @@ fi
 
 
 build() {
-  #only file-roller recognizes this archive for some reason.
-  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with file-roller" && file-roller -h ../${_imgxz}
+  #standard extraction utilities don't recognizes this archive for some reason.
+  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
 	#_msg2 "checking imaage integrity"
   #md5sum -c *.md5 || exit 1
 	_msg2 "copying image.." #so we don't have to extract it every time
@@ -98,7 +98,7 @@ build() {
   sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
 ##Fix bug in terminal not working right
   _msg2 "CHROOT: setting TERM=linux in .bashrc..."
-  sudo arch-chroot ${_mntdir} sudo echo "TERM=linux" | sudo tee ~/.bashrc
+  sudo arch-chroot ${_mntdir} echo "TERM=linux" | sudo tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot asrchitecture"
   _targetarch=$(sudo arch-chroot ${_mntdir} sudo dpkg --print-architecture)
