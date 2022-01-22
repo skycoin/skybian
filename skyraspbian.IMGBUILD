@@ -11,7 +11,8 @@ _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p2
 _boot_partition=/dev/loop0p1
 _defaultuser=root
-_aptrepo="http://deb.skywire.skycoin.com"
+#_aptrepo="http://deb.skywire.skycoin.com"
+_aptrepo="http://176.9.28.105/" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
 #_skybiandeb="skybian-0.4.0-24-armhf.deb"
@@ -21,13 +22,14 @@ url="http://github.com/skycoin/skybian"
 makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg')
 depends=()
 source=("${_torrent}"
-"${_aptrepo}/archive/${_skywiredeb}"
+"http://176.9.28.105/archive/${_skywiredeb}"
+#"${_aptrepo}/archive/${_skywiredeb}"
 #"${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('8af378f1249781a489657d823938ac6d91d376ccf7ab6193c541fa2b63f781b7'
-            '33d0b3d56ddca44e328f033ca6a7dba406dd6d341b82ae349dc0e91033d04ad8'
+            '097fe18520bc27ce875217eefe0ec40b0fa6ee1dc40952f60b58b77726208bd2'
             'SKIP')
 
 #pkgver() {
@@ -50,7 +52,7 @@ fi
 
 build() {
   #standard extraction utilities don't recognizes this archive for some reason.
-  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
+  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" &&  dtrx -no ../${_imgxz} && mv ${_img%.img}/${_img} ../${_img}
 	#_msg2 "checking imaage integrity"
   #md5sum -c *.md5 || exit 1
 	_msg2 "copying image.." #so we don't have to extract it every time
