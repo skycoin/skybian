@@ -12,7 +12,7 @@ _root_partition=/dev/loop0p2
 _boot_partition=/dev/loop0p1
 _defaultuser=root
 #_aptrepo="http://deb.skywire.skycoin.com"
-_aptrepo="http://176.9.28.105/" #omit DNS issues by using server IP
+_aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
 #_skybiandeb="skybian-0.4.0-24-armhf.deb"
@@ -22,8 +22,7 @@ url="http://github.com/skycoin/skybian"
 makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg' 'arch-install-scripts')
 depends=()
 source=("${_torrent}"
-"http://176.9.28.105/archive/${_skywiredeb}"
-#"${_aptrepo}/archive/${_skywiredeb}"
+"${_aptrepo}/archive/${_skywiredeb}"
 #"${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 )
