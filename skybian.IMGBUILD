@@ -18,7 +18,7 @@ _skybiandeb="skybian-0.5.0-1-arm64.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
-makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg')
+makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg' 'arch-install-scripts')
 depends=()
 source=("${_torrent}"
 "${_torrent}.md5"
@@ -64,7 +64,7 @@ build() {
   truncate -s +512M ${_imgfinal}
   echo ", +" | sfdisk -N1 ${_imgfinal}
 	_msg2 "mounting image to loop device.."
-  gnome-disk-image-mounter -w ${_imgfinal}
+  sudo gnome-disk-image-mounter -w ${_imgfinal}
 	_msg2 "creating mount dir"
   mkdir -p ${srcdir}/mnt
   _msg2 "mounting ${_root_partition} to mount point"

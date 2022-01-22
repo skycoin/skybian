@@ -19,7 +19,7 @@ _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
-makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg')
+makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg' 'arch-install-scripts')
 depends=()
 source=("${_torrent}"
 "http://176.9.28.105/archive/${_skywiredeb}"
@@ -61,7 +61,7 @@ build() {
   #truncate -s +512M ${_imgfinal}
   #echo ", +" | sfdisk -N1 ${_imgfinal}
 	_msg2 "mounting image to loop device.."
-  gnome-disk-image-mounter -w ${_imgfinal}
+  sudo gnome-disk-image-mounter -w ${_imgfinal}
 	_msg2 "creating mount dir"
   _mntdir="${srcdir}/mnt"
   mkdir -p ${_mntdir}
