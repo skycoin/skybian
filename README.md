@@ -16,6 +16,13 @@ Build and create an archive:
 
 Note: the archive type that is created is specified in /etc/makepkg.conf
 
+the following defaults are used for compression
+
+```
+COMPRESSZST=(zstd -c -T0 -18 -)
+PKGEXT=’.pkg.tar.zst’
+```
+
 Build only:
 ```
  makepkg --noarchive --skippgpcheck -p skybian.IMGBUILD
