@@ -136,11 +136,15 @@ package() {
   #package only, assuming ${_imgfinal} exists with makepkg -R
 install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
 cd ${pkgdir}
+_msg2 "Creating image checksums"
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
+cat ${_imgfinal}.sha
+if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}.zip ]]; then
 cd ..
 _msg2 "Creating .zip archive for windows"
 zip -r ${pkgname}-${pkgver}-${pkgrel}.zip ${pkgname}
 mv *.zip ../
+fi
 }
 
 _msg2() {

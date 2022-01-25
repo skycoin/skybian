@@ -19,7 +19,8 @@ Note: the archive type that is created by `makepkg` is specified in `/etc/makepk
 the following default is used for compression
 
 ```
-PKGEXT=’.pkg.tar.xz’
+COMPRESSZST=(zstd -c -T0 -18 -)
+PKGEXT=’.pkg.tar.zst’
 ```
 
 Build only:
