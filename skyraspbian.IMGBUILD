@@ -1,7 +1,7 @@
 pkgname=skyraspbian-img
 pkgdesc="Skyraspbian image build"
 pkgver='0.5.0'
-pkgrel=1
+pkgrel=2
 arch=('any')
 _img="2021-10-30-raspios-bullseye-armhf-lite.img"
 _imgxz="2021-10-30-raspios-bullseye-armhf-lite.zip"
@@ -20,7 +20,7 @@ _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
-makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg' 'arch-install-scripts')
+makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
 depends=()
 source=("${_torrent}"
 "${_aptrepo}/archive/${_skywiredeb}"
@@ -142,8 +142,11 @@ package() {
 install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
 cd ${pkgdir}
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
+cd ..
+_msg2 "Creating .zip archive for windows"
+zip -r ${pkgname}-${pkgver}-${pkgrel}.zip ${pkgname}
+mv *.zip ../
 }
-
 
 _msg2() {
 (( QUIET )) && return

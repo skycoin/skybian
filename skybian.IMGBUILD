@@ -1,7 +1,7 @@
 pkgname=skybian-img
 pkgdesc="Skybian image build"
 pkgver='0.5.0'
-pkgrel=1
+pkgrel=2
 arch=('any')
 _img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
 _imgxz=${_img}.xz
@@ -19,7 +19,7 @@ _skybiandeb="skybian-0.5.0-1-arm64.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
-makedepends=('gnome-disk-utility' 'qemu-arm-static' 'aria2' 'dtrx' 'dpkg' 'arch-install-scripts')
+makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
 depends=()
 source=("${_torrent}"
 "${_torrent}.md5"
@@ -131,12 +131,16 @@ sudo umount ${srcdir}/mnt/sys || echo
 
 package() {
   #Just let makepkg compress the archive as it does automatically for a package
-  #and then remove the metadata from the archive and change the extension
+  #afterwards remove the metadata from the archive and change the extension
   #avoid the compression step with makepkg --noarchive
   #package only, assuming ${_imgfinal} exists with makepkg -R
 install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
 cd ${pkgdir}
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
+cd ..
+_msg2 "Creating .zip archive for windows"
+zip -r ${pkgname}-${pkgver}-${pkgrel}.zip ${pkgname}
+mv *.zip ../
 }
 
 _msg2() {

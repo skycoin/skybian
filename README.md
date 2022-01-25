@@ -4,7 +4,7 @@ Builds requires archlinux host.
 
 install dependencies from AUR:
 ```
-yay -S gnome-disk-utility qemu-arm-static aria2 dtrx pacman-contrib
+yay -S 'arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip'
 ```
 
 Note: be sure to install qemu-arm-static-bin if you don't have qemu-arm-static installed already
@@ -14,9 +14,9 @@ Build and create an archive:
  makepkg --skippgpcheck -p skybian.IMGBUILD
 ```
 
-Note: the archive type that is created is specified in /etc/makepkg.conf
+Note: the archive type that is created by `makepkg` is specified in `/etc/makepkg.conf`
 
-the following defaults are used for compression
+the following default is used for compression
 
 ```
 PKGEXT=’.pkg.tar.xz’
@@ -28,6 +28,8 @@ Build only:
 ```
 
 The image, when created, can be found in the pkg dir
+
+The image archives will populate at the top level
 
 Update checksums on changes to source files:
 
@@ -71,64 +73,15 @@ The public key is then used to create a visor config with that public key as the
 
 ### Using the Skybian image
 
-* [Download the image](https://deb.skywire.skycoin.com/img/) and extract it from the archive
-    - [Windows / MacOS zst extraction utility](https://peazip.github.io/)
-    - [MacOS:](https://www.unix.com/man-page/osx/1/bsdtar/) `bsdtar -xf /path/to/archive.tar.zst`
-    - [linux:](https://man.archlinux.org/man/tar.1) `tar -xf /path/to/archive.tar.zst`
+Refer to the [Skybian User Guide](https://github.com/skycoin/skywire/wiki/Skybian-User-Guide) in the [skywire github wiki](https://github.com/skycoin/skywire/wiki)
 
-* Use balena etcher, or the dd / dcfldd command on linux, to write the image to a microSD card
-    - [downlad balena etcher](https://www.balena.io/etcher/)
-    - [dd command](https://wiki.archlinux.org/title/Dd)
-
-* Power off every board in the skyminer with the individual switches
-
-* Insert the card into the board which you designate as hypervisor, and power on that board. The board will reboot once during this process.
-
-* Wait until the hypervisor interface appears at the ip address of the skyminer, port :8000.
-
-* repeat step 2 with the next microSD card, insert it in the next pi, and power on the board
-
-* wait until the visor appears in the hypervisor user interface. The board will reboot once during this process
-
-* Repeat steps 6 and 7 for every node in the skyminer
-
-If you prefer instead to use a different computer as the hypervisor of your cluster, the easiest way is to connect that machine to the skyminer router and assign it the .2 ip address. Make sure your hypervisor is running and the RPC server is enabled in your configuration file (delete localhost but leave the port :3435)
-
-### Troubleshooting the image and skywire installation
+### Troubleshooting
 
 If for some reason the hypervisor is not accessible or the visor never shows up in the hypervisor, first try rebooting that board
 
 If the visor or hypervisor still does not show up online, ssh to the board or access it via keyboard and HDMI monitor
 
-run `skywire-autoconfig` to fix almost any issue with configuration and yield a running instance of skywire
-
-If skywire-autoconfig does not work, you may need to uninstall and reinstall skywire
-
-```
-apt remove skywire-bin
-apt update
-apt install skywire-bin
-```
-
-To explicitly configure a visor to the hypervisor running at the .2 ip address on the network (the rpc server of the hypervisor must accept queries from the LAN)
-
-```
-skywire-autoconfig-remote
-```
-
-To set a remote htpervisor via public key, supply the public key as an argument to skywire-autoconfig
-
-```
-skywire-autoconfig <pk>
-```
-
-To restore keys from a previous installation:
-
-* place the configuration file at `/etc/skywire-config.json`
-* `rm /opt/skywire/skywire.json`
-* `skywire-autoconfig`
-
-any remote hypervisor(s) set in the config file will not be retained.
+For troubleshooting the skywire package, see [Skywire Package Installation](https://github.com/skycoin/skywire/wiki/Skywire-Package-Installation)
 
 ### APT repository
 
@@ -136,54 +89,14 @@ Skywire is now available as a package from the repository at [https://deb.skywir
 
 This package repository will work with any .deb based arm / arm64 / amd64 system and is pre-configured in the provided Skybian and Skyraspbian images.
 
-To install skywire from this repository
-(run all commands as root or use sudo)
-
-Add the repository to your apt sources
-```
-add-apt-repository 'deb https://deb.skywire.skycoin.com sid main'
-```
-
- or manually edit `/etc/apt/sources.list`:
-```
-nano /etc/apt/sources.list
-```
-
-Add the following:
-```
-deb http://deb.skywire.skycoin.com sid main
-#deb-src https://deb.skywire.skycoin.com sid main
-```
-
-Add the repository signing key:
-as root:
-```
-curl -L https://deb.skywire.skycoin.com/KEY.asc | apt-key add -
-```
-with sudo this would be:
-```
-curl -L https://deb.skywire.skycoin.com/KEY.asc | sudo apt-key add -
-```
-
-If you have difficulty with configuring this repository, you may attempt [manually downloading](https://deb.skywire.skycoin.com/archive) and installing the package with `dpkg -i`
-
-Resync the package database:
-```
-apt update
-```
-Install skywire:
-```
-apt install skywire-bin
-```
-
-Skywire will be started automatically after installation. Access the hypervisor to be sure it's working.
+To configure this repository please refer to [Skywire Package Installation](https://github.com/skycoin/skywire/wiki/Skywire-Package-Installation)
 
 ### Additional notes
 
-**the skybian package**, when updated, will enable the skymanager systemd service and the skywire-autoconfig service and disable the skywire service.
+**the skybian package**, when updated, will enable the [skymanager](/script/skymanager.sh) systemd service (provided by skybian) and the skywire-autoconfig service (provided by skywire) and disable the skywire service.
+
 This will result in erroneous behavior of the skyminer, so this package is not included in the APT repo, but instead kept in the archive at
 [https://deb.skywire.skycoin.com/archive](https://deb.skywire.skycoin.com/archive)
-
 
 Images for testing can be found at [https://deb.skywire.skycoin.com/img/](https://deb.skywire.skycoin.com/img)
 
@@ -191,25 +104,25 @@ Images for testing can be found at [https://deb.skywire.skycoin.com/img/](https:
 ### Script and systemd service reference
 
 #### Skybian
-* skymanager.sh (formerly skybian-firstrun)
+* [skymanager.sh](/script/skymanager.sh) (formerly skybian-firstrun)
     - produces static IP configuration (hypervisor)
     - sets hostname (hypervisor)
     - enables either skywire-autoconfig or skywire-autoconfig-remote
     - disables skymanager.service
     - reboots the board
-* skymanager.service
+* [skymanager.service](/script/skymanager.service)
     - runs on skybian's first boot; wants network-online.target
-* skybian-chrootconfig.sh (expected to run in chroot)
-    - called by postinst of the skybian.deb package
+* [skybian-chrootconfig.sh](/script/skybian-chrootconfig.sh) (expected to run in chroot)
+    - called by [postinst.sh](/script/postinst.sh) of the skybian.deb package upon installation
     - disables and enables required systemd services
     - removes any autogenerated skywire config
-* skybian-patch-config.sh
+* [skybian-patch-config.sh](/script/skybian-patch-config.sh)
     - changes the skywire config for the hypervisor to serve rpc on lan
-    - restarts skywire and disables skywire-patch-config.service
-* skybian-patch-config.service
+    - restarts skywire and disables [skybian-patch-config.service](/script/skybian-patch-config.service)
+* [skybian-patch-config.service](/script/skybian-patch-config.service)
     - runs on first boot if hypervisor is configured
-* skybian-reset.sh
-    - resets skybian except for the static ip configuration (script for testing)
+* [skybian-reset.sh](/script/skybian-reset.sh)
+    - resets skybian; except for the static ip configuration - for testing purposes only
 
 
 #### Skywire
