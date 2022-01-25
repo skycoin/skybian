@@ -3,6 +3,8 @@ pkgdesc="Skyraspbian image build"
 pkgver='0.5.0'
 pkgrel=2
 arch=('any')
+_imgarch="armhf"
+_hostarch=$(dpkg --print-architecture)
 _img="2021-10-30-raspios-bullseye-armhf-lite.img"
 _imgxz="2021-10-30-raspios-bullseye-armhf-lite.zip"
 _xzlink="https://downloads.raspberrypi.org/raspios_lite_armhf/images/raspios_lite_armhf-2021-11-08/2021-10-30-raspios-bullseye-armhf-lite.zip"
@@ -10,7 +12,6 @@ _torrent="${_xzlink}.torrent"
 _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p2
 _boot_partition=/dev/loop0p1
-_hostarch=$(dpkg --print-architecture)
 _defaultuser=pi
 #_aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
@@ -103,7 +104,7 @@ build() {
   echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt sudo tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot architecture"
-  if [[ ${_hostarch} == "armhf" ]] ; then
+  if [[ "${_hostarch}" == "${_imgarch}" ]] ; then
   _msg2 "CHROOT: updating image with apt..."
   sudo arch-chroot ${_mntdir} sudo apt update
   sudo arch-chroot ${_mntdir} sudo apt upgrade
@@ -147,7 +148,7 @@ cat ${_imgfinal}.sha
 if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}.zip ]]; then
 cd ..
 _msg2 "Creating .zip archive for windows"
-zip -r ${pkgname}-${pkgver}-${pkgrel}.zip ${pkgname}
+zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
 mv *.zip ../
 fi
 }
