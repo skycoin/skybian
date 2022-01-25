@@ -10,7 +10,8 @@ _torrent="${_xzlink}.torrent"
 _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p2
 _boot_partition=/dev/loop0p1
-_defaultuser=root
+_hostarch=$(dpkg --print-architecture)
+_defaultuser=pi
 #_aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
@@ -99,12 +100,10 @@ build() {
   sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
 ##Fix bug in terminal not working right
   _msg2 "CHROOT: setting TERM=linux in .bashrc..."
-  sudo arch-chroot ${_mntdir} echo "TERM=linux" | sudo tee /root/.bashrc
+  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt sudo tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
-  _msg2 "Comparing host and chroot asrchitecture"
-  _targetarch=$(sudo arch-chroot ${_mntdir} sudo dpkg --print-architecture)
-  _hostarch=$(dpkg --print-architecture)
-  if [[ ${_hostarch} == ${_targetarch} ]] ; then
+  _msg2 "Comparing host and chroot architecture"
+  if [[ ${_hostarch} == "armhf" ]] ; then
   _msg2 "CHROOT: updating image with apt..."
   sudo arch-chroot ${_mntdir} sudo apt update
   sudo arch-chroot ${_mntdir} sudo apt upgrade
@@ -113,7 +112,7 @@ else
   _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
 fi
 ##set password for _defaultuser
-sudo arch-chroot ${_mntdir} echo ${_defaultuser}:skybian | sudo chpasswd
+echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
 sudo umount ${_mntdir}
 ######################## end chroot modifications ##############################
 ################# SKYRASPBIAN SPECIFIC BOOT CONFIG PARAMS ######################
@@ -140,7 +139,7 @@ package() {
   #and then remove the metadata from the archive and change the extension
   #avoid the compression step with makepkg --noarchive
   #package only, assuming ${_imgfinal} exists with makepkg -R
-mv ${srcdir}/../${_imgfinal} ${pkgdir}/
+install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
 cd ${pkgdir}
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 }

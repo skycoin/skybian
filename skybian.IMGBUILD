@@ -9,6 +9,7 @@ _xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_21.0
 _torrent="${_xzlink}.torrent"
 _imgfinal="skybian-${pkgver}.img"
 _root_partition=/dev/loop0p1
+_hostarch=$(dpkg --print-architecture)
 _defaultuser=root
 #_aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
@@ -97,11 +98,10 @@ build() {
   sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
 ##Fix bug in terminal not working right
   _msg2 "CHROOT: setting TERM=linux in .bashrc..."
-  sudo arch-chroot ${srcdir}/mnt echo "TERM=linux" | sudo tee /root/.bashrc
+  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot architecture"
 
-  _hostarch=$(dpkg --print-architecture)
   if [[ ${_hostarch} == "arm64" ]] ; then
   _msg2 "CHROOT: updating image with apt..."
   sudo arch-chroot ${srcdir}/mnt sudo apt update
@@ -116,7 +116,7 @@ sudo umount ${srcdir}/mnt/proc || echo
 sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
 sudo umount ${srcdir}/mnt/sys || echo
 
-sudo arch-chroot ${srcdir}/mnt echo ${_defaultuser}:skybian | sudo chpasswd
+echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
 ######################## end chroot modifications ##############################
 sudo umount ${srcdir}/mnt/proc || echo
 sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
@@ -134,7 +134,7 @@ package() {
   #and then remove the metadata from the archive and change the extension
   #avoid the compression step with makepkg --noarchive
   #package only, assuming ${_imgfinal} exists with makepkg -R
-mv ${srcdir}/../${_imgfinal} ${pkgdir}/
+install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
 cd ${pkgdir}
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 }
