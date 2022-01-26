@@ -1,7 +1,7 @@
 pkgname=skyraspbian-img
 pkgdesc="Skyraspbian image build"
 pkgver='0.5.0'
-pkgrel=2
+pkgrel=3
 arch=('any')
 _imgarch="armhf"
 _hostarch=$(dpkg --print-architecture)
@@ -19,8 +19,6 @@ _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-0.5.1-29-armhf.deb"
 #_skybiandeb="skybian-0.4.0-24-armhf.deb"
 url="http://github.com/skycoin/skybian"
-#_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
-#_gz=${_gz//"--"/"-"}
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
 depends=()
 source=("${_torrent}"
@@ -38,18 +36,17 @@ sha256sums=('8af378f1249781a489657d823938ac6d91d376ccf7ab6193c541fa2b63f781b7'
 #}
 
 prepare() {
-	cd "${srcdir}"
+  cd "${srcdir}"
   if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-		_msg2 "Downloading sources via torrent"
-	# Download the assets via torrent - very fast!
-	aria2c -V --seed-time=0 ${_torrent}
-  mv ${_imgxz} ../${_imgxz}
-else
-	_msg2 "found downloaded sources"
-fi
+    _msg2 "Downloading sources via torrent"
+    # Download the assets via torrent - very fast!
+    aria2c -V --seed-time=0 ${_torrent}
+    mv ${_imgxz} ../${_imgxz}
+  else
+    _msg2 "found downloaded sources"
+  fi
 
 }
-
 
 build() {
   #standard extraction utilities don't recognizes this archive for some reason.
@@ -99,27 +96,33 @@ build() {
   sudo arch-chroot ${_mntdir} sudo /sbin/fake-hwclock save force
   _msg2 "CHROOT: Generating locale en_US.UTF-8..."
   sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
-##Fix bug in terminal not working right
-  _msg2 "CHROOT: setting TERM=linux in .bashrc..."
-  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt sudo tee /root/.bashrc
+#fix console / tty
+  _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
+  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
+#set env to detect that this is a skybian image
+  _msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
+  echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot architecture"
   if [[ "${_hostarch}" == "${_imgarch}" ]] ; then
-  _msg2 "CHROOT: updating image with apt..."
-  sudo arch-chroot ${_mntdir} sudo apt update
-  sudo arch-chroot ${_mntdir} sudo apt upgrade
-  #sudo arch-chroot ${_mntdir} sudo apt install skywire
-else
-  _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
-fi
-##set password for _defaultuser
-echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
-sudo umount ${_mntdir}
+    _msg2 "CHROOT: updating image with apt..."
+    sudo arch-chroot ${_mntdir} sudo apt update
+    sudo arch-chroot ${_mntdir} sudo apt upgrade
+    #sudo arch-chroot ${_mntdir} sudo apt install skywire
+  else
+    _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
+  fi
+  ##set password for _defaultuser
+  _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
+  echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+  _msg2 "Unmounting image root partition"
+  sudo umount ${_mntdir}
 ######################## end chroot modifications ##############################
 ################# SKYRASPBIAN SPECIFIC BOOT CONFIG PARAMS ######################
-  _msg2 "creating mount dir"
+  _msg2 "creating mount dir for boot partition"
   _mntdir="${srcdir}/boot"
   mkdir -p ${_mntdir}
+  _msg2 "mounting ${_boot_partition} to mount point"
   sudo mount ${_boot_partition} ${_mntdir}
   _msg2 "Enabling UART"
   sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${_mntdir}/config.txt"
@@ -129,8 +132,10 @@ sudo umount ${_mntdir}
 
   _msg2 "Enabling SSH"
   sudo touch "${_mntdir}/SSH.txt"
+  _msg2 "Unounting image boot partition"
   sudo umount ${_mntdir}
 ########################## end boot param modifications  #######################
+  _msg2 "detatching /dev/loop0"
 	sudo losetup -d /dev/loop0
   mv ${_imgfinal} ../${_imgfinal}
 }
@@ -140,17 +145,17 @@ package() {
   #and then remove the metadata from the archive and change the extension
   #avoid the compression step with makepkg --noarchive
   #package only, assuming ${_imgfinal} exists with makepkg -R
-install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
-cd ${pkgdir}
-_msg2 "Creating image checksums"
-sha256sum ${_imgfinal} > ${_imgfinal}.sha
-cat ${_imgfinal}.sha
-if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}.zip ]]; then
-cd ..
-_msg2 "Creating .zip archive for windows"
-zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
-mv *.zip ../
-fi
+  install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
+  cd ${pkgdir}
+  _msg2 "Creating image checksums"
+  sha256sum ${_imgfinal} > ${_imgfinal}.sha
+  cat ${_imgfinal}.sha
+  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}.zip ]]; then
+    cd ..
+    _msg2 "Creating .zip archive for windows"
+    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+    mv *.zip ../
+  fi
 }
 
 _msg2() {

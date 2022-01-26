@@ -1,7 +1,7 @@
 pkgname=skybian-img
 pkgdesc="Skybian image build"
 pkgver='0.5.0'
-pkgrel=2
+pkgrel=3
 arch=('any')
 _imgarch="arm64"
 _hostarch=$(dpkg --print-architecture)
@@ -44,13 +44,12 @@ prepare() {
   if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
 		_msg2 "Downloading sources via torrent"
     # Download the assets via torrent - very fast!
-    	aria2c -V --seed-time=0 ${_torrent}
-      mv ${_imgxz} ../${_imgxz}
-    else
-      _msg2 "found downloaded sources"
+    aria2c -V --seed-time=0 ${_torrent}
+    mv ${_imgxz} ../${_imgxz}
+  else
+    _msg2 "found downloaded sources"
   fi
 }
-
 
 build() {
   #standard extraction utilities don't recognizes this archive for some reason.
@@ -96,9 +95,11 @@ build() {
   sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
   _msg2 "CHROOT: Generating locale en_US.UTF-8..."
   sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
-##Fix bug in terminal not working right
-  _msg2 "CHROOT: setting TERM=linux in .bashrc..."
+#fix console / tty
+  _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
   echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
+#set env to detect that this is a skybian image
+  _msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
   echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot architecture"
@@ -115,7 +116,7 @@ build() {
   sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
   sudo umount ${srcdir}/mnt/sys || echo
   ##set password for _defaultuser
-  _msg2 "Setting password skybian for ${_defaultuser}"
+  _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
   echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
 ######################## end chroot modifications ##############################
   #mount points were sticking previously
