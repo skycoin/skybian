@@ -43,13 +43,12 @@ prepare() {
 	cd "${srcdir}"
   if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
 		_msg2 "Downloading sources via torrent"
-	# Download the assets via torrent - very fast!
-	aria2c -V --seed-time=0 ${_torrent}
-  mv ${_imgxz} ../${_imgxz}
-else
-	_msg2 "found downloaded sources"
-fi
-
+    # Download the assets via torrent - very fast!
+    	aria2c -V --seed-time=0 ${_torrent}
+      mv ${_imgxz} ../${_imgxz}
+    else
+      _msg2 "found downloaded sources"
+  fi
 }
 
 
@@ -100,30 +99,33 @@ build() {
 ##Fix bug in terminal not working right
   _msg2 "CHROOT: setting TERM=linux in .bashrc..."
   echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
+  echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot architecture"
-
   if [[ "${_hostarch}" == "${_imgarch}" ]] ; then
-  _msg2 "CHROOT: updating image with apt..."
-  sudo arch-chroot ${srcdir}/mnt sudo apt update
-  sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
-  #sudo arch-chroot ${srcdir}/mnt sudo apt install skywire
-else
-  _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
-
-fi
-##set password for _defaultuser
-sudo umount ${srcdir}/mnt/proc || echo
-sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
-sudo umount ${srcdir}/mnt/sys || echo
-
-echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+    _msg2 "CHROOT: updating image with apt..."
+    sudo arch-chroot ${srcdir}/mnt sudo apt update
+    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
+    #sudo arch-chroot ${srcdir}/mnt sudo apt install skywire
+  else
+    _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
+  fi
+  #mount points were sticking previously
+  sudo umount ${srcdir}/mnt/proc || echo
+  sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
+  sudo umount ${srcdir}/mnt/sys || echo
+  ##set password for _defaultuser
+  _msg2 "Setting password skybian for ${_defaultuser}"
+  echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
 ######################## end chroot modifications ##############################
-sudo umount ${srcdir}/mnt/proc || echo
-sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
-sudo umount ${srcdir}/mnt/sys || echo
-	sudo umount ${srcdir}/mnt
-	sudo losetup -d /dev/loop0
+  #mount points were sticking previously
+  sudo umount ${srcdir}/mnt/proc || echo
+  sudo umount ${srcdir}/mnt/sys/firmware/efi/efivars || echo
+  sudo umount ${srcdir}/mnt/sys || echo
+  _msg2 "Unmounting image"
+  sudo umount ${srcdir}/mnt
+  _msg2 "detatching /dev/loop0"
+  sudo losetup -d /dev/loop0
   mv ${_imgfinal} ../${_imgfinal}
   cd ..
   echo "created image(s):"
@@ -135,17 +137,17 @@ package() {
   #afterwards remove the metadata from the archive and change the extension
   #avoid the compression step with makepkg --noarchive
   #package only, assuming ${_imgfinal} exists with makepkg -R
-install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
-cd ${pkgdir}
-_msg2 "Creating image checksums"
-sha256sum ${_imgfinal} > ${_imgfinal}.sha
-cat ${_imgfinal}.sha
-if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}.zip ]]; then
-cd ..
-_msg2 "Creating .zip archive for windows"
-zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
-mv *.zip ../
-fi
+  install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
+  cd ${pkgdir}
+  _msg2 "Creating image checksum"
+  sha256sum ${_imgfinal} > ${_imgfinal}.sha
+  cat ${_imgfinal}.sha
+  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}.zip ]]; then
+    cd ..
+    _msg2 "Creating .zip archive for windows"
+    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+    mv *.zip ../
+  fi
 }
 
 _msg2() {
