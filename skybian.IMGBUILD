@@ -15,7 +15,9 @@ _defaultuser=root
 #_aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
-_skywiredeb="skywire-bin-0.5.1-29-arm64.deb"
+_aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
+_aptrepo1_config="deb ${_aptrepo1} sid main"
+_skywiredeb="skywire-bin-0.5.1-34-arm64.deb"
 _skybiandeb="skybian-0.5.0-1-arm64.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
@@ -80,6 +82,7 @@ build() {
   cp ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/sources.list
   sudo rm ${srcdir}/mnt/etc/apt/sources.list
   echo "${_aptrepo_config}" >> ${srcdir}/sources.list
+  echo "${_aptrepo_config1}" >> ${srcdir}/sources.list
   sudo install -Dm644 ${srcdir}/sources.list ${srcdir}/mnt/etc/apt/sources.list
 	_msg2 "CHROOT: add the repository signing key to apt keyring"
   sudo arch-chroot ${srcdir}/mnt sudo apt-key add /root/KEY.asc
