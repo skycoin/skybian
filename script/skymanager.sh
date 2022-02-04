@@ -43,7 +43,6 @@ DNS=${_gateway}" | tee /etc/systemd/network/eth.network
       [[ -f /opt/skywire/skywire-visor.json ]] && rm /opt/skywire/skywire-visor.json && echo "removed a visor configuration"
       systemctl disable skymanager 2> /dev/null && echo "disabling skymanager.service"
       systemctl enable skywire-autoconfig 2> /dev/null && echo "enabling skywire-autoconfig.service"
-      systemctl enable skybian-patch-config 2> /dev/null && echo "enabling skybian-patch-config.service"
       echo "REBOOT"
       reboot now
     fi

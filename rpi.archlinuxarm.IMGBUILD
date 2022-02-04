@@ -1,8 +1,8 @@
 _rpi="aarch64"
 pkgname=rpi-img
 pkgdesc="ArchlinuxARM image creator - rpi ${_rpi}"
-pkgver=20220116
-pkgrel=1
+pkgver='0.5.0'
+pkgrel=3
 arch=( 'any')
 _img="rpi-${_rpi}-arch-linux-${pkgver}.img"
 _img=${_img//"--"/"-"}

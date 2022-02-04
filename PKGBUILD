@@ -1,7 +1,7 @@
 pkgname=skybian
 _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image - debian package"
-pkgver='0.5.0'
+pkgver='0.6.0'
 _pkgver=${pkgver}
 pkgrel=1
 _pkgrel=${pkgrel}
@@ -20,8 +20,8 @@ source=(
 )
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
-sha256sums=('ce826193c89c5c5f7bd72673503913df650f8e95a64a0d79b5f9e903c85c9b6b'
-            'fb62153b9f21fb6174b81174cbb32a2ffd6bdc754b1993c1a118c79593f6930b')
+sha256sums=('8e483b01b0a2fbeccbadcabbb3970a396ca321e9542ff5711e3372bf344634ba'
+            '6c843a73bd64e2fe13b0d0736e89c82153807ba829bd6ccdcf375059d5f96d1b')
 
 
 
@@ -65,9 +65,6 @@ package() {
   install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
   install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
   install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
-  install -Dm755 ${srcdir}/script/skybian-patch-config.sh ${_pkgdir}/usr/bin/skybian-patch-config
-  install -Dm644 ${srcdir}/script/skybian-patch-config.service ${_pkgdir}/etc/systemd/system/skybian-patch-config.service
-  install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
   install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
