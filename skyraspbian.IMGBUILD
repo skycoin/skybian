@@ -150,7 +150,7 @@ package() {
   _msg2 "Creating image checksums"
   sha256sum ${_imgfinal} > ${_imgfinal}.sha
   cat ${_imgfinal}.sha
-  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}.zip ]]; then
+  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ]]; then
     cd ..
     _msg2 "Creating .zip archive for windows"
     zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
