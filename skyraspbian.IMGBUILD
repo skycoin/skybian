@@ -1,7 +1,7 @@
 pkgname=skyraspbian-img
 pkgdesc="Skyraspbian image build"
 pkgver='0.6.0'
-pkgrel=1
+pkgrel=4
 arch=('any')
 _imgarch="armhf"
 _hostarch=$(dpkg --print-architecture)
@@ -16,7 +16,7 @@ _defaultuser=pi
 #_aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
-_skywiredeb="skywire-bin-0.6.0-2-armhf.deb"
+_skywiredeb="skywire-bin-0.6.0-4-armhf.deb"
 #_skybiandeb="skybian-0.4.0-24-armhf.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
@@ -28,7 +28,7 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('8af378f1249781a489657d823938ac6d91d376ccf7ab6193c541fa2b63f781b7'
-            'e03cee54185871aa3b5621a2b1d191d9167949ad8ebbbd5315c741b03900351b'
+            'd8cca77455d6ba32953d456d553131744dd56061913e7836740e3bf2e7bf3c78'
             'SKIP')
 
 #pkgver() {
