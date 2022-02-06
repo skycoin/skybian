@@ -102,16 +102,16 @@ build() {
 #set env to detect that this is a skybian image
   _msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
   echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
-  _msg2 "CHROOT: configuring unattended-updates"
+  #_msg2 "CHROOT: configuring unattended-updates"
   #add the skybian apt repo
-  head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
-  echo '        "origin=skycoin,codename=sid,label=skycoin";' >> ${srcdir}/50unattended-upgrades
-  tail -n 115 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades >> ${srcdir}/50unattended-upgrades
-  sudo rm ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
-  sudo install -Dm644 ${srcdir}/50unattended-upgrades ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
+  #head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
+  #echo '        "origin=skycoin,codename=sid,label=skycoin";' >> ${srcdir}/50unattended-upgrades
+  #tail -n 115 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades >> ${srcdir}/50unattended-upgrades
+  #sudo rm ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
+  #sudo install -Dm644 ${srcdir}/50unattended-upgrades ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
   #debconf
-  echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
-  sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+  #echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
+  #sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
 ##Updating in the chroot can be done from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot architecture"
   if [[ "${_hostarch}" == "${_imgarch}" ]] ; then
