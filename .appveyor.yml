@@ -46,7 +46,7 @@ for:
       - make build-skybian-img BOARD=opi3 ARCH=arm64
       - make build-skybian-img BOARD=rpi ARCH=armhf
       - make build-skybian-img BOARD=rpi64 ARCH=arm64
-      - make build-skyimager-gui
+      #- make build-skyimager-gui
 
     after_build:
       - mkdir artifacts
