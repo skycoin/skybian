@@ -54,8 +54,8 @@ for:
       - cp output/opi3/final/*.tar.gz artifacts/
       - cp output/rpi/final/*.tar.gz artifacts/
       - cp output/rpi64/final/*.tar.gz artifacts/
-      - cp fyne-cross/bin/*.tar.gz artifacts/
-      - cp fyne-cross/bin/*.zip artifacts/
+        #      - cp fyne-cross/bin/*.tar.gz artifacts/
+        #      - cp fyne-cross/bin/*.zip artifacts/
 
     artifacts:
       - path: artifacts/*
