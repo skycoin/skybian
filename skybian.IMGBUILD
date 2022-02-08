@@ -1,7 +1,7 @@
 pkgname=skybian-img
 pkgdesc="Skybian image build"
 pkgver='0.6.0'
-pkgrel=4
+pkgrel=5
 arch=('any')
 _imgarch="arm64"
 _hostarch=$(dpkg --print-architecture)
