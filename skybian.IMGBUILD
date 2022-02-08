@@ -17,7 +17,7 @@ _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
 _aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
 _aptrepo1_config="deb ${_aptrepo1} sid main"
-_skywiredeb="skywire-bin-0.6.0-4-arm64.deb"
+_skywiredeb="skywire-bin-0.6.0-5-arm64.deb"
 _skybiandeb="skybian-0.6.0-1-arm64.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
@@ -33,7 +33,7 @@ source=("${_torrent}"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('3aceb75d5672abfa0a900b149357555586d2e049abbaa15bcae4d2638912d3e7'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '25d2c2ec55ae7119607f8ac2edb2e29bf68ed6cf2624d9613925940a42484b1e'
+            '29e6b7fdf9413c1fcdf7e115833939112bb9cb56549c904833aa2bb02df99c56'
             '275363fb767109dd882fbf92d3301aa5ac54cce92e6340d4ed3ce0da51361b42'
             'SKIP')
 
@@ -104,7 +104,7 @@ build() {
 #set env to detect that this is a skybian image
   _msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
   echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
-  _msg2 "CHROOT: configuring unattended-updates"
+  _msg2 "CHROOT: configuring unattended-upgrades"
   #add the skybian apt repo
   head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
   echo '        "origin=skycoin,codename=sid,label=skycoin";' >> ${srcdir}/50unattended-upgrades
