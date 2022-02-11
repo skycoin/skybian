@@ -97,11 +97,11 @@ build() {
   _msg2 "CHROOT: Generating locale en_US.UTF-8..."
   sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
 #fix console / tty
-  _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
-  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
+  #_msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
+  #echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
 #set env to detect that this is a skybian image
-  _msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
-  echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
+  #_msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
+  #echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
   #_msg2 "CHROOT: configuring unattended-updates"
   #add the skybian apt repo
   #head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
