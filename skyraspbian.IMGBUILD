@@ -16,7 +16,7 @@ _defaultuser=pi
 #_aptrepo="http://deb.skywire.skycoin.com"
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
-_skywiredeb="skywire-bin-0.6.0-5-armhf.deb"
+_skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
 #_skybiandeb="skybian-0.4.0-24-armhf.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
@@ -28,7 +28,7 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('8af378f1249781a489657d823938ac6d91d376ccf7ab6193c541fa2b63f781b7'
-            '36c731a98ce2896da2ffb75dbeb9ae5cf0cbb2d07cfbd1f86465d97df2cb6a9d'
+            '41e5b7016ef112d2f63794e59a6f55b6324bef2d4074c64e34cdb56e06597e16'
             'SKIP')
 
 #pkgver() {
