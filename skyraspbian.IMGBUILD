@@ -27,7 +27,7 @@ source=("${_torrent}"
 "${_aptrepo}/KEY.asc"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('8af378f1249781a489657d823938ac6d91d376ccf7ab6193c541fa2b63f781b7'
+sha256sums=('87ee2d8543517cefb2dc12dd958f72915c470c932bb0a77f9d4ba39bd710bac5'
             '41e5b7016ef112d2f63794e59a6f55b6324bef2d4074c64e34cdb56e06597e16'
             'SKIP')
 
