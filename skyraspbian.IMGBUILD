@@ -1,7 +1,7 @@
 pkgname=skyraspbian-img
 pkgdesc="Skyraspbian image build"
 pkgver='0.6.0'
-pkgrel=6
+pkgrel=7
 arch=('any')
 _imgarch="armhf"
 _hostarch=$(dpkg --print-architecture)
@@ -28,7 +28,7 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('87ee2d8543517cefb2dc12dd958f72915c470c932bb0a77f9d4ba39bd710bac5'
-            '41e5b7016ef112d2f63794e59a6f55b6324bef2d4074c64e34cdb56e06597e16'
+            'e9e874e74c6edaa7fc22c453a3c5a2c92a5e9dbbb3b9bd452bd0a4fa6c3d4f9c'
             'SKIP')
 
 #pkgver() {

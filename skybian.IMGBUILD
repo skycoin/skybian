@@ -1,7 +1,7 @@
 pkgname=skybian-img
 pkgdesc="Skybian image build"
 pkgver='0.6.0'
-pkgrel=6
+pkgrel=7
 arch=('any')
 _imgarch="arm64"
 _hostarch=$(dpkg --print-architecture)
@@ -33,8 +33,8 @@ source=("${_torrent}"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('395af42127ac1f09588dc6bd87d9ba95cf720dfac2b95d8bab936fd5e3854b43'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '673c472e26964eefc05744767b8673ccbba7bed1c8a9cd17eccbe1a89961348d'
-            'ec62d86693ba2f06d4a88f52e02786b7f0870e1e89c8c1f39545ad43939f7d52'
+            '3d1fafe5867b275888b8e3d4ba667d31c1cee7ba68afeef1031b8e684eed005a'
+            '6ebb1297d5eff5aaabe622b26c5cea5e9954db48181162845f47de50230d5f7a'
             'SKIP')
 
 #pkgver() {
