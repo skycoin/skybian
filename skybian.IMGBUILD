@@ -34,7 +34,7 @@ noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('395af42127ac1f09588dc6bd87d9ba95cf720dfac2b95d8bab936fd5e3854b43'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
             '3d1fafe5867b275888b8e3d4ba667d31c1cee7ba68afeef1031b8e684eed005a'
-            '6ebb1297d5eff5aaabe622b26c5cea5e9954db48181162845f47de50230d5f7a'
+            'bac8a10291958c159c0afcf2f6ffa2f20ac5d3e33d77e047a22f804918fa70c2'
             'SKIP')
 
 #pkgver() {
