@@ -5,7 +5,6 @@ go 1.16
 
 require (
 	fyne.io/fyne/v2 v2.1.0
-	github.com/fyne-io/fyne-cross v1.1.3 // indirect
 	github.com/google/go-github v17.0.0+incompatible
 	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/rakyll/statik v0.1.7
