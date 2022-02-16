@@ -61,6 +61,23 @@ Update checksums of source archives in the [PKGBUILD](PKGBUILD):
 updpkgsums
 ```
 
+### Skybian image updates
+
+Due to DNS issues inside a chroot of dissimilar architectures, a pi board is used to update software in the image chroot after the initial modifications
+
+the `updateskybian.sh` script is included as a command with the skybian-img zstd archive (package).
+
+This script will issue three commands into the chroot of the image
+
+```
+apt update
+apt upgrade
+skybian reset
+```
+
+Once the script has completed, the image can be repackaged with skybian.IMGUPDATE
+
+WIP
 
 ### Skybian Autoconfiguration Explained
 

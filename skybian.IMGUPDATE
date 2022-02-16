@@ -1,0 +1,35 @@
+pkgname=skybian-img
+pkgdesc="Repackage updated skybian image"
+pkgver='0.6.0'
+pkgrel=7
+arch=('any')
+_imgarch="arm64"
+_imgfinal="skybian.img"
+#export BOARDIP=ip address of board that updated the image
+url="$BOARDIP"
+makedepends=('zip')
+depends=()
+source=("${url}/${_img}")
+sha256sums=('SKIP')
+
+#this is the third step
+#after updateskybian.sh has been run on the pi
+package() {
+  install -Dm644 ${srcdir}/${_imgfinal} ${pkgdir}/
+  cd ${pkgdir}
+  _msg2 "Creating image checksum"
+  sha256sum ${_imgfinal} > ${_imgfinal}.sha
+  cat ${_imgfinal}.sha
+  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ]]; then
+    cd ..
+    _msg2 "Creating .zip archive for windows"
+    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+    mv *.zip ../
+  fi
+}
+
+_msg2() {
+(( QUIET )) && return
+local mesg=$1; shift
+printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}

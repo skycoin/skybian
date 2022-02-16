@@ -47,7 +47,7 @@ done
 package() {
 
   for i in ${_pkgarches[@]}; do
-  msg2 "_pkgarch=${i}"
+  _msg2 "_pkgarch=${i}"
   local _pkgarch=${i}
    echo ${_pkgarch}
   _msg2 'creating dirs'

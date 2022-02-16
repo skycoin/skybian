@@ -9,7 +9,7 @@ _img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
 _imgxz=${_img}.xz
 _xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 _torrent="${_xzlink}.torrent"
-_imgfinal="skybian-${pkgver}.img"
+_imgfinal="skybian.img"
 _root_partition=/dev/loop0p1
 _defaultuser=root
 #_aptrepo="http://deb.skywire.skycoin.com"
@@ -22,20 +22,24 @@ _skybiandeb="skybian-0.6.0-1-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 #_gz="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
 #_gz=${_gz//"--"/"-"}
-makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
+makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip' 'caddy')
 depends=()
 source=("${_torrent}"
 "${_torrent}.md5"
 "${_aptrepo}/archive/${_skywiredeb}"
 "${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
+"skycoin.list"
+"updateskybian.sh"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('395af42127ac1f09588dc6bd87d9ba95cf720dfac2b95d8bab936fd5e3854b43'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
             '3d1fafe5867b275888b8e3d4ba667d31c1cee7ba68afeef1031b8e684eed005a'
             'bac8a10291958c159c0afcf2f6ffa2f20ac5d3e33d77e047a22f804918fa70c2'
-            'SKIP')
+            'SKIP'
+            '1e7657bdac4162ff43407b49bf5d7e0d0b4ba3606822e692f64288906dc6d069'
+            '5a61f9020de0928525cd307537800758df80ee8ccf22673bd319cf385dea312c')
 
 #pkgver() {
 #echo $(date +%Y%m%d)
@@ -78,18 +82,14 @@ build() {
   sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
 #sudo is used for all commands to give correct environmental vars in chroot
-  _msg2 "CHROOT: configuring package repository in /etc/apt/sources.list"
-  cp ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/sources.list
-  sudo rm ${srcdir}/mnt/etc/apt/sources.list
-  echo "${_aptrepo_config}" >> ${srcdir}/sources.list
-  echo "${_aptrepo_config1}" >> ${srcdir}/sources.list
-  sudo install -Dm644 ${srcdir}/sources.list ${srcdir}/mnt/etc/apt/sources.list
+  _msg2 "CHROOT: add package repository configuration: /etc/apt/sources.list.d/skycoin.list"
+  sudo install -Dm644 ${srcdir}/skycoin.list ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list
 	_msg2 "CHROOT: add the repository signing key to apt keyring"
   sudo arch-chroot ${srcdir}/mnt sudo apt-key add /root/KEY.asc
 	_msg2 "CHROOT: installing skywire with dpkg"
   sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skywiredeb}
   sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skywiredeb}
-  _msg2 "CHROOT: installing skybian with dpkg" #the skybian package overwrites another package's file
+  _msg2 "CHROOT: installing skybian with dpkg" #the skybian package overwrites another package's file and depends on skywire
   sudo arch-chroot ${srcdir}/mnt sudo dpkg --force-overwrite -i /root/${_skybiandeb}
   sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skybiandeb}
   sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
@@ -114,19 +114,33 @@ build() {
   #debconf
   echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
   sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
-##Updating in the chroot can be done from an archlinux host of the same architecture
+##Updating in the chroot can be done natively from an archlinux host of the same architecture
   _msg2 "Comparing host and chroot architecture"
-  if [[ "${_hostarch}" == "${_imgarch}" ]] ; then
-    _msg2 "CHROOT: updating image with apt..."
+  if [[ "${_hostarch}" != "${_imgarch}" ]] ; then
+    _msg2 "CHROOT: not updating image due to dns issues with chroots to dissimilar architectures"
+    #_msg2 "CHROOT: updating image with apt via reverse-proxy..."
+    #sudo mv ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/mnt/etc/apt/sources.list.bak
+    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak
+    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak
+    #sudo install -Dm644 ${srcdir}/proxy.sources.list ${srcdir}/mnt/etc/apt/sources.list
+    #caddy start -config ${srcdir}/Caddyfile
+    #sudo arch-chroot ${srcdir}/mnt sudo apt update
+    #sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
+    #caddy stop
+    #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.bak ${srcdir}/mnt/etc/apt/sources.list
+    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list
+    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list
+  else
+    _msg2 "CHROOT: updating image"
     sudo arch-chroot ${srcdir}/mnt sudo apt update
     sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
-    #sudo arch-chroot ${srcdir}/mnt sudo apt install skywire
-  else
-    _msg2 "Not updating chroot because of DNS issues with dissimilar architectures"
+    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
   fi
   ##set password for _defaultuser
   _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
   echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+  sleep 1
 ######################## end chroot modifications ##############################
   _msg2 "Unmounting image"
   sudo umount ${srcdir}/mnt
@@ -154,6 +168,8 @@ package() {
     zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
     mv *.zip ../
   fi
+  install -Dm644 ${srcdir}/updateskybian.sh ${pkgdir}/usr/bin/updateskybian
+
 }
 
 _msg2() {
