@@ -9,7 +9,7 @@ GOBIN=$(pwd)/bin
 export GOBIN
 
 # Run fyne-cross
-go get -d github.com/fyne-io/fyne-cross || exit 1
+go get github.com/fyne-io/fyne-cross || exit 1
 
 ./bin/fyne-cross \
   linux \
