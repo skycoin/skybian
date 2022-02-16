@@ -14,11 +14,13 @@ import (
 
 // Factory creates appdisc.Updater instances based on the app name.
 type Factory struct {
-	Log         logrus.FieldLogger
-	PK          cipher.PubKey
-	SK          cipher.SecKey
-	ServiceDisc string // Address of service-discovery
-	Client      http.Client
+	Log            logrus.FieldLogger
+	MLog           *logging.MasterLogger
+	PK             cipher.PubKey
+	SK             cipher.SecKey
+	ServiceDisc    string // Address of service-discovery
+	Client         *http.Client
+	ClientPublicIP string
 }
 
 func (f *Factory) setDefaults() {
@@ -46,7 +48,7 @@ func (f *Factory) VisorUpdater(port uint16) Updater {
 	}
 
 	return &serviceUpdater{
-		client: servicedisc.NewClient(f.Log, conf, f.Client),
+		client: servicedisc.NewClient(f.Log, f.MLog, conf, f.Client, f.ClientPublicIP),
 	}
 }
 
@@ -77,11 +79,11 @@ func (f *Factory) AppUpdater(conf appcommon.ProcConfig) (Updater, bool) {
 	switch conf.AppName {
 	case skyenv.VPNServerName:
 		return &serviceUpdater{
-			client: servicedisc.NewClient(log, getServiceDiscConf(conf, servicedisc.ServiceTypeVPN), f.Client),
+			client: servicedisc.NewClient(log, f.MLog, getServiceDiscConf(conf, servicedisc.ServiceTypeVPN), f.Client, f.ClientPublicIP),
 		}, true
 	case skyenv.SkysocksName:
 		return &serviceUpdater{
-			client: servicedisc.NewClient(log, getServiceDiscConf(conf, servicedisc.ServiceTypeSkysocks), f.Client),
+			client: servicedisc.NewClient(log, f.MLog, getServiceDiscConf(conf, servicedisc.ServiceTypeSkysocks), f.Client, f.ClientPublicIP),
 		}, true
 	default:
 		return &emptyUpdater{}, false
