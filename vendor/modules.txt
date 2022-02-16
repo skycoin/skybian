@@ -40,16 +40,34 @@ fyne.io/fyne/v2/storage/repository
 fyne.io/fyne/v2/test
 fyne.io/fyne/v2/theme
 fyne.io/fyne/v2/widget
+# github.com/ActiveState/termtest/conpty v0.5.0
+github.com/ActiveState/termtest/conpty
 # github.com/AudriusButkevicius/pfilter v0.0.0-20210515103320-4b4b86609d51
 github.com/AudriusButkevicius/pfilter
+# github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
+github.com/Azure/go-ansiterm
+github.com/Azure/go-ansiterm/winterm
+# github.com/Microsoft/go-winio v0.4.16
+github.com/Microsoft/go-winio
+github.com/Microsoft/go-winio/pkg/guid
 # github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d
 github.com/StackExchange/wmi
-# github.com/VictoriaMetrics/metrics v1.17.2
+# github.com/VictoriaMetrics/metrics v1.18.0
 github.com/VictoriaMetrics/metrics
 # github.com/ccding/go-stun/stun v0.0.0-20200514191101-4dc67bcdb029
 github.com/ccding/go-stun/stun
+# github.com/coreos/bbolt v1.3.2
+## explicit
+# github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
+## explicit
+# github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f
+## explicit
+# github.com/creack/pty v1.1.15
+github.com/creack/pty
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+## explicit
 # github.com/dsnet/compress v0.0.1
 github.com/dsnet/compress
 github.com/dsnet/compress/bzip2
@@ -93,17 +111,27 @@ github.com/golang/snappy
 github.com/google/go-github/github
 # github.com/google/go-querystring v1.0.0
 github.com/google/go-querystring/query
-# github.com/google/uuid v1.1.1
+# github.com/google/uuid v1.1.2
 github.com/google/uuid
-# github.com/json-iterator/go v1.1.11
+# github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
+## explicit
+# github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
+## explicit
+# github.com/james-barrow/golang-ipc v0.0.0-20210227130457-95e7cc81f5e2
+github.com/james-barrow/golang-ipc
+# github.com/jonboulle/clockwork v0.1.0
+## explicit
+# github.com/json-iterator/go v1.1.12
 github.com/json-iterator/go
+# github.com/klauspost/compress v1.11.0
+github.com/klauspost/compress/flate
 # github.com/klauspost/cpuid v1.2.4
 github.com/klauspost/cpuid
 # github.com/klauspost/reedsolomon v1.9.9
 github.com/klauspost/reedsolomon
-# github.com/mattn/go-colorable v0.1.8
+# github.com/mattn/go-colorable v0.1.11
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.12
+# github.com/mattn/go-isatty v0.0.14
 github.com/mattn/go-isatty
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 github.com/mgutz/ansi
@@ -126,7 +154,7 @@ github.com/mmcloughlin/avo/src
 github.com/mmcloughlin/avo/x86
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent
-# github.com/modern-go/reflect2 v1.0.1
+# github.com/modern-go/reflect2 v1.0.2
 github.com/modern-go/reflect2
 # github.com/nwaples/rardecode v1.0.0
 github.com/nwaples/rardecode
@@ -137,6 +165,8 @@ github.com/pierrec/lz4/internal/xxh32
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
+# github.com/prometheus/client_golang v0.9.3
+## explicit
 # github.com/rakyll/statik v0.1.7
 ## explicit
 github.com/rakyll/statik/fs
@@ -152,12 +182,13 @@ github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 ## explicit
 github.com/skratchdot/open-golang/open
-# github.com/skycoin/dmsg v0.0.0-20211125122021-388f2fc645c9
+# github.com/skycoin/dmsg v0.0.0-20220125112430-1dfce6ea8ef3
 ## explicit
 github.com/skycoin/dmsg
 github.com/skycoin/dmsg/buildinfo
 github.com/skycoin/dmsg/cipher
 github.com/skycoin/dmsg/disc
+github.com/skycoin/dmsg/dmsgpty
 github.com/skycoin/dmsg/httputil
 github.com/skycoin/dmsg/ioutil
 github.com/skycoin/dmsg/metricsutil
@@ -174,7 +205,7 @@ github.com/skycoin/skycoin/src/cipher/ripemd160
 github.com/skycoin/skycoin/src/cipher/secp256k1-go
 github.com/skycoin/skycoin/src/cipher/secp256k1-go/secp256k1-go2
 github.com/skycoin/skycoin/src/util/logging
-# github.com/skycoin/skywire v0.5.2-0.20211125164518-be38adb86ad3
+# github.com/skycoin/skywire v0.6.0-rc2.0.20220211172508-37eabd36ef15
 ## explicit
 github.com/skycoin/skywire/internal/httpauth
 github.com/skycoin/skywire/internal/netutil
@@ -209,13 +240,15 @@ github.com/skycoin/skywire/pkg/visor/hypervisorconfig
 github.com/skycoin/skywire/pkg/visor/visorconfig
 # github.com/skycoin/yamux v0.0.0-20200803175205-571ceb89da9f
 github.com/skycoin/yamux
+# github.com/soheilhy/cmux v0.1.4
+## explicit
 # github.com/srwiley/oksvg v0.0.0-20200311192757-870daf9aa564
 github.com/srwiley/oksvg
 # github.com/srwiley/rasterx v0.0.0-20200120212402-85cb7272f5e9
 github.com/srwiley/rasterx
 # github.com/stretchr/objx v0.1.1
 github.com/stretchr/objx
-# github.com/stretchr/testify v1.6.1
+# github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/mock
@@ -224,23 +257,29 @@ github.com/stretchr/testify/require
 github.com/templexxx/cpufeat
 # github.com/templexxx/xor v0.0.0-20191217153810-f85b25db303b
 github.com/templexxx/xor
-# github.com/tjfoc/gmsm v1.3.2
+# github.com/tjfoc/gmsm v1.4.0
 github.com/tjfoc/gmsm/sm4
 # github.com/tklauser/go-sysconf v0.3.4
 github.com/tklauser/go-sysconf
 # github.com/tklauser/numcpus v0.2.1
 github.com/tklauser/numcpus
+# github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5
+## explicit
+# github.com/ugorji/go v1.1.4
+## explicit
 # github.com/ulikunitz/xz v0.5.6
 github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/hash
 github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
-# github.com/valyala/fastrand v1.0.0
+# github.com/valyala/fastrand v1.1.0
 github.com/valyala/fastrand
-# github.com/valyala/histogram v1.1.2
+# github.com/valyala/histogram v1.2.0
 github.com/valyala/histogram
 # github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 github.com/xi2/xz
+# github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2
+## explicit
 # github.com/xtaci/kcp-go v5.4.20+incompatible
 github.com/xtaci/kcp-go
 # github.com/yuin/goldmark v1.3.8
@@ -251,9 +290,9 @@ github.com/yuin/goldmark/renderer
 github.com/yuin/goldmark/renderer/html
 github.com/yuin/goldmark/text
 github.com/yuin/goldmark/util
-# go.etcd.io/bbolt v1.3.5
+# go.etcd.io/bbolt v1.3.6
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+# golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 golang.org/x/crypto/blake2b
 golang.org/x/crypto/blake2s
 golang.org/x/crypto/blowfish
@@ -262,9 +301,9 @@ golang.org/x/crypto/chacha20
 golang.org/x/crypto/chacha20poly1305
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/curve25519/internal/field
+golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/pbkdf2
-golang.org/x/crypto/poly1305
 golang.org/x/crypto/salsa20
 golang.org/x/crypto/salsa20/salsa
 golang.org/x/crypto/ssh/terminal
@@ -280,7 +319,7 @@ golang.org/x/image/math/fixed
 golang.org/x/image/vector
 # golang.org/x/mod v0.4.2
 golang.org/x/mod/semver
-# golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4
+# golang.org/x/net v0.0.0-20211020060615-d418f374d309
 ## explicit
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -291,7 +330,7 @@ golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
 golang.org/x/net/ipv4
 golang.org/x/net/ipv6
-# golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6
+# golang.org/x/sys v0.0.0-20211020174200-9d6173849985
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
@@ -299,7 +338,7 @@ golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.0.0-20210503060354-a79de5458b56
+# golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 golang.org/x/term
 # golang.org/x/text v0.3.6
 golang.org/x/text/encoding
@@ -334,5 +373,15 @@ golang.org/x/tools/internal/typesinternal
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
-# gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
+# golang.zx2c4.com/wireguard v0.0.20200320
+## explicit
+# gopkg.in/resty.v1 v1.12.0
+## explicit
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 gopkg.in/yaml.v3
+# nhooyr.io/websocket v1.8.2
+nhooyr.io/websocket
+nhooyr.io/websocket/internal/bpool
+nhooyr.io/websocket/internal/errd
+nhooyr.io/websocket/internal/wsjs
+nhooyr.io/websocket/internal/xsync
