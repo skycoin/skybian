@@ -1,8 +1,6 @@
 package visorconfig
 
 import (
-	"runtime"
-
 	"github.com/skycoin/dmsg/cipher"
 	"github.com/skycoin/dmsg/disc"
 	"github.com/skycoin/skycoin/src/util/logging"
@@ -80,7 +78,7 @@ func defaultConfigFromCommon(cc *Common, hypervisor bool) (*V1, error) {
 	conf.Dmsgpty = &V1Dmsgpty{
 		DmsgPort: skyenv.DmsgPtyPort,
 		CLINet:   skyenv.DefaultDmsgPtyCLINet,
-		CLIAddr:  skyenv.DefaultDmsgPtyCLIAddr,
+		CLIAddr:  skyenv.DefaultDmsgPtyCLIAddr(),
 	}
 
 	conf.STCP = &network.STCPConfig{
@@ -130,7 +128,7 @@ func MakePackageConfig(log *logging.MasterLogger, confPath string, sk *cipher.Se
 	conf.Dmsgpty = &V1Dmsgpty{
 		DmsgPort: skyenv.DmsgPtyPort,
 		CLINet:   skyenv.DefaultDmsgPtyCLINet,
-		CLIAddr:  skyenv.DefaultDmsgPtyCLIAddr,
+		CLIAddr:  skyenv.DefaultDmsgPtyCLIAddr(),
 	}
 	conf.LocalPath = skyenv.PackageAppLocalPath()
 	conf.Launcher.BinPath = skyenv.PackageAppBinPath()
@@ -142,31 +140,6 @@ func MakePackageConfig(log *logging.MasterLogger, confPath string, sk *cipher.Se
 		conf.Hypervisor.TLSKeyFile = skyenv.PackageTLSKey()
 		conf.Hypervisor.TLSCertFile = skyenv.PackageTLSCert()
 		conf.Hypervisor.DBPath = skyenv.PackageDBPath()
-	}
-	return conf, nil
-}
-
-// MakeSkybianConfig acts like MakeDefaultConfig but uses default paths, etc. as found in skybian / produced by skyimager
-func MakeSkybianConfig(log *logging.MasterLogger, confPath string, sk *cipher.SecKey, hypervisor bool) (*V1, error) {
-	conf, err := MakeDefaultConfig(log, confPath, sk, hypervisor)
-	if err != nil {
-		return nil, err
-	}
-
-	conf.Dmsgpty = &V1Dmsgpty{
-		DmsgPort: skyenv.DmsgPtyPort,
-		CLINet:   skyenv.DefaultDmsgPtyCLINet,
-		CLIAddr:  skyenv.SkybianDmsgPtyCLIAddr,
-	}
-	conf.LocalPath = skyenv.SkybianLocalPath
-	conf.Launcher.BinPath = skyenv.SkybianAppBinPath
-
-	if conf.Hypervisor != nil {
-		conf.Hypervisor.EnableAuth = skyenv.DefaultEnableAuth
-		conf.Hypervisor.EnableTLS = skyenv.SkybianEnableTLS
-		conf.Hypervisor.TLSKeyFile = skyenv.SkybianTLSKey
-		conf.Hypervisor.TLSCertFile = skyenv.SkybianTLSCert
-		conf.Hypervisor.DBPath = skyenv.SkybianDBPath
 	}
 	return conf, nil
 }
@@ -205,22 +178,6 @@ func makeDefaultLauncherAppsConfig() []launcher.AppConfig {
 			AutoStart: false,
 			Port:      routing.Port(skyenv.VPNClientPort),
 		},
-	}
-
-	switch runtime.GOOS {
-	case "linux":
-		return launcherAddAllApps(defaultConfig)
-	case "darwin":
-		return defaultConfig
-	case "windows":
-		return defaultConfig
-	default:
-		return defaultConfig
-	}
-}
-
-func launcherAddAllApps(launcherCfg []launcher.AppConfig) []launcher.AppConfig {
-	launcherCfg = append(launcherCfg, []launcher.AppConfig{
 		{
 			Name:      skyenv.SkychatName,
 			AutoStart: true,
@@ -242,8 +199,8 @@ func launcherAddAllApps(launcherCfg []launcher.AppConfig) []launcher.AppConfig {
 			AutoStart: false,
 			Port:      routing.Port(skyenv.VPNServerPort),
 		},
-	}...)
-	return launcherCfg
+	}
+	return defaultConfig
 }
 
 // DmsgHTTPServers struct use to unmarshal dmsghttp file

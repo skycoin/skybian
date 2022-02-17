@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"sync"
 
 	"github.com/skycoin/dmsg"
@@ -56,11 +57,16 @@ type ClientFactory struct {
 	ARClient   addrresolver.APIClient
 	EB         *appevent.Broadcaster
 	DmsgC      *dmsg.Client
+	MLogger    *logging.MasterLogger
 }
 
 // MakeClient creates a new client of specified type
 func (f *ClientFactory) MakeClient(netType Type) (Client, error) {
 	log := logging.MustGetLogger(string(netType))
+	if f.MLogger != nil {
+		log = f.MLogger.PackageLogger(string(netType))
+	}
+
 	p := porter.New(porter.MinEphemeral)
 
 	generic := &genericClient{}
@@ -68,6 +74,7 @@ func (f *ClientFactory) MakeClient(netType Type) (Client, error) {
 	generic.done = make(chan struct{})
 	generic.listeners = make(map[uint16]*listener)
 	generic.log = log
+	generic.mLog = f.MLogger
 	generic.porter = p
 	generic.eb = f.EB
 	generic.lPK = f.PK
@@ -103,6 +110,7 @@ type genericClient struct {
 	netType    Type
 
 	log    *logging.Logger
+	mLog   *logging.MasterLogger
 	porter *porter.Porter
 	eb     *appevent.Broadcaster
 
@@ -143,6 +151,12 @@ func (c *genericClient) acceptTransports(lis net.Listener) {
 			if errors.Is(err, io.EOF) {
 				continue // likely it's a dummy connection from service discovery
 			}
+
+			if c.isClosed() && (errors.Is(err, io.ErrClosedPipe) || strings.Contains(err.Error(), "use of closed network connection")) {
+				c.log.Info("Cleanly stopped serving.")
+				return
+			}
+
 			c.log.Warnf("failed to accept incoming connection: %v", err)
 			if !handshake.IsHandshakeError(err) {
 				c.log.Warnf("stopped serving")
@@ -312,6 +326,7 @@ func (c *resolvedClient) dialVisor(ctx context.Context, rPK cipher.PubKey, dial 
 	if err != nil {
 		return nil, fmt.Errorf("resolve PK: %w", err)
 	}
+	c.log.Infof("Resolved PK %v to visor data %v", rPK, visorData)
 
 	if visorData.IsLocal {
 		for _, host := range visorData.Addresses {
