@@ -32,7 +32,7 @@ for:
 
     after_build: 
       - mkdir artifacts
-      - cp output/opi3/final*.tar.gz artifacts/
+      - cp output/opi3/final/*.tar.gz artifacts/
 
     artifacts:
       - path: artifacts/*
