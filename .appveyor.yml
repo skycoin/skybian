@@ -27,8 +27,16 @@ for:
    
     build_script:
       - make test # Can be 'make check' once that is working.
-      - make build-skybian-img 
+      - make build-skybian-img BOARD=opi3 ARCH=arm64
       - make build-skyimager-gui
+
+    after_build: 
+      - mkdir artifacts
+      - cp output/opi3/final*.tar.gz artifacts/
+
+    artifacts:
+      - path: artifacts/*
+        name: deploy
 
   - # Release
     skip_non_tags: true
