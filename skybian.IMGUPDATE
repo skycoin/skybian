@@ -1,15 +1,15 @@
 pkgname=skybian-img
 pkgdesc="Repackage updated skybian image"
 pkgver='0.6.0'
-pkgrel=7
+pkgrel=9
 arch=('any')
 _imgarch="arm64"
 _imgfinal="skybian.img"
 #export BOARDIP=ip address of board that updated the image
-url="$BOARDIP"
+url=${BOARDIP}
 makedepends=('zip')
 depends=()
-source=("${url}/${_img}")
+source=("${url}/${_imgfinal}")
 sha256sums=('SKIP')
 
 #this is the third step

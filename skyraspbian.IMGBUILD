@@ -1,7 +1,7 @@
 pkgname=skyraspbian-img
 pkgdesc="Skyraspbian image build"
 pkgver='0.6.0'
-pkgrel=7
+pkgrel=9
 arch=('any')
 _imgarch="armhf"
 _hostarch=$(dpkg --print-architecture)
