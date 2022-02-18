@@ -26,9 +26,9 @@ for:
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.42.0
    
     build_script:
-      - make test # Can be 'make check' once that is working.
+      # - make test # Can be 'make check' once that is working.
       - make build-skybian-img BOARD=opi3 ARCH=arm64
-      - make build-skyimager-gui
+      # - make build-skyimager-gui
 
     after_build: 
       - mkdir artifacts
