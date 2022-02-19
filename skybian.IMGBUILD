@@ -36,7 +36,7 @@ noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('395af42127ac1f09588dc6bd87d9ba95cf720dfac2b95d8bab936fd5e3854b43'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
             '540968f20b2c64deeef7fb4d93ea67da7d8bd4a7259452b6d6d25a1027ae3a5b'
-            'bac8a10291958c159c0afcf2f6ffa2f20ac5d3e33d77e047a22f804918fa70c2'
+            'a32183596c0907577ee09bd1348b34a2d92411d61dbd773a60549607aaf1f695'
             'SKIP'
             '1e7657bdac4162ff43407b49bf5d7e0d0b4ba3606822e692f64288906dc6d069'
             '5a61f9020de0928525cd307537800758df80ee8ccf22673bd319cf385dea312c')
@@ -65,7 +65,7 @@ build() {
 	_msg2 "copying image.." #so we don't have to extract it every time
   cp -b ../${_img} ${_imgfinal}
   _msg2 "adding extra space" #may not be necessary
-  truncate -s +512M ${_imgfinal}
+  truncate -s +1536M ${_imgfinal}
   echo ", +" | sfdisk -N1 ${_imgfinal}
 	_msg2 "mounting image to loop device.."
   sudo gnome-disk-image-mounter -w ${_imgfinal}
