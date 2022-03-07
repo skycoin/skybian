@@ -4,19 +4,9 @@ Builds requires archlinux host.
 
 install dependencies from AUR:
 ```
-yay -S 'arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip' 'caddy'
+yay -S 'arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip'
 ```
 Note: be sure to install qemu-arm-static-bin if you don't have qemu-arm-static installed already
-
-Caddy (webserver) is used to reverse-proxy apt repo mirrors to local ports and thus avoid DNS errors which prevent the image from being updated.
-
-start caddy in a terminal with
-
-```
-sudo caddy run
-```
-
-(or add the contents of the (Caddyfile)[/Caddyfile] to your existing configuration) before running `makepkg`
 
 Build the image and compress into archive:
 ```
