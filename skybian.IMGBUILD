@@ -1,7 +1,8 @@
 pkgname=skybian-img
 pkgdesc="Skybian image build"
+#pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
 pkgver='0.6.0'
-pkgrel=9
+pkgrel=11
 arch=('any')
 _imgarch="arm64"
 _hostarch=$(dpkg --print-architecture)
@@ -19,7 +20,7 @@ _aptrepo1_config="deb ${_aptrepo1} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
 _skybiandeb="skybian-0.6.0-1-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
-makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip' 'caddy')
+makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip') # 'caddy')
 #assuming the created .zst is installed as a package on arm64 host
 #which will update the image  using `updateskybian`
 #these are the dependencies:
@@ -30,16 +31,15 @@ source=("${_torrent}"
 "${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 "skycoin.list"
-"updateskybian.sh"
 )
+#"proxy.sources.list" #used with caddy
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('395af42127ac1f09588dc6bd87d9ba95cf720dfac2b95d8bab936fd5e3854b43'
             'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '540968f20b2c64deeef7fb4d93ea67da7d8bd4a7259452b6d6d25a1027ae3a5b'
+            'e85abe16e5a9815ac8c37990875acdd9de1f79668d3370e238b0daeb2710e96e'
             'a32183596c0907577ee09bd1348b34a2d92411d61dbd773a60549607aaf1f695'
             'SKIP'
-            '1e7657bdac4162ff43407b49bf5d7e0d0b4ba3606822e692f64288906dc6d069'
-            '5a61f9020de0928525cd307537800758df80ee8ccf22673bd319cf385dea312c')
+            '1e7657bdac4162ff43407b49bf5d7e0d0b4ba3606822e692f64288906dc6d069')
 
 #pkgver() {
 #echo $(date +%Y%m%d)
@@ -65,7 +65,8 @@ build() {
 	_msg2 "copying image.." #so we don't have to extract it every time
   cp -b ../${_img} ${_imgfinal}
   _msg2 "adding extra space" #may not be necessary
-  truncate -s +1536M ${_imgfinal}
+  #truncate -s +1536M ${_imgfinal}
+  truncate -s +512M ${_imgfinal}
   echo ", +" | sfdisk -N1 ${_imgfinal}
 	_msg2 "mounting image to loop device.."
   sudo gnome-disk-image-mounter -w ${_imgfinal}
@@ -100,48 +101,48 @@ build() {
   sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
 #fix console / tty
   _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
-  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
+  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
 #set env to detect that this is a skybian image
   _msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
-  echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee /root/.bashrc
-  _msg2 "CHROOT: configuring unattended-upgrades"
-  #add the skybian apt repo
-  head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
-  echo '        "origin=skycoin,codename=sid,label=skycoin";' >> ${srcdir}/50unattended-upgrades
-  tail -n 115 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades >> ${srcdir}/50unattended-upgrades
-  sudo rm ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
-  sudo install -Dm644 ${srcdir}/50unattended-upgrades ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
-  #debconf
-  echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
-  sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+  echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
+  #_msg2 "CHROOT: configuring unattended-upgrades"
+  ##add the skybian apt repo
+  #head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
+  #echo '        "origin=skycoin,codename=sid,label=skycoin";' >> ${srcdir}/50unattended-upgrades
+  #tail -n 115 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades >> ${srcdir}/50unattended-upgrades
+  #sudo rm ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
+  #sudo install -Dm644 ${srcdir}/50unattended-upgrades ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
+  ##debconf
+  #echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
+  #sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
 ##Updating in the chroot can be done natively from an archlinux host of the same architecture
-  _msg2 "Comparing host and chroot architecture"
-  if [[ "${_hostarch}" != "${_imgarch}" ]] ; then
-    _msg2 "CHROOT: not updating image due to dns issues with chroots to dissimilar architectures"
-    #_msg2 "CHROOT: updating image with apt via reverse-proxy..."
-    #sudo mv ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/mnt/etc/apt/sources.list.bak
-    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak
-    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak
-    #sudo install -Dm644 ${srcdir}/proxy.sources.list ${srcdir}/mnt/etc/apt/sources.list
-    #caddy start -config ${srcdir}/Caddyfile
-    #sudo arch-chroot ${srcdir}/mnt sudo apt update
-    #sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
-    #caddy stop
-    #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
-    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.bak ${srcdir}/mnt/etc/apt/sources.list
-    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list
-    #sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list
-  else
-    _msg2 "CHROOT: updating image"
-    sudo arch-chroot ${srcdir}/mnt sudo apt update
-    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
-    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
-  fi
+#  _msg2 "Comparing host and chroot architecture"
+#  if [[ "${_hostarch}" != "${_imgarch}" ]] ; then
+#    _msg2 "CHROOT: updating image with apt via reverse-proxy..."
+#    sudo mv ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/mnt/etc/apt/sources.list.bak
+#    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak
+#    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak
+#    sudo install -Dm644 ${srcdir}/proxy.sources.list ${srcdir}/mnt/etc/apt/sources.list
+#    #caddy start -config ${srcdir}/Caddyfile
+#    sudo arch-chroot ${srcdir}/mnt sudo apt update
+#    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
+#    #caddy stop
+#    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+#    sudo mv ${srcdir}/mnt/etc/apt/sources.list.bak ${srcdir}/mnt/etc/apt/sources.list
+#    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list
+#    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list
+#  else
+#    _msg2 "CHROOT: updating image"
+#    sudo arch-chroot ${srcdir}/mnt sudo apt update
+#    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
+#    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+#  fi
   ##set password for _defaultuser
   _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
   echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
   sleep 1
 ######################## end chroot modifications ##############################
+  [[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
   _msg2 "Unmounting image"
   sudo umount ${srcdir}/mnt
   _msg2 "detatching /dev/loop0"
@@ -153,7 +154,7 @@ build() {
 }
 
 package() {
-  #Just let makepkg compress the archive as it does automatically for a package
+  #let makepkg compress the archive as it does automatically for any package
   #afterwards remove the metadata from the archive and change the extension
   #avoid the compression step with makepkg --noarchive
   #package only, assuming ${_imgfinal} exists with makepkg -R
@@ -168,8 +169,6 @@ package() {
     zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
     mv *.zip ../
   fi
-  install -Dm644 ${srcdir}/updateskybian.sh ${pkgdir}/usr/bin/updateskybian
-
 }
 
 _msg2() {

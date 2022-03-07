@@ -1,15 +1,24 @@
 Builds requires archlinux host.
 
-### Skybian image:
+### Build Skybian image:
 
 install dependencies from AUR:
 ```
-yay -S 'arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip'
+yay -S 'arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip' 'caddy'
 ```
-
 Note: be sure to install qemu-arm-static-bin if you don't have qemu-arm-static installed already
 
-Build and create an archive:
+Caddy (webserver) is used to reverse-proxy apt repo mirrors to local ports and thus avoid DNS errors which prevent the image from being updated.
+
+start caddy in a terminal with
+
+```
+sudo caddy run
+```
+
+(or add the contents of the (Caddyfile)[/Caddyfile] to your existing configuration) before running `makepkg`
+
+Build the image and compress into archive:
 ```
  makepkg --skippgpcheck -p skybian.IMGBUILD
 ```
@@ -23,7 +32,7 @@ COMPRESSZST=(zstd -c -T0 -18 -)
 PKGEXT=’.pkg.tar.zst’
 ```
 
-Build only:
+Build only (still creates .zip):
 ```
  makepkg --noarchive --skippgpcheck -p skybian.IMGBUILD
 ```
@@ -61,23 +70,6 @@ Update checksums of source archives in the [PKGBUILD](PKGBUILD):
 updpkgsums
 ```
 
-### Skybian image updates
-
-Due to DNS issues inside a chroot of dissimilar architectures, a pi board is used to update software in the image chroot after the initial modifications
-
-the `updateskybian.sh` script is included as a command with the skybian-img zstd archive (package).
-
-This script will issue three commands into the chroot of the image
-
-```
-apt update
-apt upgrade
-skybian reset
-```
-
-Once the script has completed, the image can be repackaged with skybian.IMGUPDATE
-
-WIP
 
 ### Skybian Autoconfiguration Explained
 
