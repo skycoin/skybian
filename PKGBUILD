@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image - debian package"
 pkgver='0.6.0'
 _pkgver=${pkgver}
-pkgrel=1
+pkgrel=2
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('armhf' 'arm64')
@@ -59,12 +59,16 @@ package() {
   mkdir -p ${_pkgdir}/etc/update-motd.d/
   mkdir -p ${_pkgdir}/etc/default/
   mkdir -p ${_pkgdir}/etc/profile.d/
+  mkdir -p ${_pkgdir}/etc/sources.list.d/
   mkdir -p ${_pkgdir}/etc/systemd/system/
   mkdir -p ${_pkgdir}/usr/bin/
   install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
+  _msg2 "installing apt repository configuration: /etc/apt/sources.list.d/skycoin.list"
+  install -Dm644 ${srcdir}/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
   #install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
   install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
   install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
+  install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
   install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
