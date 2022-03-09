@@ -6,7 +6,9 @@
 #and that this script is being executed in chroot
 #as called by the postinstall script of the skybian .deb package
 #################################################################
-
+if [[ -z $CHROOTCONFIG ]] ; then
+  exit 0
+fi
 #enable config gen on boot - calls `skywire-autoconfig`
 if [[ -f /etc/systemd/system/skywire-autoconfig.service ]] ; then
    sudo systemctl enable skywire-autoconfig && echo "enabling skywire-autoconfig"
