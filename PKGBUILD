@@ -1,9 +1,9 @@
 pkgname=skybian
 _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image - debian package"
-pkgver='0.6.0'
+pkgver='1.0.0'
 _pkgver=${pkgver}
-pkgrel=2
+pkgrel=1
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('armhf' 'arm64')
@@ -11,7 +11,8 @@ _pkgpath="github.com/skycoin/${_pkgname}"
 url="https://${_pkgpath}"
 makedepends=('dpkg')
 depends=()
-_debdeps="skywire-bin"
+_debdeps=""
+#_debdeps="skywire"
 source=(
 #original to skybian
 "skybian-static.tar.gz"
@@ -20,8 +21,8 @@ source=(
 )
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
-sha256sums=('8e483b01b0a2fbeccbadcabbb3970a396ca321e9542ff5711e3372bf344634ba'
-            '2bb0df20aa2c946a3c297a95ef941ae43b25ad9b90e11f83bd76d9136525c123')
+sha256sums=('3408e643404a6df8ea1122d2884a39f034353877a109d45ec83bd24510368ded'
+            '63648dbecd4d7b5c81fec74dd90eb1397a6a530e57a1b4c4020ca92c363d9bdd')
 
 
 
@@ -64,14 +65,16 @@ package() {
   mkdir -p ${_pkgdir}/usr/bin/
   install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
   _msg2 "installing apt repository configuration: /etc/apt/sources.list.d/skycoin.list"
-  install -Dm644 ${srcdir}/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
+  install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
   #install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
   install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
   install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
+  install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
   install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
   install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
+  install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
   #########################################################################
   _msg2 'installing control file and postinst script'
   install -Dm755 ${srcdir}/${_pkgarch}.control ${_pkgdir}/DEBIAN/control

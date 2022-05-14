@@ -24,14 +24,23 @@ else
   echo "error skywire not installed or service not found"
 fi
 
-#the former skybian-firstrun script ;
-#either sets ip for hypervisor and reboots; then configures hypervisor
+#skymanager substituites for the former skybian-firstrun script ;
+#skymanager either sets ip for hypervisor and reboots; then configures hypervisor
 #or starts the skywire-visor-firstboot
 #to query hypervisor public key from rpc from the ip set on hypervisor
+#skywire-install installs skywire if skywire is not installed
 if [[ -f /etc/systemd/system/skymanager.service ]] ; then
-  sudo systemctl enable skymanager
+	sudo systemctl enable skymanager
 else
   echo "error skymanager service not found"
+fi
+
+if ! command -v skywire &> /dev/null && ! command -v skywire-cli &> /dev/null ; then
+	if [[ -f /etc/systemd/system/install-skywire.service ]] ; then
+		sudo systemctl enable install-skywire
+	else
+		echo "error install-skywire service not found"
+	fi
 fi
 
 #enable the wait online service

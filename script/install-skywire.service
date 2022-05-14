@@ -1,0 +1,14 @@
+[Unit]
+Description=install-skywire service
+After=systemd-networkd.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service network-online.target systend-networkd-wait-online.service NetworkManager-wait-online.service
+Before=skymanager.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/install-skywire
+
+[Install]
+WantedBy=multi-user.target

@@ -1,14 +1,14 @@
 pkgname=skybian-img
 pkgdesc="Skybian image build"
 #pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
-pkgver='0.6.0'
-pkgrel=12
+pkgver='1.0.0'
+pkgrel=1
 arch=('any')
 _imgarch="arm64"
 _hostarch=$(dpkg --print-architecture)
-_img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
+_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
 _imgxz=${_img}.xz
-_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img.xz"
+_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img.xz"
 _torrent="${_xzlink}.torrent"
 _imgfinal="skybian.img"
 _root_partition=/dev/loop0p1
@@ -18,7 +18,7 @@ _aptrepo_config="deb ${_aptrepo} sid main"
 _aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
 _aptrepo1_config="deb ${_aptrepo1} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-0.6.0-2-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-1-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip') # 'caddy')
 source=("${_torrent}"
@@ -29,10 +29,10 @@ source=("${_torrent}"
 )
 #"proxy.sources.list" #used with caddy
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('395af42127ac1f09588dc6bd87d9ba95cf720dfac2b95d8bab936fd5e3854b43'
-            'e240f45d053650e6043f7e33cc113df43c2c90a5f3870742bedf76fa8e2bcf60'
-            '3a71a9497984d10734982a1c80e4870dd306f8124914de461c6d056e98924fde'
-            '659669a12bcdc9eb3e542617d85738f9925fa2f817cc077914b32f4ad774d4be'
+sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
+            '6746318033a36671cdf79e08a9a214c654ead86e47d121f774378a8087e9782e'
+            'e0be5f97e70f06ec08f8e69a3c40fa26a2df9f2ca8499bb8669bdedff81b2790'
+            'ede3c1a759858b276954c69a367d3e664c8d51773ad4898b9bc26943d7c918ab'
             'SKIP')
 
 #pkgver() {
@@ -42,7 +42,7 @@ sha256sums=('395af42127ac1f09588dc6bd87d9ba95cf720dfac2b95d8bab936fd5e3854b43'
 prepare() {
 	cd "${srcdir}"
   if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-		_msg2 "Downloading sources via torrent"
+	_msg2 "Downloading sources via torrent"
     # Download the assets via torrent - very fast!
     aria2c -V --seed-time=0 ${_torrent}
     mv ${_imgxz} ../${_imgxz}
@@ -54,36 +54,41 @@ prepare() {
 build() {
   #standard extraction utilities don't recognizes this archive for some reason.
   [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
-	#_msg2 "checking imaage integrity"
+  #_msg2 "checking imaage integrity"
   #md5sum -c *.md5 || exit 1
-	_msg2 "copying image.." #so we don't have to extract it every time
+  _msg2 "copying image.." #so we don't have to extract it every time
   cp -b ../${_img} ${_imgfinal}
   _msg2 "adding extra space" #may not be necessary
   #truncate -s +1536M ${_imgfinal}
   truncate -s +512M ${_imgfinal}
   echo ", +" | sfdisk -N1 ${_imgfinal}
-	_msg2 "mounting image to loop device.."
+  _msg2 "mounting image to loop device.."
   sudo gnome-disk-image-mounter -w ${_imgfinal}
-	_msg2 "creating mount dir"
+  _msg2 "creating mount dir"
   mkdir -p ${srcdir}/mnt
   _msg2 "mounting ${_root_partition} to mount point"
   sudo mount ${_root_partition} ${srcdir}/mnt
-	_msg2 "copy packages into image"
-  sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+  _msg2 "copy packages into image"
+  # export NOINSTALL=true
+  if [[ ${NOINSTALL} != "true" ]]; then #test making image without skywire installed ; install skywire on boot - experimental feature
+  	sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+  fi
   sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
-	#_msg2 "copying repository signing key to root dir"
+  #_msg2 "copying repository signing key to root dir"
   #sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
-	_msg2 "copy qemu-aarch64-static command to chroot bin"
+  _msg2 "copy qemu-aarch64-static command to chroot bin"
   sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
 #sudo is used for all commands to give correct environmental vars in chroot
   _msg2 "disabling user creation on first login"
   sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
-	_msg2 "CHROOT: add the repository signing key to apt keyring"
+  _msg2 "CHROOT: add the repository signing key to apt keyring"
   cat ${srcdir}/KEY.asc | sudo arch-chroot ${srcdir}/mnt sudo apt-key add -
+  if [[ ${NOINSTALL} != "true" ]]; then
 	_msg2 "CHROOT: installing skywire with dpkg"
-  sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skywiredeb}
-  sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skywiredeb}
+	sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skywiredeb}
+	sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skywiredeb}
+  fi
   _msg2 "CHROOT: installing skybian with dpkg" #the skybian package depends on skywire
   sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i --force-overwrite /root/${_skybiandeb}
   sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skybiandeb}

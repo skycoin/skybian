@@ -1,5 +1,6 @@
 #!/bin/bash
-#determine if visor or hypervisor and enable the correct service
+#script runs on first boot via skymanager.service
+#determines visor or hypervisor mode and enable the correct service
 #generate the config for static IP address on the hypervisor
 #192.168.xxx.1
 _gateway="$(ip route show | grep -i 'default via'| awk '{print $3 }')"
