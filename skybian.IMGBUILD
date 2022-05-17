@@ -1,8 +1,11 @@
+COMPRESSZST=(zstd -c -T0 -18 -)
+PKGEXT='.pkg.tar.zst'
+SKIPPGPCHECK=1
 pkgname=skybian-img
 pkgdesc="Skybian image build"
 #pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
 pkgver='1.0.0'
-pkgrel=1
+pkgrel=3
 arch=('any')
 _imgarch="arm64"
 _hostarch=$(dpkg --print-architecture)
@@ -18,7 +21,7 @@ _aptrepo_config="deb ${_aptrepo} sid main"
 _aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
 _aptrepo1_config="deb ${_aptrepo1} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-1-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-3-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip') # 'caddy')
 source=("${_torrent}"
@@ -31,8 +34,8 @@ source=("${_torrent}"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
             '6746318033a36671cdf79e08a9a214c654ead86e47d121f774378a8087e9782e'
-            'f50b6f318ad6beff1f5b05debd3d155690cd0044ed363d139716a8ccb4d90bcf'
-            'f2ed14da5dd1b12747df9325e7bdf94b769fd0eecba1f450ea9bd6ba6d8770ec'
+            'a1589e0f68fbc81fb5fb0bc5fbebad9d0adc5d4eadedb485e97e5972bcec294a'
+            'ed8e7b0045ac51117a9f8345a7f266be911a6a282a1c7f91d23df241cee41fc2'
             'SKIP')
 
 #pkgver() {
@@ -71,9 +74,9 @@ build() {
   _msg2 "copy packages into image"
   # export NOINSTALL=true
   if [[ ${NOINSTALL} != "true" ]]; then #test making image without skywire installed ; install skywire on boot - experimental feature
-  	sudo cp -b ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+  	sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
   fi
-  sudo cp -b ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+  sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
   #_msg2 "copying repository signing key to root dir"
   #sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
   _msg2 "copy qemu-aarch64-static command to chroot bin"
@@ -84,15 +87,16 @@ build() {
   sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
   _msg2 "CHROOT: add the repository signing key to apt keyring"
   cat ${srcdir}/KEY.asc | sudo arch-chroot ${srcdir}/mnt sudo apt-key add -
-  if [[ ${NOINSTALL} != "true" ]]; then
+  #if [[ ${NOINSTALL} != "true" ]]; then
 	_msg2 "CHROOT: installing skywire with dpkg"
-	sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skywiredeb}
-	sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skywiredeb}
-  fi
-  _msg2 "CHROOT: installing skybian with dpkg" #the skybian package depends on skywire
-  sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i --force-overwrite /root/${_skybiandeb}
-  sudo arch-chroot ${srcdir}/mnt sudo rm /root/${_skybiandeb}
-  sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+	sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
+	sudo rm ${srcdir}/mnt/root/${_skywiredeb}
+  #fi
+  _msg2 "CHROOT: installing packages in chroot with dpkg" #the skybian package depends on skywire
+  sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
+  sudo rm ${srcdir}/mnt/root/${_skybiandeb}
+  #_msg2 "CHROOT: resetting skybian configuration" #the skybian package depends on skywire
+  #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
 ## included from chroot-commands.sh
   _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
   sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force

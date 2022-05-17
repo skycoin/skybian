@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image - debian package"
 pkgver='1.0.0'
 _pkgver=${pkgver}
-pkgrel=1
+pkgrel=3
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('armhf' 'arm64')
@@ -22,7 +22,7 @@ source=(
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
 sha256sums=('3408e643404a6df8ea1122d2884a39f034353877a109d45ec83bd24510368ded'
-            '63648dbecd4d7b5c81fec74dd90eb1397a6a530e57a1b4c4020ca92c363d9bdd')
+            'bd4a6b9de23aab709c99f0bedb6c20a909ea1f7662fc86a2c7bc122986fb4bfb')
 
 
 

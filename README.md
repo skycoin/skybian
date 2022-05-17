@@ -10,21 +10,11 @@ Note: be sure to install qemu-arm-static-bin if you don't have qemu-arm-static i
 
 Build the image and compress into archive:
 ```
- makepkg --skippgpcheck -p skybian.IMGBUILD
+ makepkg -p skybian.IMGBUILD
 ```
-
-Note: the archive type that is created by `makepkg` is specified in `/etc/makepkg.conf`
-
-the following default is used for compression
-
-```
-COMPRESSZST=(zstd -c -T0 -18 -)
-PKGEXT=’.pkg.tar.zst’
-```
-
 Build only (still creates .zip):
 ```
- makepkg --noarchive --skippgpcheck -p skybian.IMGBUILD
+ makepkg --noarchive -p skybian.IMGBUILD
 ```
 
 The image, when created, can be found in the pkg dir
