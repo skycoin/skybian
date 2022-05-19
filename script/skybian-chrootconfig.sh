@@ -1,5 +1,5 @@
 #!/bin/bash
-#/usr/bin/skybian-chrootconfig
+##/usr/bin/skybian-chrootconfig
 #################################################################
 #this script is run with the assumption
 #that the skybian package is installed in chroot
@@ -10,19 +10,19 @@ if [[ -z $CHROOTCONFIG ]] ; then
   exit 0
 fi
 #enable config gen on boot - calls `skywire-autoconfig`
-if [[ -f /etc/systemd/system/skywire-autoconfig.service ]] ; then
-   sudo systemctl enable skywire-autoconfig && echo "enabling skywire-autoconfig"
- else
-   echo "error skywire-autoconfig service not found"
- fi
+#if [[ -f /etc/systemd/system/skywire-autoconfig.service ]] ; then
+#   sudo systemctl enable skywire-autoconfig && echo "enabling skywire-autoconfig"
+# else
+#   echo "error skywire-autoconfig service not found"
+# fi
 
 #disable the skywire systemd service;
 #it will be enabled and started by the autoconfig script
-if [[ -f /etc/systemd/system/skywire.service ]] ; then
-  sudo systemctl disable skywire && echo "disabling skywire"
-else
-  echo "error skywire not installed or service not found"
-fi
+#if [[ -f /etc/systemd/system/skywire.service ]] ; then
+#  sudo systemctl disable skywire && echo "disabling skywire"
+#else
+#  echo "error skywire not installed or service not found"
+#fi
 
 #skymanager substituites for the former skybian-firstrun script ;
 #skymanager either sets ip for hypervisor and reboots; then configures hypervisor
@@ -35,13 +35,13 @@ else
   echo "error skymanager service not found"
 fi
 
-if ! command -v skywire &> /dev/null && ! command -v skywire-cli &> /dev/null ; then
-	if [[ -f /etc/systemd/system/install-skywire.service ]] ; then
-		sudo systemctl enable install-skywire
-	else
-		echo "error install-skywire service not found"
-	fi
-fi
+#if ! command -v skywire &> /dev/null && ! command -v skywire-cli &> /dev/null ; then
+#	if [[ -f /etc/systemd/system/install-skywire.service ]] ; then
+#		sudo systemctl enable install-skywire
+#	else
+#		echo "error install-skywire service not found"
+#	fi
+#fi
 
 #enable the wait online service
 systemctl enable NetworkManager-wait-online

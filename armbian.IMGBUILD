@@ -1,0 +1,60 @@
+COMPRESSZST=(zstd -c -T0 -18 -)
+PKGEXT='.pkg.tar.zst'
+SKIPPGPCHECK=1
+pkgname=armbian-img
+pkgdesc="Repackage base armbian buster orange pi prime image"
+#pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
+pkgver='1.0.0'
+pkgrel=1
+arch=('any')
+_imgarch="arm64"
+#_hostarch=$(dpkg --print-architecture)
+_img="Armbian_20.05.1_Orangepiprime_buster_current_5.4.43.img"
+#_imgxz=${_img}.xz
+#_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img.xz"
+#_torrent="${_xzlink}.torrent"
+makedepends=('zip') #'aria2' 'dtrx' 'zip')
+source=("${_img}")
+md5sums=('255138df46c64f8322c913e63ac03b23')
+
+
+#prepare() {
+#	cd "${srcdir}"
+#  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
+#	_msg2 "Downloading sources via torrent"
+#    # Download the assets via torrent - very fast!
+#    aria2c -V --seed-time=0 ${_torrent}
+#    mv ${_imgxz} ../${_imgxz}
+#  else
+#    _msg2 "found downloaded sources"
+#  fi
+#}
+
+#build() {
+#  #standard extraction utilities don't recognizes this archive for some reason.
+#  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
+#}
+
+package() {
+  #let makepkg compress the archive as it does automatically for any package
+  #afterwards remove the metadata from the archive and change the extension
+  #avoid the compression step with makepkg --noarchive
+  #package only, assuming ${_imgfinal} exists with makepkg -R
+  install -Dm644 ${srcdir}/${_img} ${pkgdir}/
+  cd ${pkgdir}
+  _msg2 "Creating image checksum"
+  sha256sum ${_img} > ${_img}.sha
+  cat ${_img}.sha
+#  if [[ ! -f ../../${_img}.zip ]]; then
+    cd ..
+    _msg2 "Creating .zip archive for windows"
+    zip -r ${_img}.zip ${pkgname}
+    mv *.zip ../
+  #fi
+}
+
+_msg2() {
+(( QUIET )) && return
+local mesg=$1; shift
+printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}

@@ -9,10 +9,13 @@ pkgrel=3
 arch=('any')
 _imgarch="arm64"
 _hostarch=$(dpkg --print-architecture)
-_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
+#Armbian bullseye for orangepi prime incompatible with cluster deployment - 5-19-22#
+#_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
+_img="Armbian_20.05.1_Orangepiprime_buster_current_5.4.43.img"
 _imgxz=${_img}.xz
-_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img.xz"
-_torrent="${_xzlink}.torrent"
+_xzlink="https://armbian.hosthatch.com/archive/orangepiprime/archive/${_imgxz}"
+#_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img.xz"
+#_torrent="${_xzlink}.torrent"
 _imgfinal="skybian.img"
 _root_partition=/dev/loop0p1
 _defaultuser=root
@@ -24,43 +27,44 @@ _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
 _skybiandeb="skybian-1.0.0-3-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip') # 'caddy')
-source=("${_torrent}"
-"${_torrent}.md5"
+#source=("${_torrent}"
+#"${_torrent}.md5"
+source=("${_xzlink}"
 "${_aptrepo}/archive/${_skywiredeb}"
 "${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 )
 #"proxy.sources.list" #used with caddy
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
-            '6746318033a36671cdf79e08a9a214c654ead86e47d121f774378a8087e9782e'
-            'a1589e0f68fbc81fb5fb0bc5fbebad9d0adc5d4eadedb485e97e5972bcec294a'
-            'ed8e7b0045ac51117a9f8345a7f266be911a6a282a1c7f91d23df241cee41fc2'
+sha256sums=('5be059bbaddcc0a38b1b37f82cab021d703d02786f48c53b217209e8ed638a23'
+            'c3378a3300693948cbfb4404fc95ad7640b06944eb41a591c64b91e7a6a705da'
+            '4d1b962561fee49b0ddbc4f7fd35b55cbd5757ac1a0305b5e23f59683dc4ed5b'
             'SKIP')
 
 #pkgver() {
 #echo $(date +%Y%m%d)
 #}
 
-prepare() {
-	cd "${srcdir}"
-  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-	_msg2 "Downloading sources via torrent"
+#prepare() {
+#	cd "${srcdir}"
+#  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
+#	_msg2 "Downloading sources via torrent"
     # Download the assets via torrent - very fast!
-    aria2c -V --seed-time=0 ${_torrent}
-    mv ${_imgxz} ../${_imgxz}
-  else
-    _msg2 "found downloaded sources"
-  fi
-}
+#    aria2c -V --seed-time=0 ${_torrent}
+#    mv ${_imgxz} ../${_imgxz}
+ # else
+#    _msg2 "found downloaded sources"
+ # fi
+#}
 
 build() {
   #standard extraction utilities don't recognizes this archive for some reason.
-  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
-  #_msg2 "checking imaage integrity"
+  #[[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
+  #_msg2 "checking image integrity"
   #md5sum -c *.md5 || exit 1
   _msg2 "copying image.." #so we don't have to extract it every time
-  cp -b ../${_img} ${_imgfinal}
+  #cp -b ../${_img} ${_imgfinal}
+  cp -b ${_img} ${_imgfinal}
   _msg2 "adding extra space" #may not be necessary
   #truncate -s +1536M ${_imgfinal}
   truncate -s +512M ${_imgfinal}
@@ -85,6 +89,10 @@ build() {
 #sudo is used for all commands to give correct environmental vars in chroot
   _msg2 "disabling user creation on first login"
   sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
+  ##set password for _defaultuser
+  _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
+  echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+  sleep 1
   _msg2 "CHROOT: add the repository signing key to apt keyring"
   cat ${srcdir}/KEY.asc | sudo arch-chroot ${srcdir}/mnt sudo apt-key add -
   #if [[ ${NOINSTALL} != "true" ]]; then
@@ -105,10 +113,12 @@ build() {
   #fix console / tty
   _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
   echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
-  ##set password for _defaultuser
-  _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
-  echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
-  sleep 1
+  _msg2 "CHROOT: setting up ssh key access"
+  sudo arch-chroot ${srcdir}/mnt sudo ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
+  sudo cp ${srcdir}/mnt/root/.ssh/id_rsa ${srcdir}/mnt/root/.ssh/authorized_keys
+  _msg2 "CHROOT: configuring unattended-upgrades"
+  echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
+  sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
 ######################## end chroot modifications ##############################
   [[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
   _msg2 "Unmounting image"

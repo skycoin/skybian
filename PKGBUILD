@@ -12,7 +12,6 @@ url="https://${_pkgpath}"
 makedepends=('dpkg')
 depends=()
 _debdeps=""
-#_debdeps="skywire"
 source=(
 #original to skybian
 "skybian-static.tar.gz"
@@ -21,8 +20,8 @@ source=(
 )
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
-sha256sums=('3408e643404a6df8ea1122d2884a39f034353877a109d45ec83bd24510368ded'
-            'bd4a6b9de23aab709c99f0bedb6c20a909ea1f7662fc86a2c7bc122986fb4bfb')
+sha256sums=('6971136afa8a5d680f3dabf2b8be123a9e62f2adf0db03f9de1eb0aa875dcc44'
+            '77b9d63843f3d3e45da097578cd1c094421e3ef95d5df45a792c273fb7dce269')
 
 
 
@@ -57,29 +56,32 @@ package() {
   _pkgdir="${pkgdir}/${_debpkgdir}"
   #########################################################################
   #PACKAGE AS YOU NORMALLY WOULD HERE USING ${_pkgdir} instead of ${pkgdir}
+  _msg2 "Creating dirs"
   mkdir -p ${_pkgdir}/etc/update-motd.d/
   mkdir -p ${_pkgdir}/etc/default/
   mkdir -p ${_pkgdir}/etc/profile.d/
   mkdir -p ${_pkgdir}/etc/sources.list.d/
   mkdir -p ${_pkgdir}/etc/systemd/system/
   mkdir -p ${_pkgdir}/usr/bin/
-  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
-  _msg2 "installing apt repository configuration: /etc/apt/sources.list.d/skycoin.list"
-  install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
   #install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
   install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
+  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
+  _msg2 "Installing apt repository configuration: /etc/apt/sources.list.d/skycoin.list"
+  install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
+  _msg2 "Installing scripts"
   install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
   install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
   install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
+  _msg2 "Installing systemd services"
   install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
   install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
   #########################################################################
-  _msg2 'installing control file and postinst script'
+  _msg2 'Installing control file and postinst script'
   install -Dm755 ${srcdir}/${_pkgarch}.control ${_pkgdir}/DEBIAN/control
   install -Dm755 ${srcdir}/script/postinst.sh ${_pkgdir}/DEBIAN/postinst
-  _msg2 'creating the debian package'
+  _msg2 'Creating the debian package'
   cd $pkgdir
   dpkg-deb --build -z9 ${_debpkgdir}
   mv *.deb ../../
