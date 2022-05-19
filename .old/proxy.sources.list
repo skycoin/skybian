@@ -1,7 +1,0 @@
-
-
-deb http://127.0.0.1:8075/debian buster main contrib non-free
-
-deb http://127.0.0.1:8074/apt buster main buster-utils buster-desktop
-
-deb http://176.9.28.105  sid main

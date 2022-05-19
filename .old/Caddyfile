@@ -1,9 +1,0 @@
-:8075 {
-##deb.debian.org
-reverse_proxy ftp.us.debian.org
-#reverse_proxy	ftp.de.debian.org
-}
-:8074 {
-##apt.armbian.com
-reverse_proxy armbian.tnahosting.net
-}
