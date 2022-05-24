@@ -8,14 +8,19 @@ pkgver='1.0.0'
 pkgrel=3
 arch=('any')
 _imgarch="arm64"
-_hostarch=$(dpkg --print-architecture)
+_hostarch="$(dpkg --print-architecture)"
 #Armbian bullseye for orangepi prime incompatible with cluster deployment - 5-19-22#
-#_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
-_img="Armbian_20.05.1_Orangepiprime_buster_current_5.4.43.img"
-_imgxz=${_img}.xz
-_xzlink="https://armbian.hosthatch.com/archive/orangepiprime/archive/${_imgxz}"
-#_xzlink="https://mirrors.netix.net/armbian/dl/orangepiprime/archive/Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img.xz"
-#_torrent="${_xzlink}.torrent"
+_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
+#_img="Armbian_20.05.1_Orangepiprime_buster_current_5.4.43.img"
+#_img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
+#_img="Armbian_20.08_Orangepiprime_stretch_current_5.7.15.img"
+_imgxz="${_img}.xz"
+_imgsha="Bullseye_current.sha"
+_imgshalink="https://redirect.armbian.com/orangepiprime/${_imgsha}"
+#_imgzst="${_img}.tar.zst"
+#_xzlink="https://armbian.hosthatch.com/archive/orangepiprime/archive/${_imgxz}"
+_xzlink="https://www.armbian.com/dl/orangepiprime/archive/${_imgxz}"
+_torrent="${_xzlink}.torrent"
 _imgfinal="skybian.img"
 _root_partition=/dev/loop0p1
 _defaultuser=root
@@ -27,44 +32,53 @@ _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
 _skybiandeb="skybian-1.0.0-3-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip') # 'caddy')
-#source=("${_torrent}"
-#"${_torrent}.md5"
-source=("${_xzlink}"
+source=("${_torrent}"
+"${_torrent}.md5"
+"${_imgshalink}"
+#source=("${_xzlink}"
 "${_aptrepo}/archive/${_skywiredeb}"
 "${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 )
 #"proxy.sources.list" #used with caddy
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('5be059bbaddcc0a38b1b37f82cab021d703d02786f48c53b217209e8ed638a23'
+sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
+            '6746318033a36671cdf79e08a9a214c654ead86e47d121f774378a8087e9782e'
+            'f7e1d843190eca6aaa03ed3f8cf86aefdb5b72e8684040c69068c4916a6f286f'
             'c3378a3300693948cbfb4404fc95ad7640b06944eb41a591c64b91e7a6a705da'
-            '4d1b962561fee49b0ddbc4f7fd35b55cbd5757ac1a0305b5e23f59683dc4ed5b'
+            'd9271695ba66a7ce9a9ce6e7b36d17e3964273517edf1435d4cdaa6f543d3e74'
             'SKIP')
 
 #pkgver() {
 #echo $(date +%Y%m%d)
 #}
 
-#prepare() {
-#	cd "${srcdir}"
-#  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-#	_msg2 "Downloading sources via torrent"
-    # Download the assets via torrent - very fast!
-#    aria2c -V --seed-time=0 ${_torrent}
-#    mv ${_imgxz} ../${_imgxz}
- # else
-#    _msg2 "found downloaded sources"
- # fi
-#}
+prepare() {
+	cd "${srcdir}"
+  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
+	_msg2 "Downloading sources via torrent"
+# Download the assets via torrent - very fast!
+    aria2c -V --seed-time=0 ${_torrent}
+    mv ${_imgxz} ../${_imgxz}
+ else
+    _msg2 "found downloaded sources"
+ fi
+}
 
 build() {
   #standard extraction utilities don't recognizes this archive for some reason.
-  #[[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
-  #_msg2 "checking image integrity"
+  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
+  _msg2 "checking image archive integrity"
+  _sum=$(sha256sum ../${_imgxz})
+  _msg2 "image sha256sum: ${_sum%%' '*}"
+  _check=$(cat ${_imgsha})
+  _msg2 "${_imgsha}: ${_check%%' '*}"
+  [[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && exit 1
+  [[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" &&
   #md5sum -c *.md5 || exit 1
   _msg2 "copying image.." #so we don't have to extract it every time
-  #cp -b ../${_img} ${_imgfinal}
-  cp -b ${_img} ${_imgfinal}
+  cp -b ../${_img} ${_imgfinal}
+  #cp -b ${_img} ${_imgfinal}
   _msg2 "adding extra space" #may not be necessary
   #truncate -s +1536M ${_imgfinal}
   truncate -s +512M ${_imgfinal}
@@ -81,8 +95,7 @@ build() {
   	sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
   fi
   sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
-  #_msg2 "copying repository signing key to root dir"
-  #sudo cp -b ${srcdir}/KEY.asc ${srcdir}/mnt/root/KEY.asc
+
   _msg2 "copy qemu-aarch64-static command to chroot bin"
   sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
@@ -113,9 +126,9 @@ build() {
   #fix console / tty
   _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
   echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
-  _msg2 "CHROOT: setting up ssh key access"
-  sudo arch-chroot ${srcdir}/mnt sudo ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
-  sudo cp ${srcdir}/mnt/root/.ssh/id_rsa ${srcdir}/mnt/root/.ssh/authorized_keys
+#  _msg2 "CHROOT: setting up ssh key access"
+#  sudo arch-chroot ${srcdir}/mnt sudo ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
+#  sudo cp ${srcdir}/mnt/root/.ssh/id_rsa ${srcdir}/mnt/root/.ssh/authorized_keys
   _msg2 "CHROOT: configuring unattended-upgrades"
   echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
   sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
@@ -141,7 +154,7 @@ package() {
   _msg2 "Creating image checksum"
   sha256sum ${_imgfinal} > ${_imgfinal}.sha
   cat ${_imgfinal}.sha
-  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ]]; then
+  if [[ ${NOZIP} != "1" ]]; then
     cd ..
     _msg2 "Creating .zip archive for windows"
     zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
@@ -153,6 +166,11 @@ _msg2() {
 (( QUIET )) && return
 local mesg=$1; shift
 printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}
+
+_error() {
+	local mesg=$1; shift
+	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
 
 #set env to detect that this is a skybian image

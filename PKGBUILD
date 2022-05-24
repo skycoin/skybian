@@ -20,8 +20,8 @@ source=(
 )
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
-sha256sums=('6971136afa8a5d680f3dabf2b8be123a9e62f2adf0db03f9de1eb0aa875dcc44'
-            '77b9d63843f3d3e45da097578cd1c094421e3ef95d5df45a792c273fb7dce269')
+sha256sums=('ff9553fa0890438a6541e1906dbc36c9252caef82d3b273a404ffa224090eedf'
+            '0cb0d7106b49f585aa72d32f592e1cbb7881dce5ae79f6921f572bde89255414')
 
 
 

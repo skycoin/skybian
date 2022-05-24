@@ -5,7 +5,8 @@ updpkgsums skybian.IMGBUILD
 sudo umount -l src/mnt
 sudo losetup -d /dev/loop0
 if [[ $1 == "1" ]]; then
-makepkg  --noarchive -fp skybian.IMGBUILD
+	#build once and dont compress the archive ; for testing
+NOZIP="1" makepkg  --noarchive -fp skybian.IMGBUILD
 else
 makepkg -fp skybian.IMGBUILD || makepkg --skippgpcheck -fRp skybian.IMGBUILD || makepkg --skippgpcheck -fRp skybian.IMGBUILD || makepkg --skippgpcheck -fRp skybian.IMGBUILD || makepkg --skippgpcheck -fRp skybian.IMGBUILD || makepkg --skippgpcheck -fRp skybian.IMGBUILD
 fi

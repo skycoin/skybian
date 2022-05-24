@@ -2,15 +2,15 @@ _dist=ArchLinuxARM
 _pkgname=rpi
 pkgname=rpi-ArchlinuxARM
 pkgdesc="ArchlinuxARM image creator - rpi"
-pkgver=20220219
+pkgver=20220520
 pkgrel=1
 arch=( 'any') #<--this effectively only limits host architecture
 url="http://os.archlinuxarm.org/os"
 _r1="armv7"
 _r2="aarch64"
 _imgarches=("armv7" "aarch64")
-_gz1="${_dist}-${_r1}-latest.tar.gz"
-_gz2="${_dist}-${_r2}-latest.tar.gz"
+_gz1="${_dist}-rpi-${_r1}-latest.tar.gz"
+_gz2="${_dist}-rpi-${_r2}-latest.tar.gz"
 makedepends=()
 depends=()
 source=(
@@ -23,16 +23,17 @@ noextract=(
 "${_gz1}"
 "${_gz2}"
 )
-sha256sums=('7b4017ce208c03d50e52c99677cefd93348e992366ba6cb82a2a2f4892c37f6d'
-            '68ae5acb682d6bd5e26f4d92d99d9c69d9e130401308c92ea266bbb57f413db0'
-            '9325d2a4e61a104ca64fd50b2bae9eb601eff1c3e086088a8d4bd68735bcac70'
-            '2603cd726ee6762247191380ea44065b5ba6f8011dfb6e4ba19bee9c855d30f8')
+sha256sums=('0e6ea566bb757f7a8529667d6ee59e6d5966db043d4ffde77f776ad01d15de14'
+            '89e76d97f0a89a1ebd13a362eece21c6cf6e7fd2d53d75410a7b60d7b636ab20'
+            '6911be93c4b8a7b46bb734e58c4787c3386b175d271a24b1f73e0de498ee4bdf'
+            '6c7d43936fff4c7be83558f64af011a6455d1a0a8f835fcaf501322a04a4b2f5')
 
 pkgver() {
 echo $(date +%Y%m%d)
 }
 
 build() {
+#set -x
   for i in ${_imgarches[@]}; do
   cd ${srcdir}
   local _img="${pkgname}-${pkgver}-${i}.img"
@@ -44,6 +45,9 @@ build() {
 	sudo parted -s /dev/loop0 set 1 boot on
 	sudo parted -s /dev/loop0 unit MiB mkpart primary ext2 -- 128 -1
 	sudo parted -s /dev/loop0 print
+	sudo sfdisk -d /dev/loop0
+	sudo losetup -d /dev/loop0
+	sudo gnome-disk-image-mounter -w ${_img}
 	sudo mkfs.vfat -n SYSTEM /dev/loop0p1
 	sudo mkfs.ext4 -L root -b 4096 -E stride=4,stripe_width=1024 /dev/loop0p2
 	sudo mkdir -p arch-boot
