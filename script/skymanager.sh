@@ -30,11 +30,12 @@ DNS=${_gateway}" | tee /etc/systemd/network/eth.network
 	skywire-autoconfig
 	# start skywire & enable the service
 	systemctl enable --now skywire 2> /dev/null
+	systemctl enable --now srvpk 2> /dev/null
 fi
 #Visor configuration
 if [[ $(hostname) != "hypervisor" ]]; then
 	#query remote node for pk
-	_pubkey=$(skywire-cli visor pk --rpc ${_ip}:3435)
+	_pubkey=$(curl ${_ip}:7998)
 	#rough errorcheck
 	if [[ "${_pubkey}" != *"FATAL"* ]] ; then
 		#disable this script's service
