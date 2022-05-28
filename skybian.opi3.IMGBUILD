@@ -1,0 +1,213 @@
+COMPRESSZST=(zstd -c -T0 -18 -)
+PKGEXT='.pkg.tar.zst'
+SKIPPGPCHECK=1
+pkgname=skybian-img
+pkgdesc="Skybian image build"
+#pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
+pkgver='1.0.0'
+pkgrel=4
+arch=('any')
+_imgarch="arm64"
+_hostarch="$(dpkg --print-architecture)"
+#Armbian bullseye for orangepi prime incompatible with cluster deployment - 5-19-22#
+_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
+#_img="Armbian_20.05.1_Orangepiprime_buster_current_5.4.43.img"
+#_img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
+#_img="Armbian_20.08_Orangepiprime_stretch_current_5.7.15.img"
+_imgxz="${_img}.xz"
+_imgsha="Bullseye_current.sha"
+_imgshalink="https://redirect.armbian.com/orangepiprime/${_imgsha}"
+#_imgzst="${_img}.tar.zst"
+#_xzlink="https://armbian.hosthatch.com/archive/orangepiprime/archive/${_imgxz}"
+_xzlink="https://www.armbian.com/dl/orangepiprime/archive/${_imgxz}"
+_torrent="${_xzlink}.torrent"
+_imgfinal="skybian.img"
+_root_partition=/dev/loop0p1
+_defaultuser=root
+_aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
+_aptrepo_config="deb ${_aptrepo} sid main"
+_aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
+_aptrepo1_config="deb ${_aptrepo1} sid main"
+_skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-4-${_imgarch}.deb"
+url="http://github.com/skycoin/skybian"
+makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip') # 'caddy')
+source=("${_torrent}"
+"${_torrent}.md5"
+"${_imgshalink}"
+#source=("${_xzlink}"
+"${_aptrepo}/archive/${_skywiredeb}"
+"${_aptrepo}/archive/${_skybiandeb}"
+"${_aptrepo}/KEY.asc"
+)
+#"proxy.sources.list" #used with caddy
+noextract=("${_skywiredeb}" "${_skybiandeb}")
+sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
+            '6746318033a36671cdf79e08a9a214c654ead86e47d121f774378a8087e9782e'
+            'f7e1d843190eca6aaa03ed3f8cf86aefdb5b72e8684040c69068c4916a6f286f'
+            '04c6782c866f936a24f3e6968d791f18689ef70bda0494ff018b84dd8e50e6d5'
+            '1635325cfea3ba615df980972909df8db3414b775194447f192be39ab916c1ee'
+            'SKIP')
+
+#pkgver() {
+#echo $(date +%Y%m%d)
+#}
+
+prepare() {
+	cd "${srcdir}"
+  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
+	_msg2 "Downloading sources via torrent"
+# Download the assets via torrent - very fast!
+    aria2c -V --seed-time=0 ${_torrent}
+    mv ${_imgxz} ../${_imgxz}
+ else
+    _msg2 "found downloaded sources"
+ fi
+}
+
+build() {
+  #standard extraction utilities don't recognizes this archive for some reason.
+  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
+  _msg2 "checking image archive integrity"
+  _sum=$(sha256sum ../${_imgxz})
+  _msg2 "image sha256sum: ${_sum%%' '*}"
+  _check=$(cat ${_imgsha})
+  _msg2 "${_imgsha}: ${_check%%' '*}"
+  [[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && exit 1
+  [[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" &&
+  #md5sum -c *.md5 || exit 1
+  _msg2 "copying image.." #so we don't have to extract it every time
+  cp -b ../${_img} ${_imgfinal}
+  #cp -b ${_img} ${_imgfinal}
+  _msg2 "adding extra space" #may not be necessary
+  #truncate -s +1536M ${_imgfinal}
+  truncate -s +512M ${_imgfinal}
+  echo ", +" | sfdisk -N1 ${_imgfinal}
+  _msg2 "mounting image to loop device.."
+  sudo gnome-disk-image-mounter -w ${_imgfinal}
+  _msg2 "creating mount dir"
+  mkdir -p ${srcdir}/mnt
+  _msg2 "mounting ${_root_partition} to mount point"
+  sudo mount ${_root_partition} ${srcdir}/mnt
+  _msg2 "copy packages into image"
+  # export NOINSTALL=true
+  if [[ ${NOINSTALL} != "true" ]]; then #test making image without skywire installed ; install skywire on boot - experimental feature
+  	sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+  fi
+  sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+
+  _msg2 "copy qemu-aarch64-static command to chroot bin"
+  sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
+################## chroot modifications for apt repo & package #################
+#sudo is used for all commands to give correct environmental vars in chroot
+  _msg2 "disabling user creation on first login"
+  sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
+  ##set password for _defaultuser
+  _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
+  echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+  sleep 1
+  _msg2 "CHROOT: add the repository signing key to apt keyring"
+  cat ${srcdir}/KEY.asc | sudo arch-chroot ${srcdir}/mnt sudo apt-key add -
+  #if [[ ${NOINSTALL} != "true" ]]; then
+	_msg2 "CHROOT: installing skywire with dpkg"
+	sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
+	sudo rm ${srcdir}/mnt/root/${_skywiredeb}
+  #fi
+  _msg2 "CHROOT: installing packages in chroot with dpkg" #the skybian package depends on skywire
+  sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
+  sudo rm ${srcdir}/mnt/root/${_skybiandeb}
+  #_msg2 "CHROOT: resetting skybian configuration" #the skybian package depends on skywire
+  #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+## included from chroot-commands.sh
+  _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
+  sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
+  _msg2 "CHROOT: Generating locale en_US.UTF-8..."
+  sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
+  #fix console / tty
+  _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
+  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
+#  _msg2 "CHROOT: setting up ssh key access"
+#  sudo arch-chroot ${srcdir}/mnt sudo ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
+#  sudo cp ${srcdir}/mnt/root/.ssh/id_rsa ${srcdir}/mnt/root/.ssh/authorized_keys
+  _msg2 "CHROOT: configuring unattended-upgrades"
+  echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
+  sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+######################## end chroot modifications ##############################
+  [[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
+  _msg2 "Unmounting image"
+  sudo umount ${srcdir}/mnt
+  _msg2 "detatching /dev/loop0"
+  sudo losetup -d /dev/loop0
+  mv ${_imgfinal} ../${_imgfinal}
+  cd ..
+  echo "created image(s):"
+  ls $_imgfinal
+}
+
+package() {
+  #let makepkg compress the archive as it does automatically for any package
+  #afterwards remove the metadata from the archive and change the extension
+  #avoid the compression step with makepkg --noarchive
+  #package only, assuming ${_imgfinal} exists with makepkg -R
+  install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
+  cd ${pkgdir}
+  _msg2 "Creating image checksum"
+  sha256sum ${_imgfinal} > ${_imgfinal}.sha
+  cat ${_imgfinal}.sha
+  if [[ ${NOZIP} != "1" ]]; then
+    cd ..
+    _msg2 "Creating .zip archive for windows"
+    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+    mv *.zip ../
+  fi
+}
+
+_msg2() {
+(( QUIET )) && return
+local mesg=$1; shift
+printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}
+
+_error() {
+	local mesg=$1; shift
+	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+}
+
+#set env to detect that this is a skybian image
+#_msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
+#echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
+#set env to enable skywire VPN server
+#_msg2 "CHROOT: setting VPNSERVER=true in /root/.bashrc"
+#echo 'VPNSERVER=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
+#_msg2 "CHROOT: configuring unattended-upgrades"
+##add the skybian apt repo
+#head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
+#echo '        "origin=skycoin,codename=sid,label=skycoin";' >> ${srcdir}/50unattended-upgrades
+#tail -n 115 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades >> ${srcdir}/50unattended-upgrades
+#sudo rm ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
+#sudo install -Dm644 ${srcdir}/50unattended-upgrades ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
+##debconf
+#echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
+#sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+##Updating in the chroot can be done natively from an archlinux host of the same architecture
+#  _msg2 "Comparing host and chroot architecture"
+#  if [[ "${_hostarch}" != "${_imgarch}" ]] ; then
+  #    _msg2 "CHROOT: updating image with apt via reverse-proxy..."
+  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/mnt/etc/apt/sources.list.bak
+  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak
+  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak
+  #    sudo install -Dm644 ${srcdir}/proxy.sources.list ${srcdir}/mnt/etc/apt/sources.list
+  #    #caddy start -config ${srcdir}/Caddyfile
+  #    sudo arch-chroot ${srcdir}/mnt sudo apt update
+  #    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
+  #    #caddy stop
+  #    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.bak ${srcdir}/mnt/etc/apt/sources.list
+  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list
+  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list
+  #  else
+  #    _msg2 "CHROOT: updating image"
+  #    sudo arch-chroot ${srcdir}/mnt sudo apt update
+  #    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
+  #    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
+  #  fi
