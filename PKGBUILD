@@ -23,7 +23,7 @@ source=(
 #tar -czvf skybian-script.tar.gz script
 #tar -czvf skybian-util.tar.gz util
 sha256sums=('f372a652a01bf2dcbe7c7c8606cbeb9778441390698cc8c10d42262148c5fe4b'
-            'b32dde4e9216fa172368d6a1c7314c25b3378d1855da793515293f5ac4e140a5'
+            '3672820328714937debdddb10999203193e12382b1cbca177951aa04d47dd5c3'
             '6191e5ab828cd3d073d88c63cc3aa32cdeddbcc0d9bd6d9ed14f036d7fecb360')
 
 
