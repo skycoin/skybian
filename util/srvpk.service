@@ -1,0 +1,12 @@
+[Unit]
+Description=serve skywire public key
+Wants=network-online.target skywire.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/usr/bin/srvpk
+
+[Install]
+WantedBy=multi-user.target

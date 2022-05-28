@@ -1,6 +1,6 @@
 pkgname=skybian
 _pkgname=skybian
-pkgdesc="Packaged modifications to the skybian image - debian package"
+pkgdesc="Packaged modifications to the skybian image, including scripts and utilities - debian package"
 pkgver='1.0.0'
 _pkgver=${pkgver}
 pkgrel=4
@@ -9,19 +9,22 @@ arch=( 'any' )
 _pkgarches=('armhf' 'arm64')
 _pkgpath="github.com/skycoin/${_pkgname}"
 url="https://${_pkgpath}"
-makedepends=('dpkg')
+makedepends=('dpkg' 'go' 'musl' 'kernel-headers-musl' 'aarch64-linux-musl' 'arm-linux-gnueabihf-musl')
 depends=()
 _debdeps=""
 source=(
 #original to skybian
 "skybian-static.tar.gz"
-#Below are scripts introduced by the maintainer
+#Below are scripts and utilities introduced by the maintainer
 "skybian-script.tar.gz"
+"skybian-util.tar.gz"
 )
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
+#tar -czvf skybian-util.tar.gz util
 sha256sums=('f372a652a01bf2dcbe7c7c8606cbeb9778441390698cc8c10d42262148c5fe4b'
-            '45935ff1f129f3452b875890781d3d0efe621ad0da09603b8778c9186a9cd862')
+            'b32dde4e9216fa172368d6a1c7314c25b3378d1855da793515293f5ac4e140a5'
+            '6191e5ab828cd3d073d88c63cc3aa32cdeddbcc0d9bd6d9ed14f036d7fecb360')
 
 
 
@@ -30,6 +33,16 @@ build() {
    msg2 "_pkgarch=$i"
    local _pkgarch=$i
    echo ${_pkgarch}
+
+   [[ $_pkgarch == "amd64" ]] && export GOARCH=amd64 && export CC=musl-gcc
+   [[ $_pkgarch == "arm64" ]] && export GOARCH=arm64 && export CC=aarch64-linux-musl-gcc
+   [[ $_pkgarch == "armhf" ]] && export GOARCH=arm && export GOARM=6 && export CC=arm-linux-gnueabihf-musl-gcc
+   #_ldflags=('-linkmode external -extldflags "-static" -buildid=')
+   #create the skywire binaries
+   cd ${srcdir}/util
+   go build -trimpath --ldflags '-s -w -linkmode external -extldflags "-static" -buildid=' -o ${_pkgarch}.srvpk .
+
+
   #create control file for the debian package
   echo "Package: ${_pkgname}" > ${srcdir}/${_pkgarch}.control
   echo "Version: ${_pkgver}-${_pkgrel}" >> ${srcdir}/${_pkgarch}.control
@@ -74,9 +87,12 @@ package() {
   install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
+  _msg2 "Installing utilities"
+  install -Dm755 ${srcdir}/util/${_pkgarch}.srvpk ${_pkgdir}/usr/bin/srvpk
   _msg2 "Installing systemd services"
   install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
   install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
+  install -Dm644 ${srcdir}/util/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
   #########################################################################
   _msg2 'Installing control file and postinst script'
   install -Dm755 ${srcdir}/${_pkgarch}.control ${_pkgdir}/DEBIAN/control
