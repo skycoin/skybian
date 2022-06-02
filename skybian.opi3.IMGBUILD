@@ -66,38 +66,34 @@ prepare() {
 }
 
 build() {
-  #standard extraction utilities don't recognizes this archive for some reason.
-  [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
-  _msg2 "checking image archive integrity"
-  _sum=$(sha256sum ../${_imgxz})
-  _msg2 "image sha256sum: ${_sum%%' '*}"
-  _check=$(cat ${_imgsha})
-  _msg2 "${_imgsha}: ${_check%%' '*}"
-  [[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && exit 1
-  [[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" &&
-  #md5sum -c *.md5 || exit 1
-  _msg2 "copying image.." #so we don't have to extract it every time
-  cp -b ../${_img} ${_imgfinal}
-  #cp -b ${_img} ${_imgfinal}
-  _msg2 "adding extra space" #may not be necessary
-  #truncate -s +1536M ${_imgfinal}
-  truncate -s +512M ${_imgfinal}
-  echo ", +" | sfdisk -N1 ${_imgfinal}
-  _msg2 "mounting image to loop device.."
-  sudo gnome-disk-image-mounter -w ${_imgfinal}
-  _msg2 "creating mount dir"
-  mkdir -p ${srcdir}/mnt
-  _msg2 "mounting ${_root_partition} to mount point"
-  sudo mount ${_root_partition} ${srcdir}/mnt
-  _msg2 "copy packages into image"
-  # export NOINSTALL=true
-  if [[ ${NOINSTALL} != "true" ]]; then #test making image without skywire installed ; install skywire on boot - experimental feature
-  	sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
-  fi
-  sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
-
-  _msg2 "copy qemu-aarch64-static command to chroot bin"
-  sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
+#standard extraction utilities don't recognizes this archive for some reason.
+[[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
+_msg2 "checking image archive integrity"
+_sum=$(sha256sum ../${_imgxz})
+_msg2 "image sha256sum: ${_sum%%' '*}"
+_check=$(cat ${_imgsha})
+_msg2 "${_imgsha}: ${_check%%' '*}"
+[[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && exit 1
+[[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" &&
+#md5sum -c *.md5 || exit 1
+_msg2 "copying image.." #so we don't have to extract it every time
+cp -b ../${_img} ${_imgfinal}
+#cp -b ${_img} ${_imgfinal}
+_msg2 "adding extra space" #may not be necessary
+#truncate -s +1536M ${_imgfinal}
+truncate -s +512M ${_imgfinal}
+echo ", +" | sfdisk -N1 ${_imgfinal}
+_msg2 "mounting image to loop device.."
+sudo gnome-disk-image-mounter -w ${_imgfinal}
+_msg2 "creating mount dir"
+mkdir -p ${srcdir}/mnt
+_msg2 "mounting ${_root_partition} to mount point"
+sudo mount ${_root_partition} ${srcdir}/mnt
+_msg2 "copy packages into image"
+sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+_msg2 "copy qemu-aarch64-static command to chroot bin"
+sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
 #sudo is used for all commands to give correct environmental vars in chroot
   _msg2 "disabling user creation on first login"
@@ -106,42 +102,32 @@ build() {
   _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
   echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
   sleep 1
-  _msg2 "CHROOT: add the repository signing key to apt keyring"
-  cat ${srcdir}/KEY.asc | sudo arch-chroot ${srcdir}/mnt sudo apt-key add -
-  #if [[ ${NOINSTALL} != "true" ]]; then
-	_msg2 "CHROOT: installing skywire with dpkg"
-	sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
-	sudo rm ${srcdir}/mnt/root/${_skywiredeb}
-  #fi
-  _msg2 "CHROOT: installing packages in chroot with dpkg" #the skybian package depends on skywire
-  sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
-  sudo rm ${srcdir}/mnt/root/${_skybiandeb}
-  #_msg2 "CHROOT: resetting skybian configuration" #the skybian package depends on skywire
-  #sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
-## included from chroot-commands.sh
-  _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
-  sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
-  _msg2 "CHROOT: Generating locale en_US.UTF-8..."
-  sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
-  #fix console / tty
-  _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
-  echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
-#  _msg2 "CHROOT: setting up ssh key access"
-#  sudo arch-chroot ${srcdir}/mnt sudo ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P ""
-#  sudo cp ${srcdir}/mnt/root/.ssh/id_rsa ${srcdir}/mnt/root/.ssh/authorized_keys
-  _msg2 "CHROOT: configuring unattended-upgrades"
-  echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
-  sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+_msg2 "CHROOT: installing skywire with dpkg"
+sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
+sudo rm ${srcdir}/mnt/root/${_skywiredeb}
+_msg2 "CHROOT: installing packages in chroot with dpkg" #the skybian package depends on skywire
+sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
+sudo rm ${srcdir}/mnt/root/${_skybiandeb}
+_msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
+sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
+_msg2 "CHROOT: Generating locale en_US.UTF-8..."
+sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
+#fix console / tty
+_msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
+echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
+_msg2 "CHROOT: configuring unattended-upgrades"
+echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
+sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
 ######################## end chroot modifications ##############################
-  [[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
-  _msg2 "Unmounting image"
-  sudo umount ${srcdir}/mnt
-  _msg2 "detatching /dev/loop0"
-  sudo losetup -d /dev/loop0
-  mv ${_imgfinal} ../${_imgfinal}
-  cd ..
-  echo "created image(s):"
-  ls $_imgfinal
+[[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
+_msg2 "Unmounting image"
+sudo umount ${srcdir}/mnt
+_msg2 "detatching /dev/loop0"
+sudo losetup -d /dev/loop0
+mv ${_imgfinal} ../${_imgfinal}
+cd ..
+echo "created image(s):"
+ls $_imgfinal
 }
 
 package() {
