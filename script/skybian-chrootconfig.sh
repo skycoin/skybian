@@ -27,3 +27,4 @@ fi
 systemctl enable NetworkManager-wait-online
 systemctl enable systemd-networkd
 systemctl enable systemd-networkd-wait-online
+fi

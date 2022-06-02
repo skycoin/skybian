@@ -24,7 +24,7 @@ source=(
 #tar -czvf skybian-script.tar.gz script
 #tar -czvf skybian-util.tar.gz util
 sha256sums=('f372a652a01bf2dcbe7c7c8606cbeb9778441390698cc8c10d42262148c5fe4b'
-            '5dfe437c4208226b278d6484bb3f6d18ffac6fd5b5a8f1b0c3bae6f429b5e2c7'
+            'e96120c8219eb12e77094702b9fa45dd8499309c9162cee03af074e2e5222186'
             '6191e5ab828cd3d073d88c63cc3aa32cdeddbcc0d9bd6d9ed14f036d7fecb360'
             'f2f964bb79541e51d5373204f4030dce6948d2d7862e345b55004b59b93d30e4')
 
@@ -72,14 +72,15 @@ package() {
   #########################################################################
   #PACKAGE AS YOU NORMALLY WOULD HERE USING ${_pkgdir} instead of ${pkgdir}
   _msg2 "Creating dirs"
-  mkdir -p ${_pkgdir}/etc/update-motd.d/
-  mkdir -p ${_pkgdir}/etc/default/
-  mkdir -p ${_pkgdir}/etc/profile.d/
   mkdir -p ${_pkgdir}/etc/sources.list.d/
-  mkdir -p ${_pkgdir}/etc/systemd/system/
+  mkdir -p ${_pkgdir}/etc/apt/trusted.gpg.d
   mkdir -p ${_pkgdir}/usr/bin/
   if [[ $_pkgarch != "amd64" ]]; then
 	  _msg2 "Installing skybian modifications"
+	  mkdir -p ${_pkgdir}/etc/update-motd.d/
+	  mkdir -p ${_pkgdir}/etc/default/
+	  mkdir -p ${_pkgdir}/etc/profile.d/
+	  mkdir -p ${_pkgdir}/etc/systemd/system/
 	  #install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
 	  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
 	  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
