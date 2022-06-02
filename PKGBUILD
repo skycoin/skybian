@@ -6,7 +6,7 @@ _pkgver=${pkgver}
 pkgrel=4
 _pkgrel=${pkgrel}
 arch=( 'any' )
-_pkgarches=('armhf' 'arm64')
+_pkgarches=('armhf' 'arm64' 'amd64')
 _pkgpath="github.com/skycoin/${_pkgname}"
 url="https://${_pkgpath}"
 makedepends=('dpkg' 'go' 'musl' 'kernel-headers-musl' 'aarch64-linux-musl' 'arm-linux-gnueabihf-musl')
@@ -18,13 +18,15 @@ source=(
 #Below are scripts and utilities introduced by the maintainer
 "skybian-script.tar.gz"
 "skybian-util.tar.gz"
+"skycoin.gpg"
 )
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
 #tar -czvf skybian-util.tar.gz util
 sha256sums=('f372a652a01bf2dcbe7c7c8606cbeb9778441390698cc8c10d42262148c5fe4b'
-            '3672820328714937debdddb10999203193e12382b1cbca177951aa04d47dd5c3'
-            '6191e5ab828cd3d073d88c63cc3aa32cdeddbcc0d9bd6d9ed14f036d7fecb360')
+            '5dfe437c4208226b278d6484bb3f6d18ffac6fd5b5a8f1b0c3bae6f429b5e2c7'
+            '6191e5ab828cd3d073d88c63cc3aa32cdeddbcc0d9bd6d9ed14f036d7fecb360'
+            'f2f964bb79541e51d5373204f4030dce6948d2d7862e345b55004b59b93d30e4')
 
 
 
@@ -76,23 +78,26 @@ package() {
   mkdir -p ${_pkgdir}/etc/sources.list.d/
   mkdir -p ${_pkgdir}/etc/systemd/system/
   mkdir -p ${_pkgdir}/usr/bin/
-  #install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
-  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
-  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
+  if [[ $_pkgarch != "amd64" ]]; then
+	  _msg2 "Installing skybian modifications"
+	  #install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
+	  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
+	  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
+	  _msg2 "Installing scripts"
+	  install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
+	  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
+	  install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
+	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
+	  _msg2 "Installing utilities"
+	  install -Dm755 ${srcdir}/util/${_pkgarch}.srvpk ${_pkgdir}/usr/bin/srvpk
+	  _msg2 "Installing systemd services"
+	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
+	  install -Dm644 ${srcdir}/util/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
+  fi
   _msg2 "Installing apt repository configuration: /etc/apt/sources.list.d/skycoin.list"
   install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
-  _msg2 "Installing scripts"
-  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
-  install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
-  install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
-  install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
-  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
-  _msg2 "Installing utilities"
-  install -Dm755 ${srcdir}/util/${_pkgarch}.srvpk ${_pkgdir}/usr/bin/srvpk
-  _msg2 "Installing systemd services"
-  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
-  install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
-  install -Dm644 ${srcdir}/util/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
+  _msg2 "Installing apt repository configuration: /etc/apt/trusted.gpg.d/skycoin.gpg"
+  install -Dm644 ${srcdir}/skycoin.gpg ${_pkgdir}/etc/apt/trusted.gpg.d/skycoin.gpg
   #########################################################################
   _msg2 'Installing control file and postinst script'
   install -Dm755 ${srcdir}/${_pkgarch}.control ${_pkgdir}/DEBIAN/control
