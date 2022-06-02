@@ -84,10 +84,9 @@ package() {
 	  #install -Dm755 ${srcdir}/static/armbian-check-first-login.sh ${_pkgdir}/etc/profile.d/
 	  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
 	  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
-	  _msg2 "Installing scripts"
+	  _msg2 "Installing skybian scripts"
 	  install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
 	  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
-	  install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
 	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
 	  _msg2 "Installing utilities"
 	  install -Dm755 ${srcdir}/util/${_pkgarch}.srvpk ${_pkgdir}/usr/bin/srvpk
@@ -95,6 +94,8 @@ package() {
 	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
 	  install -Dm644 ${srcdir}/util/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
   fi
+  _msg2 "Installing skybian-chrootconfig"
+  install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   _msg2 "Installing apt repository configuration: /etc/apt/sources.list.d/skycoin.list"
   install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
   _msg2 "Installing apt repository configuration: /etc/apt/trusted.gpg.d/skycoin.gpg"
