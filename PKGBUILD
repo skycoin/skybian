@@ -9,7 +9,7 @@ arch=( 'any' )
 _pkgarches=('armhf' 'arm64' 'amd64')
 _pkgpath="github.com/skycoin/${_pkgname}"
 url="https://${_pkgpath}"
-makedepends=('dpkg' 'go' 'musl' 'kernel-headers-musl' 'aarch64-linux-musl' 'arm-linux-gnueabihf-musl')
+makedepends=('dpkg') # 'go' 'musl' 'kernel-headers-musl' 'aarch64-linux-musl' 'arm-linux-gnueabihf-musl')
 depends=()
 _debdeps=""
 source=(
@@ -25,7 +25,7 @@ source=(
 #tar -czvf skybian-util.tar.gz util
 sha256sums=('f372a652a01bf2dcbe7c7c8606cbeb9778441390698cc8c10d42262148c5fe4b'
             'e96120c8219eb12e77094702b9fa45dd8499309c9162cee03af074e2e5222186'
-            '6191e5ab828cd3d073d88c63cc3aa32cdeddbcc0d9bd6d9ed14f036d7fecb360'
+            '45828704c32db393d4d75f09c454c34ba1472893c31dd79c697bb25df2a2589d'
             'f2f964bb79541e51d5373204f4030dce6948d2d7862e345b55004b59b93d30e4')
 
 
@@ -36,13 +36,13 @@ build() {
    local _pkgarch=$i
    echo ${_pkgarch}
 
-   [[ $_pkgarch == "amd64" ]] && export GOARCH=amd64 && export CC=musl-gcc
-   [[ $_pkgarch == "arm64" ]] && export GOARCH=arm64 && export CC=aarch64-linux-musl-gcc
-   [[ $_pkgarch == "armhf" ]] && export GOARCH=arm && export GOARM=6 && export CC=arm-linux-gnueabihf-musl-gcc
-   #_ldflags=('-linkmode external -extldflags "-static" -buildid=')
-   #create the skywire binaries
-   cd ${srcdir}/util
-   go build -trimpath --ldflags '-s -w -linkmode external -extldflags "-static" -buildid=' -o ${_pkgarch}.srvpk .
+#   [[ $_pkgarch == "amd64" ]] && export GOARCH=amd64 && export CC=musl-gcc
+#   [[ $_pkgarch == "arm64" ]] && export GOARCH=arm64 && export CC=aarch64-linux-musl-gcc
+#   [[ $_pkgarch == "armhf" ]] && export GOARCH=arm && export GOARM=6 && export CC=arm-linux-gnueabihf-musl-gcc
+#   #_ldflags=('-linkmode external -extldflags "-static" -buildid=')
+#   #create the srvpk binaries
+#   cd ${srcdir}/util
+#   go build -trimpath --ldflags '-s -w -linkmode external -extldflags "-static" -buildid=' -o ${_pkgarch}.srvpk .
 
 
   #create control file for the debian package
@@ -89,7 +89,8 @@ package() {
 	  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
 	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
 	  _msg2 "Installing utilities"
-	  install -Dm755 ${srcdir}/util/${_pkgarch}.srvpk ${_pkgdir}/usr/bin/srvpk
+	  #install -Dm755 ${srcdir}/util/${_pkgarch}.srvpk ${_pkgdir}/usr/bin/srvpk
+	  install -Dm755 ${srcdir}/util/bin/srvpk-${_pkgarch} ${_pkgdir}/usr/bin/srvpk
 	  _msg2 "Installing systemd services"
 	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
 	  install -Dm644 ${srcdir}/util/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
