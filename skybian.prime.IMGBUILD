@@ -11,7 +11,7 @@ pkgrel=6
 arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
-_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
+_img="Armbian_22.05.1_Orangepiprime_bullseye_current_5.15.43.img"
 _imgxz="${_img}.xz"
 _imgsha="Bullseye_current.sha"
 _imgshalink="https://redirect.armbian.com/orangepiprime/${_imgsha}"
@@ -35,9 +35,9 @@ source=("${_torrent}"
 "${_aptrepo}/archive/${_skybiandeb}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
-            '6746318033a36671cdf79e08a9a214c654ead86e47d121f774378a8087e9782e'
-            'f7e1d843190eca6aaa03ed3f8cf86aefdb5b72e8684040c69068c4916a6f286f'
+sha256sums=('da369e6fcafa3ec383391af004c87bb4e4e2c647c7728c79fa11e88717018e16'
+            'a6b75db961a22164595146bcdb6e9c3a799921ea550daf20f7f760c44b91b0e1'
+            'ed1a98aabf79b9c0b727b2eeefc0dfd3be10b2302d11142ad6fe512a86d883c1'
             '0349ba7cd2fe961036ef9ef0ae7b55fd528fc13d545b3050722c99a3063dc1b1'
             '00a763b02811f747d8b6d937cfd257113ba81f87ce291e8745fd7aee81e92bb7')
 
@@ -60,8 +60,8 @@ _sum=$(sha256sum ../${_imgxz})
 _msg2 "image sha256sum: ${_sum%%' '*}"
 _check=$(cat ${_imgsha})
 _msg2 "${_imgsha}: ${_check%%' '*}"
-[[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && exit 1
-[[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" &&
+[[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && rm ${_imgsha} && exit 1
+[[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" && rm ${_imgsha}
 _msg2 "copying image.." #so we don't have to extract it every time
 cp -b ../${_img} ${_imgfinal}
 _msg2 "adding extra space" #may or may not be necessary
