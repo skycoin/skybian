@@ -1,24 +1,20 @@
 COMPRESSZST=(zstd -c -T0 -18 -)
-PKGEXT='.pkg.tar.zst'
+#PKGEXT='.img.tar.zst'
+#PKGEXT='.img.tar.xz'
+#PKGEXT='.img.tar.gz'
 SKIPPGPCHECK=1
-pkgname=skybian-img
-pkgdesc="Skybian image build"
+pkgname=skybian-opi3
+pkgdesc="Skybian orange pi 3 image build"
 #pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
 pkgver='1.0.0'
 pkgrel=4
 arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
-#Armbian bullseye for orangepi prime incompatible with cluster deployment - 5-19-22#
-_img="Armbian_22.02.1_Orangepiprime_bullseye_current_5.15.25.img"
-#_img="Armbian_20.05.1_Orangepiprime_buster_current_5.4.43.img"
-#_img="Armbian_21.08.1_Orangepiprime_buster_current_5.10.60.img"
-#_img="Armbian_20.08_Orangepiprime_stretch_current_5.7.15.img"
+_img="Armbian_22.05.1_Orangepi3_bullseye_current_5.15.43.img"
 _imgxz="${_img}.xz"
 _imgsha="Bullseye_current.sha"
-_imgshalink="https://redirect.armbian.com/orangepiprime/${_imgsha}"
-#_imgzst="${_img}.tar.zst"
-#_xzlink="https://armbian.hosthatch.com/archive/orangepiprime/archive/${_imgxz}"
+_imgshalink="https://redirect.armbian.com/orangepi3/${_imgsha}"
 _xzlink="https://www.armbian.com/dl/orangepiprime/archive/${_imgxz}"
 _torrent="${_xzlink}.torrent"
 _imgfinal="skybian.img"
@@ -31,16 +27,14 @@ _aptrepo1_config="deb ${_aptrepo1} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
 _skybiandeb="skybian-1.0.0-4-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
-makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip') # 'caddy')
+makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
 source=("${_torrent}"
 "${_torrent}.md5"
 "${_imgshalink}"
-#source=("${_xzlink}"
 "${_aptrepo}/archive/${_skywiredeb}"
 "${_aptrepo}/archive/${_skybiandeb}"
 "${_aptrepo}/KEY.asc"
 )
-#"proxy.sources.list" #used with caddy
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
             '6746318033a36671cdf79e08a9a214c654ead86e47d121f774378a8087e9782e'
@@ -49,15 +43,10 @@ sha256sums=('ff68691361714c37f1d9a27ac900765a63c9d66f243efcf91c408964fef4893d'
             '1635325cfea3ba615df980972909df8db3414b775194447f192be39ab916c1ee'
             'SKIP')
 
-#pkgver() {
-#echo $(date +%Y%m%d)
-#}
-
 prepare() {
 	cd "${srcdir}"
   if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-	_msg2 "Downloading sources via torrent"
-# Download the assets via torrent - very fast!
+	_msg2 "Downloading sources via torrent"	#	very fast!
     aria2c -V --seed-time=0 ${_torrent}
     mv ${_imgxz} ../${_imgxz}
  else
@@ -75,12 +64,9 @@ _check=$(cat ${_imgsha})
 _msg2 "${_imgsha}: ${_check%%' '*}"
 [[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && exit 1
 [[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" &&
-#md5sum -c *.md5 || exit 1
 _msg2 "copying image.." #so we don't have to extract it every time
 cp -b ../${_img} ${_imgfinal}
-#cp -b ${_img} ${_imgfinal}
 _msg2 "adding extra space" #may not be necessary
-#truncate -s +1536M ${_imgfinal}
 truncate -s +512M ${_imgfinal}
 echo ", +" | sfdisk -N1 ${_imgfinal}
 _msg2 "mounting image to loop device.."
@@ -140,12 +126,12 @@ package() {
   _msg2 "Creating image checksum"
   sha256sum ${_imgfinal} > ${_imgfinal}.sha
   cat ${_imgfinal}.sha
-  if [[ ${NOZIP} != "1" ]]; then
-    cd ..
-    _msg2 "Creating .zip archive for windows"
-    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
-    mv *.zip ../
-  fi
+#  if [[ ${NOZIP} != "1" ]]; then
+#    cd ..
+#    _msg2 "Creating .zip archive for windows"
+#    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+#    mv *.zip ../
+#  fi
 }
 
 _msg2() {
@@ -158,42 +144,3 @@ _error() {
 	local mesg=$1; shift
 	printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
 }
-
-#set env to detect that this is a skybian image
-#_msg2 "CHROOT: setting SKYBIAN=true in /root/.bashrc"
-#echo 'SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
-#set env to enable skywire VPN server
-#_msg2 "CHROOT: setting VPNSERVER=true in /root/.bashrc"
-#echo 'VPNSERVER=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
-#_msg2 "CHROOT: configuring unattended-upgrades"
-##add the skybian apt repo
-#head -n32 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades > ${srcdir}/50unattended-upgrades
-#echo '        "origin=skycoin,codename=sid,label=skycoin";' >> ${srcdir}/50unattended-upgrades
-#tail -n 115 ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades >> ${srcdir}/50unattended-upgrades
-#sudo rm ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
-#sudo install -Dm644 ${srcdir}/50unattended-upgrades ${srcdir}/mnt/etc/apt/apt.conf.d/50unattended-upgrades
-##debconf
-#echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
-#sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
-##Updating in the chroot can be done natively from an archlinux host of the same architecture
-#  _msg2 "Comparing host and chroot architecture"
-#  if [[ "${_hostarch}" != "${_imgarch}" ]] ; then
-  #    _msg2 "CHROOT: updating image with apt via reverse-proxy..."
-  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list ${srcdir}/mnt/etc/apt/sources.list.bak
-  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak
-  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak
-  #    sudo install -Dm644 ${srcdir}/proxy.sources.list ${srcdir}/mnt/etc/apt/sources.list
-  #    #caddy start -config ${srcdir}/Caddyfile
-  #    sudo arch-chroot ${srcdir}/mnt sudo apt update
-  #    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
-  #    #caddy stop
-  #    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
-  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.bak ${srcdir}/mnt/etc/apt/sources.list
-  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/armbian.list
-  #    sudo mv ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list.bak ${srcdir}/mnt/etc/apt/sources.list.d/skycoin.list
-  #  else
-  #    _msg2 "CHROOT: updating image"
-  #    sudo arch-chroot ${srcdir}/mnt sudo apt update
-  #    sudo arch-chroot ${srcdir}/mnt sudo apt upgrade
-  #    sudo arch-chroot ${srcdir}/mnt sudo skybian-reset
-  #  fi

@@ -6,6 +6,7 @@
 *.torrent
 *.md5
 *.asc
+*pkg.tar.gz
 *latest.tar.gz
 *.sha
 .*/*

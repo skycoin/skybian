@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image, including scripts and utilities - debian package"
 pkgver='1.0.0'
 _pkgver=${pkgver}
-pkgrel=4
+pkgrel=6
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('armhf' 'arm64' 'amd64')
@@ -28,11 +28,9 @@ sha256sums=('f372a652a01bf2dcbe7c7c8606cbeb9778441390698cc8c10d42262148c5fe4b'
             '45828704c32db393d4d75f09c454c34ba1472893c31dd79c697bb25df2a2589d'
             'f2f964bb79541e51d5373204f4030dce6948d2d7862e345b55004b59b93d30e4')
 
-
-
 build() {
   for i in ${_pkgarches[@]}; do
-   msg2 "_pkgarch=$i"
+   _msg2 "_pkgarch=$i"
    local _pkgarch=$i
    echo ${_pkgarch}
 
@@ -43,7 +41,6 @@ build() {
 #   #create the srvpk binaries
 #   cd ${srcdir}/util
 #   go build -trimpath --ldflags '-s -w -linkmode external -extldflags "-static" -buildid=' -o ${_pkgarch}.srvpk .
-
 
   #create control file for the debian package
   echo "Package: ${_pkgname}" > ${srcdir}/${_pkgarch}.control

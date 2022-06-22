@@ -1,14 +1,15 @@
 #!/usr/bin/bash
-#build until the server quits segfaulting on compression
 #don't forget to update checksums first
 updpkgsums skybian.opi3.IMGBUILD
-if mountpoint -q -- "src/mnt"; then
-	sudo umount -l src/mnt
-fi
-[[ $(losetup | grep /dev/loop0) == *"/dev/loop0"* ]] && sudo losetup -d /dev/loop0
+sudo umount -l src/mnt
+sudo losetup -d /dev/loop0
 if [[ $1 == "1" ]]; then
 	#build once and dont compress the archive ; for testing
-NOZIP="1" makepkg  --noarchive -fp skybian.opi3.IMGBUILD
+makepkg  --noarchive -fp skybian.opi3.IMGBUILD
 else
-makepkg -fp skybian.opi3.IMGBUILD || makepkg --skippgpcheck -fRp skybian.opi3.IMGBUILD || makepkg --skippgpcheck -fRp skybian.opi3.IMGBUILD || makepkg --skippgpcheck -fRp skybian.opi3.IMGBUILD || makepkg --skippgpcheck -fRp skybian.opi3.IMGBUILD || makepkg --skippgpcheck -fRp skybian.opi3.IMGBUILD
+	#attempt the compression until success
+	PKGEXT='.pkg.tar.zst' makepkg -p skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.opi3.IMGBUILD
+	PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.opi3.IMGBUILD
+	PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.opi3.IMGBUILD
 fi
+mmv '*.any.pkg.tar.zst' '#1.arm64.img.tar.zst'
