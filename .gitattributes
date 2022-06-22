@@ -1,2 +1,3 @@
 *.PKGBUILD linguist-language=Shell
 PKGBUILD linguist-language=Shell
+IMGBUILD linguist-language=Shell
