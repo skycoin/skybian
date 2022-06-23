@@ -44,6 +44,9 @@ aria2c -V --seed-time=0 ${_torrent}
 mv ${_imgxz} ../${_imgxz}
 else
 _msg2 "found downloaded sources"
+if [[ ! -f ../${_imgxz} ]]; then
+mv ${_imgxz} ../${_imgxz}
+fi
 fi
 }
 
