@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 #don't forget to update checksums first
+rm Bullseye_current.sha
 updpkgsums skybian.prime.IMGBUILD
 sudo umount -l src/mnt
 sudo losetup -d /dev/loop0
