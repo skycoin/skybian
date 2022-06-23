@@ -1,13 +1,13 @@
 pkgname=skyraspbian-rpi3
 pkgdesc="Skyraspbian armhf image build"
+_imgarch="armhf"
 pkgver='1.0.0'
 pkgrel=6
 arch=('any')
-_imgarch="armhf"
 _hostarch=$(dpkg --print-architecture)
-_img="2022-04-04-raspios-buster-${_imgarch}.img"
-_imgxz="2022-04-04-raspios-buster-${_imgarch}.zip"
-_xzlink="https://downloads.raspberrypi.org/raspios_${_imgarch}/images/raspios_${_imgarch}-2022-04-07/2022-04-04-raspios-bullseye-${_imgarch}.img.xz"
+_img="2022-04-04-raspios-bullseye-${_imgarch}.img"
+_imgxz="${_img}.xz"
+_xzlink="https://downloads.raspberrypi.org/raspios_${_imgarch}/images/raspios_${_imgarch}-2022-04-07/${_imgxz}"
 _torrent="${_xzlink}.torrent"
 _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p2
@@ -18,96 +18,99 @@ _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
 _skybiandeb="skybian-1.0.0-4-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
-makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
+makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 depends=()
 source=("${_torrent}"
 "${_aptrepo}/archive/${_skywiredeb}"
 "${_aptrepo}/archive/${_skybiandeb}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('87ee2d8543517cefb2dc12dd958f72915c470c932bb0a77f9d4ba39bd710bac5'
-            '69a1694e2180f3c5264c0105a96797ed51b86854f8c881474bd84613bfe617db'
-            'SKIP')
+sha256sums=('f4c402dea48e7c58fbcecc63fc9ec28d73c8c6486b4df792b935ed18f54bc6d9'
+            'b68d11e28baa54675c43e425e58001961fdaac44d725f1a41f9b65f07b98ebb9'
+            'f604f8d624ee427c9ddd4ff921d7a8c62b22f4def4a3ecea0fdb69cf3f85f703')
 
 prepare() {
-	cd "${srcdir}"
-	if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-		_msg2 "Downloading sources via torrent"	#	very fast!
-		aria2c -V --seed-time=0 ${_torrent}
-		mv ${_imgxz} ../${_imgxz}
-	else
-		_msg2 "found downloaded sources"
-	fi
+cd "${srcdir}"
+if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
+_msg2 "Downloading sources via torrent"	#	very fast!
+aria2c -V --seed-time=0 ${_torrent}
+mv ${_imgxz} ../${_imgxz}
+else
+_msg2 "found downloaded sources"
+if [[ ! -f ../${_imgxz} ]]; then
+mv ${_imgxz} ../${_imgxz}
+fi
+fi
 }
 
 build() {
-	#standard extraction utilities don't recognizes this archive for some reason.
-	[[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" &&  dtrx -no ../${_imgxz} && mv ${_img%.img}/${_img} ../${_img}
-	_msg2 "copying image.." #so we don't have to extract it every time
-	cp -b ../${_img} ${_imgfinal}
-	_msg2 "mounting image to loop device.."
-	sudo gnome-disk-image-mounter -w ${_imgfinal}
-	_msg2 "creating mount dir"
-	_mntdir="${srcdir}/mnt"
-	mkdir -p ${_mntdir}
-	_msg2 "mounting ${_root_partition} to mount point"
-	sudo mount ${_root_partition} ${_mntdir}
-	_msg2 "copy packages into apt cache"
-	sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
-	sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
-	_msg2 "copy qemu-aarch64-static command to chroot bin"
-	sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
-################## chroot modifications for apt repo & package #################
-	#sudo is used for all commands to give correct environmental vars in chroot
-	_msg2 "CHROOT: installing skywire with dpkg"
-	sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
-	sudo rm ${srcdir}/mnt/root/${_skywiredeb}
-	_msg2 "CHROOT: installing packages in chroot with dpkg"
-	sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skybiandeb}
-	sudo rm ${srcdir}/mnt/root/${_skybiandeb}
-	sudo arch-chroot ${_mntdir} sudo systemctl enable skywire-autoconfig
-	##set password for _defaultuser
-	_msg2 "CHROOT: setting password skybian for ${_defaultuser}"
-	echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
-	sleep 1
-	## included from chroot-commands.sh
-	_msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
-	sudo arch-chroot ${_mntdir} sudo /sbin/fake-hwclock save force
-	_msg2 "CHROOT: Generating locale en_US.UTF-8..."
-	sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
-	_msg2 "Unmounting image root partition"
-	sudo umount ${_mntdir}
+#standard extraction utilities don't recognizes this archive for some reason.
+[[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" &&  dtrx -no ../${_imgxz} && mv ${_img} ../${_img}
+_msg2 "copying image.." #so we don't have to extract it every time
+cp -b ../${_img} ${_imgfinal}
+_msg2 "mounting image to loop device.."
+sudo gnome-disk-image-mounter -w ${_imgfinal}
+_msg2 "creating mount dir"
+_mntdir="${srcdir}/mnt"
+mkdir -p ${_mntdir}
+_msg2 "mounting ${_root_partition} to mount point"
+sudo mount ${_root_partition} ${_mntdir}
+_msg2 "copy packages into apt cache"
+sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+_msg2 "copy qemu-aarch64-static command to chroot bin"
+sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
+################# chroot modifications for apt repo & package #################
+#sudo is used for all commands to give correct environmental vars in chroot
+_msg2 "CHROOT: installing skywire with dpkg"
+sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
+sudo rm ${srcdir}/mnt/root/${_skywiredeb}
+_msg2 "CHROOT: installing packages in chroot with dpkg"
+sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skybiandeb}
+sudo rm ${srcdir}/mnt/root/${_skybiandeb}
+sudo arch-chroot ${_mntdir} sudo systemctl enable skywire-autoconfig
+##set password for _defaultuser
+_msg2 "CHROOT: setting password skybian for ${_defaultuser}"
+echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+sleep 1
+## included from chroot-commands.sh
+_msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
+sudo arch-chroot ${_mntdir} sudo /sbin/fake-hwclock save force
+_msg2 "CHROOT: Generating locale en_US.UTF-8..."
+sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
+_msg2 "Unmounting image root partition"
+sudo umount ${_mntdir}
 ######################## end chroot modifications ##############################
 ################# SKYRASPBIAN SPECIFIC BOOT CONFIG PARAMS ######################
-	_msg2 "creating mount dir for boot partition"
-	_mntdir="${srcdir}/boot"
-	mkdir -p ${_mntdir}
-	_msg2 "mounting ${_boot_partition} to mount point"
-	sudo mount ${_boot_partition} ${_mntdir}
-	_msg2 "Enabling UART"
-	sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${_mntdir}/config.txt"
-	_msg2 "Enabling HDMI"
-	sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${_mntdir}/config.txt"
-	_msg2 "Enabling SSH"
-	sudo touch "${_mntdir}/SSH.txt"
-	_msg2 "Unounting image boot partition"
-	sudo umount ${_mntdir}
+_msg2 "creating mount dir for boot partition"
+_mntdir="${srcdir}/boot"
+mkdir -p ${_mntdir}
+_msg2 "mounting ${_boot_partition} to mount point"
+sudo mount ${_boot_partition} ${_mntdir}
+_msg2 "Enabling UART"
+sudo sed -i '/^#dtparam=spi=on.*/a enable_uart=1' "${_mntdir}/config.txt"
+_msg2 "Enabling HDMI"
+sudo sed -i 's/#hdmi_force_hotplug=1/hdmi_force_hotplug=1/' "${_mntdir}/config.txt"
+_msg2 "Enabling SSH"
+sudo touch "${_mntdir}/SSH.txt"
+_msg2 "Unounting image boot partition"
+sudo umount ${_mntdir}
 ########################## end boot param modifications  #######################
-	_msg2 "detatching /dev/loop0"
-	sudo losetup -d /dev/loop0
-	mv ${_imgfinal} ../${_imgfinal}
+_msg2 "detatching /dev/loop0"
+sudo losetup -d /dev/loop0
+mv ${_imgfinal} ../${_imgfinal}
 }
 
 package() {
-	#Just let makepkg compress the archive as it does automatically for a package
-	#and then remove the metadata from the archive and change the extension
-	#avoid the compression step with makepkg --noarchive
-	#package only, assuming ${_imgfinal} exists with makepkg -R
-	install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
-	cd ${pkgdir}
-	_msg2 "Creating image checksums"
-	sha256sum ${_imgfinal} > ${_imgfinal}.sha
-	cat ${_imgfinal}.sha
+#Just let makepkg compress the archive as it does automatically for a package
+#and then remove the metadata from the archive and change the extension
+#avoid the compression step with makepkg --noarchive
+#package only, assuming ${_imgfinal} exists with makepkg -R
+install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
+cd ${pkgdir}
+_msg2 "Creating image checksums"
+sha256sum ${_imgfinal} > ${_imgfinal}.sha
+cat ${_imgfinal}.sha
 #  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ]]; then
 #    cd ..
 #    _msg2 "Creating .zip archive for windows"
