@@ -16,12 +16,13 @@ _defaultuser=pi
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-4-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static' 'zip')
 depends=()
 source=("${_torrent}"
 "${_aptrepo}/archive/${_skywiredeb}"
-"${_aptrepo}/KEY.asc"
+"${_aptrepo}/archive/${_skybiandeb}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('87ee2d8543517cefb2dc12dd958f72915c470c932bb0a77f9d4ba39bd710bac5'
@@ -51,35 +52,29 @@ build() {
   mkdir -p ${_mntdir}
 	_msg2 "mounting ${_root_partition} to mount point"
   sudo mount ${_root_partition} ${_mntdir}
-	_msg2 "copy packages into apt cache"
-  sudo cp -b ${srcdir}/${_skywiredeb} ${_mntdir}/root/${_skywiredeb}
-	_msg2 "copying repository signing key to root dir"
-  sudo cp -b ${srcdir}/KEY.asc ${_mntdir}/root/KEY.asc
-	_msg2 "copy qemu-aarch64-satatic command to chroot bin"
+	_msg2 "copy packages into image"
+	sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+	sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+	_msg2 "copy qemu-aarch64-static command to chroot bin"
   sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
 #sudo is used for all commands to give correct environmental vars in chroot
-  _msg2 "CHROOT: configuring package repository in /etc/apt/sources.list"
-  cp ${_mntdir}/etc/apt/sources.list ${srcdir}/sources.list
-  sudo rm ${_mntdir}/etc/apt/sources.list
-  echo "${_aptrepo_config}" >> ${srcdir}/sources.list
-  sudo install -Dm644 ${srcdir}/sources.list ${_mntdir}/etc/apt/sources.list
-	_msg2 "CHROOT: add the repository signing key to apt keyring"
-  sudo arch-chroot ${_mntdir} sudo apt-key add /root/KEY.asc
-	_msg2 "CHROOT: installing skywire with dpkg"
-  sudo arch-chroot ${_mntdir} sudo dpkg -i /root/${_skywiredeb}
-  sudo arch-chroot ${_mntdir} sudo rm /root/${_skywiredeb}
-  sudo arch-chroot ${_mntdir} sudo systemctl disable skywire
-  sudo arch-chroot ${_mntdir} sudo systemctl enable skywire-autoconfig
-  sudo rm ${_mntdir}/opt/skywire/skywire.json
+_msg2 "CHROOT: installing skywire with dpkg"
+sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
+sudo rm ${srcdir}/mnt/root/${_skywiredeb}
+_msg2 "CHROOT: installing packages in chroot with dpkg"
+sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skybiandeb}
+sudo rm ${srcdir}/mnt/root/${_skybiandeb}
+ sudo arch-chroot ${_mntdir} sudo systemctl enable skywire-autoconfig
+ ##set password for _defaultuser
+ _msg2 "CHROOT: setting password 'skybian' for user: ${_defaultuser}"
+ echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+ sleep 1
 ## included from chroot-commands.sh
   _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
   sudo arch-chroot ${_mntdir} sudo /sbin/fake-hwclock save force
   _msg2 "CHROOT: Generating locale en_US.UTF-8..."
   sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
-  ##set password for _defaultuser
-  _msg2 "CHROOT: setting password skybian for ${_defaultuser}"
-  echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
   _msg2 "Unmounting image root partition"
   sudo umount ${_mntdir}
 ######################## end chroot modifications ##############################

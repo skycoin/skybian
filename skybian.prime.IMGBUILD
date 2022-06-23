@@ -43,100 +43,100 @@ sha256sums=('da369e6fcafa3ec383391af004c87bb4e4e2c647c7728c79fa11e88717018e16'
 
 prepare() {
 	cd "${srcdir}"
-  if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-	_msg2 "Downloading sources via torrent"	#	very fast!
-    aria2c -V --seed-time=0 ${_torrent}
-    mv ${_imgxz} ../${_imgxz}
- else
-    _msg2 "found downloaded sources"
- fi
+	if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
+		_msg2 "Downloading sources via torrent"	#	very fast!
+		aria2c -V --seed-time=0 ${_torrent}
+		mv ${_imgxz} ../${_imgxz}
+	else
+		_msg2 "found downloaded sources"
+	fi
 }
 
 build() {
-#standard extraction utilities don't recognizes the armbian archive for some reason.
-[[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
-_msg2 "checking image archive integrity"
-_sum=$(sha256sum ../${_imgxz})
-_msg2 "image sha256sum: ${_sum%%' '*}"
-_check=$(cat ${_imgsha})
-_msg2 "${_imgsha}: ${_check%%' '*}"
-[[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && rm ${_imgsha} && exit 1
-[[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" && rm ${_imgsha}
-_msg2 "copying image.." #so we don't have to extract it every time
-cp -b ../${_img} ${_imgfinal}
-_msg2 "adding extra space" #may or may not be necessary
-truncate -s +512M ${_imgfinal}
-echo ", +" | sfdisk -N1 ${_imgfinal}
-_msg2 "mounting image to loop device.."
-sudo gnome-disk-image-mounter -w ${_imgfinal}
-_msg2 "creating mount dir"
-mkdir -p ${srcdir}/mnt
-_msg2 "mounting ${_root_partition} to mount point"
-sudo mount ${_root_partition} ${srcdir}/mnt
-_msg2 "copying packages into image"
-sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
-sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
-_msg2 "copying qemu-aarch64-static command to chroot bin"
-sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
-################## chroot modifications for apt repo & package #################
-#sudo is used for all commands to give correct environmental vars in chroot
-_msg2 "disabling user creation on first login"
-sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
-##set password for _defaultuser
-_msg2 "CHROOT: setting password skybian for ${_defaultuser}"
-echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
-sleep 1
-_msg2 "CHROOT: installing skywire with dpkg"
-sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
-sudo rm ${srcdir}/mnt/root/${_skywiredeb}
-_msg2 "CHROOT: installing packages in chroot with dpkg"
-sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
-sudo rm ${srcdir}/mnt/root/${_skybiandeb}
-## included from chroot-commands.sh
-_msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
-sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
-_msg2 "CHROOT: Generating locale en_US.UTF-8..."
-sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
-#fix console / tty
-_msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
-echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
-_msg2 "CHROOT: configuring unattended-upgrades"
-echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
-sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
-######################## end chroot modifications ##############################
-[[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
-_msg2 "Unmounting image"
-sudo umount ${srcdir}/mnt
-_msg2 "detatching /dev/loop0"
-sudo losetup -d /dev/loop0
-mv ${_imgfinal} ../${_imgfinal}
-cd ..
-echo "created image(s):"
-ls $_imgfinal
+	#standard extraction utilities don't recognizes the armbian archive for some reason.
+	[[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
+	_msg2 "checking image archive integrity"
+	_sum=$(sha256sum ../${_imgxz})
+	_msg2 "image sha256sum: ${_sum%%' '*}"
+	_check=$(cat ${_imgsha})
+	_msg2 "${_imgsha}: ${_check%%' '*}"
+	[[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && rm ${_imgsha} && exit 1
+	[[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" && rm ${_imgsha}
+	_msg2 "copying image.." #so we don't have to extract it every time
+	cp -b ../${_img} ${_imgfinal}
+	_msg2 "adding extra space" #may or may not be necessary
+	truncate -s +512M ${_imgfinal}
+	echo ", +" | sfdisk -N1 ${_imgfinal}
+	_msg2 "mounting image to loop device.."
+	sudo gnome-disk-image-mounter -w ${_imgfinal}
+	_msg2 "creating mount dir"
+	mkdir -p ${srcdir}/mnt
+	_msg2 "mounting ${_root_partition} to mount point"
+	sudo mount ${_root_partition} ${srcdir}/mnt
+	_msg2 "copying packages into image"
+	sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
+	sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+	_msg2 "copying qemu-aarch64-static command to chroot bin"
+	sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
+	################## chroot modifications for apt repo & package #################
+	#sudo is used for all commands to give correct environmental vars in chroot
+	_msg2 "disabling user creation on first login"
+	sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
+	##set password for _defaultuser
+	_msg2 "CHROOT: setting password skybian for ${_defaultuser}"
+	echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+	sleep 1
+	_msg2 "CHROOT: installing skywire with dpkg"
+	sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
+	sudo rm ${srcdir}/mnt/root/${_skywiredeb}
+	_msg2 "CHROOT: installing packages in chroot with dpkg"
+	sudo arch-chroot ${srcdir}/mnt sudo CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
+	sudo rm ${srcdir}/mnt/root/${_skybiandeb}
+	## included from chroot-commands.sh
+	_msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
+	sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
+	_msg2 "CHROOT: Generating locale en_US.UTF-8..."
+	sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
+	#fix console / tty
+	_msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
+	echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
+	_msg2 "CHROOT: configuring unattended-upgrades"
+	echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
+	sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
+	######################## end chroot modifications ##############################
+	[[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
+	_msg2 "Unmounting image"
+	sudo umount ${srcdir}/mnt
+	_msg2 "detatching /dev/loop0"
+	sudo losetup -d /dev/loop0
+	mv ${_imgfinal} ../${_imgfinal}
+	cd ..
+	echo "created image(s):"
+	ls $_imgfinal
 }
 
 package() {
-  #let makepkg compress the archive as it does automatically for any package
-  #afterwards remove the metadata from the archive and change the extension
-  #avoid the compression step with makepkg --noarchive
-  #package only, assuming ${_imgfinal} exists with makepkg -R
-  install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
-  cd ${pkgdir}
-  _msg2 "Creating image checksum"
-  sha256sum ${_imgfinal} > ${_imgfinal}.sha
-  cat ${_imgfinal}.sha
-#  if [[ ${NOZIP} != "1" ]]; then
-#    cd ..
-#    _msg2 "Creating .zip archive for windows"
-#    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
-#    mv *.zip ../
- # fi
+	#let makepkg compress the archive as it does automatically for any package
+	#afterwards remove the metadata from the archive and change the extension
+	#avoid the compression step with makepkg --noarchive
+	#package only, assuming ${_imgfinal} exists with makepkg -R
+	install -Dm644 ${srcdir}/../${_imgfinal} ${pkgdir}/
+	cd ${pkgdir}
+	_msg2 "Creating image checksum"
+	sha256sum ${_imgfinal} > ${_imgfinal}.sha
+	cat ${_imgfinal}.sha
+	# if [[ ${NOZIP} != "1" ]]; then
+	# 	cd ..
+	# 	_msg2 "Creating .zip archive for windows"
+	# 	zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+	# 	mv *.zip ../
+	# fi
 }
 
 _msg2() {
-(( QUIET )) && return
-local mesg=$1; shift
-printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+	(( QUIET )) && return
+	local mesg=$1; shift
+	printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
 }
 
 _error() {
