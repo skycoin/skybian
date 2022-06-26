@@ -1,4 +1,25 @@
-Builds require:
+# Skybian Image
+
+The Skybian image is a Debian-based ARM Operating System image with skywire pre-installed.
+
+Currently, the following SBCs (Single Board Computer) are supported:
+
+* Orange Pi Prime
+* Orange Pi 3
+* Raspberry Pi 32-bit and 64-bit
+
+This repository has two types of builds:
+
+The first is a [PKGBUILD](PKGBUILD) for the skybian.deb packaged modifications to the base image.
+
+The second are [IMGBUILD](skybian.prime.IMGBUILD)s, which modify a base Armbian or Raspbian images by installing the skybian and skywire-bin packages, setting the password, etc.
+
+Release images for can be found at [https://deb.skywire.skycoin.com/img/](https://deb.skywire.skycoin.com/img)
+
+### Prerequisite
+
+To build everything in this repo requires:
+
 * archlinux host
 * ~15gb of disk space
 
@@ -10,44 +31,40 @@ yay -S 'arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'qemu-arm-static' 'zip'
 ```
 Note: be sure to install the binary package `qemu-arm-static-bin` if you don't have `qemu-arm-static` installed already.
 
-Build the image and compress into an archive:
+Build only without creating an archive:
 ```
-PKGEXT='.img.tar.zst' makepkg -p skybian.prime.IMGBUILD
-PKGEXT='.img.tar.xz' makepkg -p skybian.prime.IMGBUILD
-PKGEXT='.img.tar.gz' makepkg -p skybian.prime.IMGBUILD
-```
-Build only without creating .zst archive (still creates .zip):
-```
- makepkg --noarchive -p skybian.prime.IMGBUILD
+makepkg --noarchive -p skybian.prime.IMGBUILD
 ```
 
-The image, when created, can be found in the pkg dir.
-
-The image archives will populate at the top level.
+Once the image is created, it can be compressed into the desired archive format:
+```
+PKGEXT='.img.tar.zst' makepkg -fRp skybian.prime.IMGBUILD
+PKGEXT='.img.tar.xz' makepkg -fRp skybian.prime.IMGBUILD
+PKGEXT='.img.tar.gz' makepkg -fRp skybian.prime.IMGBUILD
+```
 
 Update checksums on changes to source files:
-
 ```
 updpkgsums skybian.prime.IMGBUILD
 ```
 
-### Skybian package:
+### Skybian .deb package:
 
 The skybian amd64 package includes only the apt repo configuration and repository signing key.
 
 The skybian armhf and arm64 packages additionally contain the modifications to the base image ; when installed in a chroot, the skybian package enables the automatic remote hypervisor configuration on the first boot of the skybian image to a hypervisor running on the xxx.xxx.xxx.2 ip address of the current subnet.
 
-to build the skybian package, first install dependencies from AUR:
+to build the skybian package, first install dpkg from the AUR:
 ```
 yay -S dpkg
 ```
 
-Build:
+Build the skybian .deb package:
 ```
 makepkg
 ```
 
-On changes to source files in `script` or `static` dir; re-create the source archive(s):
+On changes to source files in [script](script) or [static](static) dir ; re-create the source archive(s):
 ```
 tar -czvf skybian-static.tar.gz static
 tar -czvf skybian-script.tar.gz script
@@ -59,16 +76,14 @@ updpkgsums
 ```
 
 ### Building Both
-Note: requires `mmv` or `mmv-go`
 
- An automated development workflow is made possible with the skybian-prime.sh and skybian.sh scripts, which build the image and package respectively. The version of the skybian package *must match* the version referenced in the skybian.prime.IMGBUILD:
+ An automated development workflow is made possible with the skybian-prime.sh and skybian.sh scripts, which build the image and package respectively. The version of the skybian and skywire packages *must match* the version referenced in the skybian.prime.IMGBUILD:
  ```
  ./skybian.sh
  ./skybian-prime.sh 1
 ```
 
 ### Building Image Variants
-Note: requires `mmv` or `mmv-go`
 
 orange pi prime
 ```
@@ -91,9 +106,16 @@ raspberry pi 4
 
 The Skybian orange pi prime image, when booted, checks for any machine on the network at the xxx.xxx.xxx.2 ip address of the current subnet; i.e. 192.168.0.2 [skymanager.sh](/skymanager.sh).
 
-If nothing is on that ip address, a static IP is set to that address via systemd-networkd. A hypervisor configuration is created and skywire.service is started via systemd by the skywire-autoconfig script.
+#### _If nothing is on that ip address;_
+* a static IP is set to that address via systemd-networkd.
+* A hypervisor configuration is created by the skywire-autoconfig script.
+* skywire.service is started (by skywire-autoconfig)
+* srvpk.service is started ; which is an http endpoint for querying the hypervisor's public key
 
-If a machine is on that ip address, the rpc server of the visor running at the .2 ip address of the current subnet is queried for its public key; the public key is then used to create a visor config with that public key as the remote hypervisor and the skywie-visor systemd service is started by the same skywire-autoconfig script.
+#### _If a machine is on that ip address;_
+* the hypervisor running at the .2 ip address of the current subnet is queried for its public key
+* the public key is used to create a visor config with that public key as the remote hypervisor
+* the skywie-visor systemd service is started by the same skywire-autoconfig script.
 
 If no configuration was generated, it is attempted again on reboot.
 
@@ -131,10 +153,9 @@ Images for testing can be found at [https://deb.skywire.skycoin.com/img/](https:
     - disables skymanager.service
 * [skymanager.service](/script/skymanager.service)
     - runs on skybian first boot; wants network-online.target and the wait-online.services
-* [srvpk(.go)](/util/srvpk.go)
-    - http endpoint for hypervisor public key (hypervisor)
 * [srvpk.service](/util/srvpk.service)
     - wants skywire.service
+	- runs `skywire-cli hv srvpk`
 * [skybian-chrootconfig.sh](/script/skybian-chrootconfig.sh) (expected to run in chroot)
     - called by [postinst.sh](/script/postinst.sh) of the skybian.deb package upon installation
     - disables and enables required systemd services

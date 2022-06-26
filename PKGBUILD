@@ -13,13 +13,11 @@ makedepends=('dpkg')
 depends=()
 _debdeps=""
 source=("skybian-static.tar.gz"
-		"skybian-script.tar.gz"
-		"skycoin.gpg")
+		"skybian-script.tar.gz")
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
-sha256sums=('f372a652a01bf2dcbe7c7c8606cbeb9778441390698cc8c10d42262148c5fe4b'
-            'e96120c8219eb12e77094702b9fa45dd8499309c9162cee03af074e2e5222186'
-            'f2f964bb79541e51d5373204f4030dce6948d2d7862e345b55004b59b93d30e4')
+sha256sums=('6b717ab477ff740e005fbe53de6d791535ba4dd464bc2d09ed4e308433aa43a2'
+            '9463235f642d4ab0c7cc3bf522056ebf2dfbde9266938faf218a3e1febed9e0b')
 
 build() {
   for i in ${_pkgarches[@]}; do
@@ -74,7 +72,7 @@ package() {
   _msg2 "Installing apt repository configuration to:\n    /etc/apt/sources.list.d/skycoin.list"
   install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
   _msg2 "Installing apt repository signing key to:\n    /etc/apt/trusted.gpg.d/skycoin.gpg"
-  install -Dm644 ${srcdir}/skycoin.gpg ${_pkgdir}/etc/apt/trusted.gpg.d/skycoin.gpg
+  install -Dm644 ${srcdir}/script/skycoin.gpg ${_pkgdir}/etc/apt/trusted.gpg.d/skycoin.gpg
   #########################################################################
   _msg2 'Installing control file and postinst script'
   install -Dm755 ${srcdir}/${_pkgarch}.control ${_pkgdir}/DEBIAN/control
