@@ -1,6 +1,6 @@
 pkgname=skybian
 _pkgname=skybian
-pkgdesc="Packaged modifications to the skybian image, including scripts and utilities - debian package"
+pkgdesc="Packaged modifications to the skybian image, including repo configuration - debian package"
 pkgver='1.0.0'
 _pkgver=${pkgver}
 pkgrel=6
@@ -67,7 +67,7 @@ package() {
 	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
 	  _msg2 "Installing systemd services"
 	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
-	  install -Dm644 ${srcdir}/util/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
+	  install -Dm644 ${srcdir}/script/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
   fi
   _msg2 "Installing skybian-chrootconfig"
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
