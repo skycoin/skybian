@@ -14,17 +14,17 @@ depends=()
 _debdeps=""
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
+sha256sums=('6b717ab477ff740e005fbe53de6d791535ba4dd464bc2d09ed4e308433aa43a2'
+            '215f7fa408bc0873bd47c06805d1b593d6623db230fb3129e4cef750489e17a5')
+
 #tar -czvf skybian-static.tar.gz static
 #tar -czvf skybian-script.tar.gz script
-sha256sums=('6b717ab477ff740e005fbe53de6d791535ba4dd464bc2d09ed4e308433aa43a2'
-            '9463235f642d4ab0c7cc3bf522056ebf2dfbde9266938faf218a3e1febed9e0b')
 
 build() {
   for i in ${_pkgarches[@]}; do
    _msg2 "_pkgarch=$i"
    local _pkgarch=$i
    _msg2 "Creating DEBIAN/control file for ${_pkgarch}"
-  #create control file for the debian package
   echo "Package: ${_pkgname}" > ${srcdir}/${_pkgarch}.control
   echo "Version: ${_pkgver}-${_pkgrel}" >> ${srcdir}/${_pkgarch}.control
   echo "Priority: optional" >> ${srcdir}/${_pkgarch}.control
@@ -42,7 +42,7 @@ package() {
   _msg2 "_pkgarch=${i}"
   local _pkgarch=${i}
    echo ${_pkgarch}
-  #set up to create a .deb package
+  #set up to create a .deb package with dpkg
   _debpkgdir="${_pkgname}-${pkgver}-${_pkgrel}-${_pkgarch}"
   _pkgdir="${pkgdir}/${_debpkgdir}"
   #########################################################################

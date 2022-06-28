@@ -1,12 +1,13 @@
 [Unit]
-Description=serve skywire public key
-Wants=network-online.target skywire.service
+Description=http endpoint for skywire public key
+Wants=skywire.service
 
 [Service]
-Type=oneshot
-User=root
-Group=root
-ExecStart=/usr/bin/skywire-cli hv srvpk
+Type=simple
+ExecStart=/bin/nc -vlc -p 7998 -e 'echo -ne "HTTP/1.0 200 OK\r\nContent-Length: "; skywire-cli visor pk | wc -m ; echo -ne "\r\n"; skywire-cli visor pk'
+Restart=always
+StartLimitInterval=1min
+StartLimitBurst=60
 
 [Install]
 WantedBy=multi-user.target
