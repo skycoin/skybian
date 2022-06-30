@@ -1,6 +1,8 @@
 version: "{build}"
+<<<<<<< HEAD
+=======
 
-stack: go 1.16.7
+stack: go 1.16.10
 
 environment:
   matrix:
@@ -70,3 +72,4 @@ for:
         artifact: deploy
         on:
           APPVEYOR_REPO_TAG: true
+>>>>>>> master

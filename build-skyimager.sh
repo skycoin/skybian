@@ -10,6 +10,7 @@ export GOBIN
 
 # Run fyne-cross
 go get github.com/fyne-io/fyne-cross || exit 1
+go mod vendor || exit 1
 
 ./bin/fyne-cross \
   linux \
