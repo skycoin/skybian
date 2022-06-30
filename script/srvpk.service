@@ -1,0 +1,13 @@
+[Unit]
+Description=http endpoint for skywire public key
+Wants=skywire.service
+
+[Service]
+Type=simple
+ExecStart=/bin/nc -vlc -p 7998 -e 'echo -ne "HTTP/1.0 200 OK\r\nContent-Length: "; skywire-cli visor pk | wc -m ; echo -ne "\r\n"; skywire-cli visor pk'
+Restart=always
+StartLimitInterval=1min
+StartLimitBurst=60
+
+[Install]
+WantedBy=multi-user.target
