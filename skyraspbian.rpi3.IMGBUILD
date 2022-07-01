@@ -2,7 +2,7 @@ pkgname=skyraspbian-rpi3
 pkgdesc="Skyraspbian armhf image build"
 _imgarch="armhf"
 pkgver='1.0.0'
-pkgrel=6
+pkgrel=7
 arch=('any')
 _hostarch=$(dpkg --print-architecture)
 _img="2022-04-04-raspios-bullseye-${_imgarch}.img"
@@ -26,7 +26,7 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('f4c402dea48e7c58fbcecc63fc9ec28d73c8c6486b4df792b935ed18f54bc6d9'
-            'b68d11e28baa54675c43e425e58001961fdaac44d725f1a41f9b65f07b98ebb9'
+            '819aaf57845c940b8a9f612f2c31d767a48b05a56afbaed403ebb90ca1774fe6'
             'f604f8d624ee427c9ddd4ff921d7a8c62b22f4def4a3ecea0fdb69cf3f85f703')
 
 prepare() {

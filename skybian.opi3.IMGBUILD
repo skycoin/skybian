@@ -7,7 +7,7 @@ _imgshalink="https://redirect.armbian.com/orangepi3/${_imgsha}"
 _xzlink="https://www.armbian.com/dl/orangepi3/archive/${_imgxz}"
 #pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
 pkgver='1.0.0'
-pkgrel=6
+pkgrel=7
 arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
@@ -33,7 +33,7 @@ noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('d81591e426fbeab3eff07221307deab82374138f2f92335eb824b2af8b47b5df'
             'a6a5c00f56b17d56eac9fbbbe786e6fcfbecea8358e23886d128718c4bb37026'
             '212daaf4f1f4fc0159d2f13b91979263eb38f0200e48d77a02e2fe893ba3f809'
-            '0349ba7cd2fe961036ef9ef0ae7b55fd528fc13d545b3050722c99a3063dc1b1'
+            '745e35e2e0e310458044bf04321d2feea582f4faf0eefd0ea60c4eef65fc1a94'
             '00a763b02811f747d8b6d937cfd257113ba81f87ce291e8745fd7aee81e92bb7')
 
 prepare() {
