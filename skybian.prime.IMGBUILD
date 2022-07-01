@@ -1,6 +1,6 @@
 pkgname=skybian-prime
 pkgdesc="Skybian orange pi prime image build"
-_img="Armbian_22.05.1_Orangepiprime_bullseye_current_5.15.43.img"
+_img="Armbian_22.05.3_Orangepiprime_bullseye_current_5.15.48.img"
 _imgxz="${_img}.xz"
 _imgsha="Bullseye_current.sha"
 _imgshalink="https://redirect.armbian.com/orangepiprime/${_imgsha}"
@@ -30,8 +30,8 @@ source=("${_torrent}"
 "${_aptrepo}/archive/${_skybiandeb}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('da369e6fcafa3ec383391af004c87bb4e4e2c647c7728c79fa11e88717018e16'
-            'a6b75db961a22164595146bcdb6e9c3a799921ea550daf20f7f760c44b91b0e1'
+sha256sums=('f4376c3da56fddfa8518e846cbd34ee63d99a308ec9045575f070cc490f9af83'
+            '15473ca38a1c4784a6cf95d698a8a2492240b84543f88399092b46e22b080240'
             '212daaf4f1f4fc0159d2f13b91979263eb38f0200e48d77a02e2fe893ba3f809'
             '745e35e2e0e310458044bf04321d2feea582f4faf0eefd0ea60c4eef65fc1a94'
             '00a763b02811f747d8b6d937cfd257113ba81f87ce291e8745fd7aee81e92bb7')
