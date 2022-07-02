@@ -16,7 +16,7 @@ _defaultuser=pi
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-4-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-6-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 depends=()
@@ -26,8 +26,8 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('f4c402dea48e7c58fbcecc63fc9ec28d73c8c6486b4df792b935ed18f54bc6d9'
-            '819aaf57845c940b8a9f612f2c31d767a48b05a56afbaed403ebb90ca1774fe6'
-            'f604f8d624ee427c9ddd4ff921d7a8c62b22f4def4a3ecea0fdb69cf3f85f703')
+            '2b4566c4ba94623763af75d61de6d2b0e49aa82347f49463f1d8d1edf366d068'
+            '6829ac08691a554f83bf14d4b7f8e9d3288f885b2a53ade73e52bde32b593606')
 
 prepare() {
 cd "${srcdir}"
@@ -111,12 +111,6 @@ cd ${pkgdir}
 _msg2 "Creating image checksums"
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 cat ${_imgfinal}.sha
-#  if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ]]; then
-#    cd ..
-#    _msg2 "Creating .zip archive for windows"
-#    zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
-#    mv *.zip ../
- # fi
 }
 
 _msg2() {

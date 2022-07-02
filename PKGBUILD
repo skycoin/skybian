@@ -14,11 +14,8 @@ depends=()
 _debdeps=""
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
-sha256sums=('6b717ab477ff740e005fbe53de6d791535ba4dd464bc2d09ed4e308433aa43a2'
-            '215f7fa408bc0873bd47c06805d1b593d6623db230fb3129e4cef750489e17a5')
-
-#tar -czvf skybian-static.tar.gz static
-#tar -czvf skybian-script.tar.gz script
+sha256sums=('3111f03858e7aa857b938e6b7902fcf615bcb80e8167eeac0f58212fc9fa48c9'
+            '0ff82151b1dbcbbe599002106f4e35380c3ca1bf929c219874c011ee9e84cb2a')
 
 build() {
   for i in ${_pkgarches[@]}; do
@@ -67,7 +64,7 @@ package() {
 	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
 	  install -Dm644 ${srcdir}/script/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
   fi
-  _msg2 "Installing skybian-chrootconfig"
+  _msg2 "Installing skybian-chrootconfig" #called by postinstall
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   _msg2 "Installing apt repository configuration to:\n    /etc/apt/sources.list.d/skycoin.list"
   install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list

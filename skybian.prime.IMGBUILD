@@ -20,7 +20,7 @@ _aptrepo_config="deb ${_aptrepo} sid main"
 _aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
 _aptrepo1_config="deb ${_aptrepo1} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-4-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-6-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 source=("${_torrent}"
@@ -34,7 +34,7 @@ sha256sums=('f4376c3da56fddfa8518e846cbd34ee63d99a308ec9045575f070cc490f9af83'
             '15473ca38a1c4784a6cf95d698a8a2492240b84543f88399092b46e22b080240'
             'e010a3600fe65c92e8367ded82ce547f2291a11647e17456b807e42dad66b8e6'
             '71841734e946371a03eda1fa2fe54bafe71106476c8f35792e6ff7fe3f311a33'
-            '00a763b02811f747d8b6d937cfd257113ba81f87ce291e8745fd7aee81e92bb7')
+            '0289a641ae712277de043b4931d68a9ef34176cf75e79bf81607683babc6a40c')
 
 prepare() {
 cd "${srcdir}"
