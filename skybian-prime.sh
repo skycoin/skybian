@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 #don't forget to update checksums first
-rm Bullseye_current.sha
+[[ -f Bullseye_current.sha ]] && rm Bullseye_current.sha
 updpkgsums skybian.prime.IMGBUILD
 sudo umount -l src/mnt
 sudo losetup -d /dev/loop0
@@ -12,7 +12,4 @@ else
 	PKGEXT='.pkg.tar.zst' makepkg -fp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.zst' makepkg -fRp skybian.prime.IMGBUILD
 	PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.xz' makepkg -fRp skybian.prime.IMGBUILD
 	PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD || PKGEXT='.pkg.tar.gz' makepkg -fRp skybian.prime.IMGBUILD
-#	mmv '*.any.pkg.tar.zst' '#1.arm64.img.tar.zst'
-#	mmv '*.any.pkg.tar.xz' '#1.arm64.img.tar.xz'
-#	mmv '*.any.pkg.tar.gz' '#1.arm64.img.tar.gz'
 fi

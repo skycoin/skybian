@@ -24,27 +24,24 @@ Gateway=${_gateway}
 DNS=${_gateway}" | tee /etc/systemd/network/eth.network
 	#refresh the networking to use the static configuration
 	systemctl restart systemd-networkd
-	#disable this script's service
-	systemctl disable skymanager 2> /dev/null
-	#configure skywire
-	skywire-autoconfig
-	# start skywire & enable the service
-	systemctl enable --now skywire 2> /dev/null
+	#start the http endpoint for the hypervisor public key
 	systemctl enable --now srvpk 2> /dev/null
-fi
-#Visor configuration
-if [[ $(hostname) != "hypervisor" ]]; then
+else
 	#query remote node for pk
 	_pubkey=$(curl ${_ip}:7998)
 	#rough errorcheck
-	if [[ "${_pubkey}" != *"FATAL"* ]] ; then
-		#disable this script's service
-		systemctl disable skymanager 2> /dev/null
-		#configure skywire with remote hypervisor
- 		skywire-autoconfig ${_pubkey}
-		#start the visor mode
-		systemctl enable --now skywire-visor 2> /dev/null
-		#systemctl reboot
+	if [[ "${_pubkey}" == *"FATAL"* ]] ; then
+		_pubkey=""
 	fi
 fi
-#the service will not be disabled if the script completes without generating the configuration
+
+#configure skywire
+skywire-autoconfig ${_pubkey}
+
+if [[ -f /opt/skywire/skywire.json ]] ; then
+	#disable this script's service
+	systemctl disable skymanager 2> /dev/null
+	# start skywire & enable the service
+	systemctl enable --now skywire 2> /dev/null
+	#the service will not be disabled if the script completes without generating the configuration
+fi

@@ -1,4 +1,4 @@
 #!/bin/bash
 #set envs here
-SKYBIAN=true
-VPNSERVER=1
+export SKYBIAN=true
+export VPNSERVER=1
