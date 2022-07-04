@@ -26,8 +26,8 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('f4c402dea48e7c58fbcecc63fc9ec28d73c8c6486b4df792b935ed18f54bc6d9'
-            '2b4566c4ba94623763af75d61de6d2b0e49aa82347f49463f1d8d1edf366d068'
-            '6829ac08691a554f83bf14d4b7f8e9d3288f885b2a53ade73e52bde32b593606')
+            'dd4c26be99b9094f76b7099e83588f35df01f79f4474aef3d521d5e8df681aca'
+            '1b9d8cc373fac19667d4d9a5646298f54a1efd7e7063268d24fb5a99d33276c2')
 
 prepare() {
 cd "${srcdir}"
