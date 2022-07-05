@@ -15,7 +15,7 @@ _debdeps=""
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
 sha256sums=('3111f03858e7aa857b938e6b7902fcf615bcb80e8167eeac0f58212fc9fa48c9'
-            '3b0b2078d87f84565300a90889a2f1b20bc3bcc1fc5f670dd967d87b3d452d1c')
+            '5b08f719d599f548d895a11a8dcf27450a1982cda6a62beed330aa20c39059d0')
 
 build() {
   for i in ${_pkgarches[@]}; do
@@ -57,12 +57,14 @@ package() {
 	  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
 	  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
 	  _msg2 "Installing skybian scripts"
-	  install -Dm755 ${srcdir}/script/skybian.sh ${_pkgdir}/etc/profile.d/skybian.sh
+	  install -Dm755 ${srcdir}/script/skyenv.sh ${_pkgdir}/etc/profile.d/skyenv.sh
 	  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
 	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
+	  install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
 	  _msg2 "Installing systemd services"
 	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
 	  install -Dm644 ${srcdir}/script/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
+	  install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
   fi
   _msg2 "Installing skybian-chrootconfig" #called by postinstall
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig

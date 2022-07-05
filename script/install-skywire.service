@@ -1,15 +1,11 @@
 [Unit]
-Description=skymanager service
+Description=install skywire service
 After=systemd-networkd.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service network-online.target systend-networkd-wait-online.service NetworkManager-wait-online.service sshd.service
-Before=skywire.service skywire-visor.service skywire-autoconfig.service
 Wants=network-online.target
 
 [Service]
-Type=forking
-User=root
-Group=root
-Environment="SYSTEMDCHILD=1"
-ExecStart=/usr/bin/skymanager
+Type=simple
+ExecStart=/bin/install-skywire
 
 [Install]
 WantedBy=multi-user.target
