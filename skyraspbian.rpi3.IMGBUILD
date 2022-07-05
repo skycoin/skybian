@@ -7,7 +7,7 @@ arch=('any')
 _hostarch=$(dpkg --print-architecture)
 _img="2022-04-04-raspios-bullseye-${_imgarch}-lite.img"
 _imgxz="${_img}.xz"
-_xzlink="https://downloads.raspberrypi.org/raspios_${_imgarch}/images/raspios_${_imgarch}-2022-04-07/${_imgxz}"
+_xzlink="https://downloads.raspberrypi.org/raspios_lite_${_imgarch}/images/raspios_lite_${_imgarch}-2022-04-07/${_imgxz}"
 _torrent="${_xzlink}.torrent"
 _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p2
@@ -25,9 +25,9 @@ source=("${_torrent}"
 "${_aptrepo}/archive/${_skybiandeb}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('f4c402dea48e7c58fbcecc63fc9ec28d73c8c6486b4df792b935ed18f54bc6d9'
-            'dd4c26be99b9094f76b7099e83588f35df01f79f4474aef3d521d5e8df681aca'
-            '1b9d8cc373fac19667d4d9a5646298f54a1efd7e7063268d24fb5a99d33276c2')
+sha256sums=('cff9b71924560032bb6884d7f78a8c84852f5c38171385aa1446f5281ecbb6a6'
+            '731f97c79f3fa12a872797b5fcc35f6b44ca53041b939a4d39e1ff1a83a75100'
+            'e283c589d9873a4aa6e7b1a2670212a146c621788dc5f01ee752b49ecb0aebde')
 
 prepare() {
 cd "${srcdir}"

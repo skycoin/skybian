@@ -33,8 +33,8 @@ noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('f4376c3da56fddfa8518e846cbd34ee63d99a308ec9045575f070cc490f9af83'
             '15473ca38a1c4784a6cf95d698a8a2492240b84543f88399092b46e22b080240'
             'e010a3600fe65c92e8367ded82ce547f2291a11647e17456b807e42dad66b8e6'
-            'a9923a044435a8f163393ea2c4f197773d6d8daa4a8c1d7b9958a8b4fd2842d9'
-            '6a3fc94ff278359a9725b7f76761703eb6ff6bfdad3b65e5eec1bb3ed11fa1ba')
+            'ab15438190d52b643e68a79252c64d25f6d24e0ced6b4af516afd2cf2a0da942'
+            'b05c4f8bfcc48bbbce2e632992c52b52cde275d8985926e153972583bd13703d')
 
 prepare() {
 cd "${srcdir}"
