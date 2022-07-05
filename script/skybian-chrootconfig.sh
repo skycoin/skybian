@@ -4,12 +4,12 @@
 #################################################################
 #meant to run when the skybian package is installed in chroot
 if [[ $INSTALLFIRSTBOOT == "1" ]] ; then
-	if [[ -f /etc/systemd/system/ install-skywire.service ]] ; then
+	if [[ -f /etc/systemd/system/install-skywire.service ]] ; then
 		systemctl enable install-skywire
 	fi
 fi
 #limit the ip setting / autopeering to only if CHROOTCONFIG env has been passed to the script
-if [[ -z $CHROOTCONFIG ]] ; then 
+if [[ -z $CHROOTCONFIG ]] ; then
   exit 0
 fi
 if [[ -f /etc/systemd/system/skymanager.service ]] ; then
