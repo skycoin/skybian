@@ -4,7 +4,7 @@ After=systemd-networkd.service network.target armbian-firstrun.service armbian-r
 Wants=network-online.target
 
 [Service]
-Type=simple
+Type=oneshot
 ExecStart=/bin/install-skywire
 
 [Install]
