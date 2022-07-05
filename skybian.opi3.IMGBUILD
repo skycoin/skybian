@@ -89,7 +89,7 @@ sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywirede
 sudo rm ${srcdir}/mnt/root/${_skywiredeb}
 sudo arch-chroot ${srcdir}/mnt sudo systemctl enable skywire-autoconfig
 _msg2 "CHROOT: installing packages in chroot with dpkg"
-sudo arch-chroot ${srcdir}/mnt sudo dpkg -i /root/${_skybiandeb}
+sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skybiandeb}
 sudo rm ${srcdir}/mnt/root/${_skybiandeb}
 ## included from chroot-commands.sh
 _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."

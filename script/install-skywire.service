@@ -1,6 +1,6 @@
 [Unit]
 Description=install skywire service
-After=systemd-networkd.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service network-online.target systend-networkd-wait-online.service NetworkManager-wait-online.service sshd.service
+After=systemd-networkd.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service network-online.target systend-networkd-wait-online.service NetworkManager-wait-online.service sshd.service skymanager.service
 Wants=network-online.target
 
 [Service]
