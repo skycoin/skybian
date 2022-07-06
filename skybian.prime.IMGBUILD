@@ -20,7 +20,7 @@ _aptrepo_config="deb ${_aptrepo} sid main"
 _aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
 _aptrepo1_config="deb ${_aptrepo1} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-7-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-8-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 source=("${_torrent}"
@@ -28,13 +28,15 @@ source=("${_torrent}"
 "${_imgshalink}"
 "${_aptrepo}/archive/${_skywiredeb}"
 "${_aptrepo}/archive/${_skybiandeb}"
+"https://fl.us.mirror.archlinuxarm.org/aarch64/extra/gnu-netcat-0.7.1-8-aarch64.pkg.tar.xz"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('f4376c3da56fddfa8518e846cbd34ee63d99a308ec9045575f070cc490f9af83'
             '15473ca38a1c4784a6cf95d698a8a2492240b84543f88399092b46e22b080240'
             'e010a3600fe65c92e8367ded82ce547f2291a11647e17456b807e42dad66b8e6'
             'b7488939390058fb22fdd7b6145e1f368c933fb26937360ce7a04b14b7c83bbd'
-            'e930e1521067fcd3cb777275c9e0758d872ae02b1fdbbe0f9c32087205ba90f5')
+            'e930e1521067fcd3cb777275c9e0758d872ae02b1fdbbe0f9c32087205ba90f5'
+            '0a10d40700e653747936d4d5a0569db22980c216616ce863c490b456b205a849')
 
 prepare() {
 cd "${srcdir}"
@@ -74,6 +76,9 @@ sudo mount ${_root_partition} ${srcdir}/mnt
 _msg2 "copying packages into image"
 sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
 sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
+_msg2 "installing newer version of netcat binary to the image"
+sudo install -Dm755 ${srcdir}/usr/bin/netcat ${srcdir}/mnt/usr/bin/
+sudo install -Dm755 ${srcdir}/usr/bin/nc ${srcdir}/mnt/usr/bin/
 _msg2 "copying qemu-aarch64-static command to chroot bin"
 sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################

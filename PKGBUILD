@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image, including repo configuration - debian package"
 pkgver='1.0.0'
 _pkgver=${pkgver}
-pkgrel=7
+pkgrel=8
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('amd64' 'arm64' 'armhf' 'armel')
@@ -15,7 +15,7 @@ _debdeps=""
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
 sha256sums=('3111f03858e7aa857b938e6b7902fcf615bcb80e8167eeac0f58212fc9fa48c9'
-            '9d5a1c669beca2242ba672f40dc01694df2b8b45763d2919398b81463146f6fb')
+            'eb1db949e879027e81ac3e3493e8496bebcdbd73de6f06b99217e50e8f03de8f')
 
 build() {
   for i in ${_pkgarches[@]}; do
