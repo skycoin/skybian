@@ -2,7 +2,7 @@ pkgname=skyraspbian-rpi4
 pkgdesc="Skyraspbian arm64 image build"
 _imgarch="arm64"
 pkgver='1.0.0'
-pkgrel=7
+pkgrel=8
 arch=('any')
 _hostarch=$(dpkg --print-architecture)
 _img="2022-04-04-raspios-bullseye-${_imgarch}-lite.img"
@@ -16,7 +16,7 @@ _defaultuser=pi
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
 _aptrepo_config="deb ${_aptrepo} sid main"
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-6-${_imgarch}.deb"
+_skybiandeb="skybian-1.0.0-7-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 depends=()
@@ -26,8 +26,8 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('113eed9f7facaefd01ea9903c4a108679d6c2ba621d754bbd701440e54127a00'
-            'ab15438190d52b643e68a79252c64d25f6d24e0ced6b4af516afd2cf2a0da942'
-            'b05c4f8bfcc48bbbce2e632992c52b52cde275d8985926e153972583bd13703d')
+            'b7488939390058fb22fdd7b6145e1f368c933fb26937360ce7a04b14b7c83bbd'
+            '17969c731ee008cbdeb659ca7ae2554ad6176de7213c271f229df033f30a2e7e')
 
 prepare() {
 cd "${srcdir}"
