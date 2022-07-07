@@ -14,8 +14,8 @@ depends=()
 _debdeps=""
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
-sha256sums=('3111f03858e7aa857b938e6b7902fcf615bcb80e8167eeac0f58212fc9fa48c9'
-            'eb1db949e879027e81ac3e3493e8496bebcdbd73de6f06b99217e50e8f03de8f')
+sha256sums=('2a9d4532c4e174f43739995b58411936d1b4ddf94db21ea574e50842fd1ddff5'
+            'fe26680e848e51d796aa3a21a3b142558f9b765eec9a6964cbeb3fc6e636f997')
 
 build() {
   for i in ${_pkgarches[@]}; do
