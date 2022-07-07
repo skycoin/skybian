@@ -3,7 +3,7 @@
 #expects CHROOTCONFIG=1 skybian-chrootconfig was run
 #determines visor or hypervisor mode and enable the correct service
 #remove any previous congig
-[[ -f /etc/systemd/network/10-eth.network ]] && rm  /etc/systemd/network/10-eth.network && systemctl restart systemd-networkd networking NetworkManager && systemctl disable --now srvpk 2> /dev/null
+[[ -f /etc/systemd/network/10-eth.network ]] && rm  /etc/systemd/network/10-eth.network && systemctl restart systemd-networkd networking NetworkManager && systemctl disable --now srvpk 2> /dev/null && exit
 
 #generate the config for static IP address on the hypervisor
 #or query the rpc of the hypervisor at the designated .2 static ip for its public key
@@ -42,8 +42,9 @@ skywire-autoconfig ${_pubkey}
 
 if [[ -f /opt/skywire/skywire.json ]] ; then
 #disable this script's service
-#systemctl disable skymanager 2> /dev/null
+systemctl disable skymanager 2> /dev/null
 #start skywire & enable the service
 systemctl enable --now skywire 2> /dev/null
+systemctl restart skywire 2> /dev/null
 #the service will be disabled by the user upon satisfactory configuratiomn
 fi
