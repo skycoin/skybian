@@ -16,7 +16,7 @@ _ip=${_gateway%.*}.2
 #need to try to make a connection for `ip neigh` to work
 skywire-cli visor pk --rpc ${_ip}:3435 &> /dev/null
 if [[ $(ip neigh show | grep ${_ip} | grep -v "FAILED" | grep -v "INCOMPLETE") == "" ]]; then
-# Set static ip if the .2 ip address is available
+# Set static ip to the .2 ip address if available
 echo "[Match]
 Name=eth*
 
@@ -38,8 +38,7 @@ fi
 fi
 
 #configure skywire
-skywire-autoconfig ${_pubkey}
-
+skywire-autoconfig #${_pubkey}
 if [[ -f /opt/skywire/skywire.json ]] ; then
 #disable this script's service
 systemctl disable skymanager 2> /dev/null

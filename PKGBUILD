@@ -1,9 +1,9 @@
 pkgname=skybian
 _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image, including repo configuration - debian package"
-pkgver='1.0.0'
+pkgver='1.1.0'
 _pkgver=${pkgver}
-pkgrel=8
+pkgrel=1
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('amd64' 'arm64' 'armhf' 'armel')
@@ -45,8 +45,8 @@ package() {
   #########################################################################
   #package normally here using ${_pkgdir} instead of ${pkgdir}
   _msg2 "Creating dirs"
-  mkdir -p ${_pkgdir}/etc/sources.list.d/
-  mkdir -p ${_pkgdir}/etc/apt/trusted.gpg.d
+  mkdir -p ${_pkgdir}/etc/apt/sources.list.d/
+  mkdir -p ${_pkgdir}/etc/apt/trusted.gpg.d/
   mkdir -p ${_pkgdir}/usr/bin/
   if [[ $_pkgarch != "amd64" ]]; then
 	  _msg2 "Installing skybian modifications"
@@ -69,7 +69,12 @@ package() {
   _msg2 "Installing skybian-chrootconfig" #called by postinstall
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   _msg2 "Installing apt repository configuration to:\n    /etc/apt/sources.list.d/skycoin.list"
-  install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
+    install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
+	if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
+		_msg2 "substituiting test repository http://deb.skywire.dev" #called by postinstall
+		echo "deb http://deb.skywire.dev  sid main
+# deb-src http://deb.skywire.dev sid main" | tee ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
+	fi
   _msg2 "Installing apt repository signing key to:\n    /etc/apt/trusted.gpg.d/skycoin.gpg"
   install -Dm644 ${srcdir}/script/skycoin.gpg ${_pkgdir}/etc/apt/trusted.gpg.d/skycoin.gpg
   #########################################################################
