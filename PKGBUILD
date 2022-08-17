@@ -14,8 +14,8 @@ depends=()
 _debdeps=""
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
-sha256sums=('2a9d4532c4e174f43739995b58411936d1b4ddf94db21ea574e50842fd1ddff5'
-            'facad3656a434b90e9f2206a79c80bd22745e27071ea168c5503d4f893bf574b')
+sha256sums=('3111f03858e7aa857b938e6b7902fcf615bcb80e8167eeac0f58212fc9fa48c9'
+            'e7110dff621714927c78971dde2f87ff7938d74852595852e9e09b7e6ce837c0')
 
 build() {
   for i in ${_pkgarches[@]}; do
@@ -57,7 +57,7 @@ package() {
 	  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
 	  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
 	  _msg2 "Installing skybian scripts"
-	  install -Dm755 ${srcdir}/script/skyenv.sh ${_pkgdir}/etc/profile.d/skyenv.sh
+#	  install -Dm755 ${srcdir}/script/skyenv.sh ${_pkgdir}/etc/profile.d/skyenv.sh
 	  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
 	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
 	  install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
