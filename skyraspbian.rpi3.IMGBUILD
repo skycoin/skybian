@@ -1,8 +1,8 @@
 pkgname=skyraspbian-rpi3
 pkgdesc="Skyraspbian armhf image build"
 _imgarch="armhf"
-pkgver='1.0.0'
-pkgrel=8
+pkgver='1.1.0'
+pkgrel=1
 arch=('any')
 _hostarch=$(dpkg --print-architecture)
 _img="2022-04-04-raspios-bullseye-${_imgarch}-lite.img"
@@ -14,9 +14,11 @@ _root_partition=/dev/loop0p2
 _boot_partition=/dev/loop0p1
 _defaultuser=pi
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
-_aptrepo_config="deb ${_aptrepo} sid main"
+if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
+	_aptrepo="http://deb.skywire.dev" #omit DNS issues by using server IP
+fi
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-8-${_imgarch}.deb"
+_skybiandeb="skybian-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 depends=()
@@ -111,6 +113,12 @@ cd ${pkgdir}
 _msg2 "Creating image checksums"
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 cat ${_imgfinal}.sha
+if [[ ${NOZIP} != "1" ]]; then
+   cd ..
+   _msg2 "Creating .zip archive for windows"
+   zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+   mv *.zip ../
+fi
 }
 
 _msg2() {

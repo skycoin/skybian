@@ -6,8 +6,8 @@ _imgsha="Bullseye_current.sha"
 _imgshalink="https://redirect.armbian.com/orangepiprime/${_imgsha}"
 _xzlink="https://www.armbian.com/dl/orangepiprime/archive/${_imgxz}"
 #pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
-pkgver='1.0.0'
-pkgrel=8
+pkgver='1.1.0'
+pkgrel=1
 arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
@@ -16,11 +16,11 @@ _imgfinal="skybian.img"
 _root_partition=/dev/loop0p1
 _defaultuser=root
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
-_aptrepo_config="deb ${_aptrepo} sid main"
-_aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
-_aptrepo1_config="deb ${_aptrepo1} sid main"
+if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
+	_aptrepo="http://deb.skywire.dev" #omit DNS issues by using server IP
+fi
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-8-${_imgarch}.deb"
+_skybiandeb="skybian-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 source=("${_torrent}"
@@ -28,8 +28,8 @@ source=("${_torrent}"
 "${_imgshalink}"
 "${_aptrepo}/archive/${_skywiredeb}"
 "${_aptrepo}/archive/${_skybiandeb}"
-"https://fl.us.mirror.archlinuxarm.org/aarch64/extra/gnu-netcat-0.7.1-8-aarch64.pkg.tar.xz"
 )
+#"https://fl.us.mirror.archlinuxarm.org/aarch64/extra/gnu-netcat-0.7.1-8-aarch64.pkg.tar.xz"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('f4376c3da56fddfa8518e846cbd34ee63d99a308ec9045575f070cc490f9af83'
             '15473ca38a1c4784a6cf95d698a8a2492240b84543f88399092b46e22b080240'
@@ -76,9 +76,9 @@ sudo mount ${_root_partition} ${srcdir}/mnt
 _msg2 "copying packages into image"
 sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
 sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
-_msg2 "installing newer version of netcat binary to the image"
-sudo install -Dm755 ${srcdir}/usr/bin/netcat ${srcdir}/mnt/usr/bin/
-sudo install -Dm755 ${srcdir}/usr/bin/nc ${srcdir}/mnt/usr/bin/
+#_msg2 "installing newer version of netcat binary to the image"
+#sudo install -Dm755 ${srcdir}/usr/bin/netcat ${srcdir}/mnt/usr/bin/
+#sudo install -Dm755 ${srcdir}/usr/bin/nc ${srcdir}/mnt/usr/bin/
 _msg2 "copying qemu-aarch64-static command to chroot bin"
 sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications for apt repo & package #################
@@ -129,12 +129,12 @@ cd ${pkgdir}
 _msg2 "Creating image checksum"
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 cat ${_imgfinal}.sha
-# if [[ ${NOZIP} != "1" ]]; then
-# 	cd ..
-# 	_msg2 "Creating .zip archive for windows"
-# 	zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
-# 	mv *.zip ../
-# fi
+ if [[ ${NOZIP} != "1" ]]; then
+ 	cd ..
+ 	_msg2 "Creating .zip archive for windows"
+ 	zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+ 	mv *.zip ../
+ fi
 }
 
 _msg2() {

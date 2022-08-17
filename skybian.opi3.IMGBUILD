@@ -6,8 +6,8 @@ _imgsha="Bullseye_current.sha"
 _imgshalink="https://redirect.armbian.com/orangepi3/${_imgsha}"
 _xzlink="https://www.armbian.com/dl/orangepi3/archive/${_imgxz}"
 #pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
-pkgver='1.0.0'
-pkgrel=8
+pkgver='1.1.0'
+pkgrel=1
 arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
@@ -16,11 +16,11 @@ _imgfinal="skybian.img"
 _root_partition=/dev/loop0p1
 _defaultuser=root
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
-_aptrepo_config="deb ${_aptrepo} sid main"
-_aptrepo1="http://deb.skywire.skycoin.com" #omit DNS issues by using server IP
-_aptrepo1_config="deb ${_aptrepo1} sid main"
+if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
+	_aptrepo="http://deb.skywire.dev" #omit DNS issues by using server IP
+fi
 _skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-1.0.0-8-${_imgarch}.deb"
+_skybiandeb="skybian-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-arm-static')
 source=("${_torrent}"
@@ -124,12 +124,12 @@ cd ${pkgdir}
 _msg2 "Creating image checksum"
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 cat ${_imgfinal}.sha
-# if [[ ${NOZIP} != "1" ]]; then
-# 	cd ..
-# 	_msg2 "Creating .zip archive for windows"
-# 	zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
-# 	mv *.zip ../
-# fi
+ if [[ ${NOZIP} != "1" ]]; then
+ 	cd ..
+ 	_msg2 "Creating .zip archive for windows"
+ 	zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
+ 	mv *.zip ../
+ fi
 }
 
 _msg2() {
