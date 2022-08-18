@@ -1,8 +1,8 @@
 pkgname=skyraspbian-rpi4
 pkgdesc="Skyraspbian arm64 image build"
 _imgarch="arm64"
-pkgver='1.0.0'
-pkgrel=8
+pkgver='1.1.0'
+pkgrel=1
 arch=('any')
 _hostarch=$(dpkg --print-architecture)
 _img="2022-04-04-raspios-bullseye-${_imgarch}-lite.img"

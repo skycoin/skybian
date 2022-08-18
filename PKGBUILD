@@ -70,6 +70,7 @@ package() {
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   _msg2 "Installing apt repository configuration to:\n    /etc/apt/sources.list.d/skycoin.list"
   install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
+  #export TESTDEPLOYMENT=1
   if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
 	  _msg2 "substituiting test repository http://deb.skywire.dev" #called by postinstall
 	  echo "deb http://deb.skywire.dev  sid main

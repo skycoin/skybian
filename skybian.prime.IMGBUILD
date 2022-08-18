@@ -12,10 +12,11 @@ arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
 _torrent="${_xzlink}.torrent"
-_imgfinal="skybian.img"
+_imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p1
 _defaultuser=root
 _aptrepo="http://176.9.28.105" #omit DNS issues by using server IP
+#export TESTDEPLOYMENT=1
 if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
 	_aptrepo="http://deb.skywire.dev" #omit DNS issues by using server IP
 fi
@@ -34,9 +35,8 @@ noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('f4376c3da56fddfa8518e846cbd34ee63d99a308ec9045575f070cc490f9af83'
             '15473ca38a1c4784a6cf95d698a8a2492240b84543f88399092b46e22b080240'
             'e010a3600fe65c92e8367ded82ce547f2291a11647e17456b807e42dad66b8e6'
-            'b7488939390058fb22fdd7b6145e1f368c933fb26937360ce7a04b14b7c83bbd'
-            '58ddef517c5dcc1b2daa7f80b7e01c51eb649a46f74e3ec2876491cd9641494e'
-            '0a10d40700e653747936d4d5a0569db22980c216616ce863c490b456b205a849')
+            '34abebcbcc672f73901e61374007530bcc0eb76ab10c86564b44b2fa2f0b1da8'
+            '1d98ed0fde698472de39daf27d41ae43d9012b327e86df81739255bfdb65f4b9')
 
 prepare() {
 cd "${srcdir}"
@@ -129,12 +129,7 @@ cd ${pkgdir}
 _msg2 "Creating image checksum"
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 cat ${_imgfinal}.sha
- if [[ ${NOZIP} != "1" ]]; then
- 	cd ..
- 	_msg2 "Creating .zip archive for windows"
- 	zip -r ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.zip ${pkgname}
- 	mv *.zip ../
- fi
+
 }
 
 _msg2() {

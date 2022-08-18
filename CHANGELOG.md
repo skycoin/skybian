@@ -17,6 +17,39 @@ This is a note for developers about the recommended tags to keep track of the ch
 
 Dates must be YEAR-MONTH-DAY
 -->
+## [1.1.0] - 2022-08-27
+### Changed
+
+- Moved autopeering system to the skywire source code
+- Skybian postinstall script produces the env file with different defaults depending on environmental variables
+- Adapted the PKGBUILD and IMGBUILDs to produce images with pre-release or release candidate binaries + repository configuration for http://deb.skywire.dev
+
+### Removed
+
+- Scripted autopeering for orange pi prime image from skybian package
+
+
+## [1.0.0] - 2022-07-07
+### Changed
+
+- Updated base image to latest available armbian image (bullseye)
+- Use skywire-bin debian package instead of untracked files comprising the installation arranged in the filesystem
+- Create skybian PKGBUILD with .deb packaged modifications to the skybian image
+- Configure the apt repository in the software sources with skybian package
+- Create skybian .deb package for amd64 only containing the repository configuraion and signing key
+- Change builds of the images to PKGBUILD format (as .IMGBUILD)
+- Skywire configuration is generated on firstboot
+- Skywire is updated to the latest version on first boot
+
+### Added
+
+- Autopeering visors to a hypervisor for the orange pi prime image
+
+### Removed
+
+- Skyimager
+
+
 ## [0.3.1] - 2021-06-30
 ### Changed
 
