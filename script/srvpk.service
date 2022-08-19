@@ -4,10 +4,11 @@ Wants=skywire.service
 
 [Service]
 Type=simple
-ExecStart=/bin/nc -vlc -p 7998 -e 'printf "HTTP/1.0 200 OK\r\nContent-Length: "; skywire-cli visor pk | wc -m ; printf "\r\n"; skywire-cli visor pk'
+ExecStart=/bin/skywire-cli visor pk -w
 Restart=always
-StartLimitInterval=1min
-StartLimitBurst=60
+RestartSec=20
+TimeoutSec=30
+
 
 [Install]
 WantedBy=multi-user.target
