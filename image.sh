@@ -1,12 +1,13 @@
 #!/usr/bin/bash
 #don't forget to update checksums first
 if [[ ${SKYBIAN} != "sky"*".IMGBUILD" ]] ; then
-	echo "error no build specified"
-	echo "Valid options include:"
-	echo "SKYBIAN=skybian.prime.IMGBUILD"
-	echo "SKYBIAN=skybian.opi3.IMGBUILD"
-	echo "SKYBIAN=skyraspbian.rpi3.IMGBUILD"
-	echo "SKYBIAN=skyraspbian.rpi4.IMGBUILD"
+	echo 'error no build specified'
+	echo 'Valid options include:'
+	echo 'SKYBIAN=skybian.prime.IMGBUILD'
+	echo 'ENABLEAUTOPEER="-autopeer" SKYBIAN=skybian.prime.IMGBUILD'
+	echo 'SKYBIAN=skybian.opi3.IMGBUILD'
+	echo 'SKYBIAN=skyraspbian.rpi3.IMGBUILD'
+	echo 'SKYBIAN=skyraspbian.rpi4.IMGBUILD'
 	exit 0
 fi
 unset PKGEXT
