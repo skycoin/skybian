@@ -178,8 +178,11 @@ main_menu() {
 	;;
 	"4")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skybian.prime.IMGBUILD ./image.sh 0
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skybian.opi3.IMGBUILD ./image.sh 0
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skyraspbian.rpi3.IMGBUILD ./image.sh 0
 	SKYBIAN=skyraspbian.rpi4.IMGBUILD ./image.sh 0
 	read -s -n 1 -p "Press any key to continue . . ."
@@ -187,8 +190,11 @@ main_menu() {
 	;;
 	"5")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skybian.prime.IMGBUILD ./image.sh 0
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skybian.opi3.IMGBUILD ./image.sh 0
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skyraspbian.rpi3.IMGBUILD ./image.sh 0
 	TESTDEPLOYMENT=1 SKYBIAN=skyraspbian.rpi4.IMGBUILD ./image.sh 0
 	read -s -n 1 -p "Press any key to continue . . ."
@@ -204,9 +210,12 @@ main_menu() {
 	"8")
 	clear
 	set -e
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
 	ENABLEAUTOPEER="-autopeer" SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skybian.opi3.IMGBUILD ./image.sh zip
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skyraspbian.rpi3.IMGBUILD ./image.sh zip
 	SKYBIAN=skyraspbian.rpi4.IMGBUILD ./image.sh zip
 	set +e
@@ -216,9 +225,12 @@ main_menu() {
 	"9")
 	clear
 	set -e
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
 	TESTDEPLOYMENT=1 ENABLEAUTOPEER="-autopeer" SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skybian.opi3.IMGBUILD ./image.sh zip
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skyraspbian.rpi3.IMGBUILD ./image.sh zip
 	TESTDEPLOYMENT=1 SKYBIAN=skyraspbian.rpi4.IMGBUILD ./image.sh zip
 	set +e
