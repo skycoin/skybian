@@ -133,7 +133,6 @@ cd ${pkgdir}
 _msg2 "Creating image checksum"
 sha256sum ${_imgfinal} > ${_imgfinal}.sha
 cat ${_imgfinal}.sha
-
 }
 
 _msg2() {
