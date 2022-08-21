@@ -33,18 +33,21 @@ build_image() {
 	case $(cat $tmp_file) in
 	"1")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
 	read -s -n 1 -p "Press any key to continue . . ."
 	echo ""
 	;;
 	"2")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	ENABLEAUTOPEER="-autopeer" SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
 	read -s -n 1 -p "Press any key to continue . . ."
 	echo ""
 	;;
 	"3")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	SKYBIAN=skybian.opi3.IMGBUILD ./image.sh zip
 	read -s -n 1 -p "Press any key to continue . . ."
 	echo ""
@@ -86,18 +89,21 @@ build_test_image() {
 	case $(cat $tmp_file) in
 	"1")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
 	read -s -n 1 -p "Press any key to continue . . ."
 	echo ""
 	;;
 	"2")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 ENABLEAUTOPEER="-autopeer" SKYBIAN=skybian.prime.IMGBUILD ./image.sh zip
 	read -s -n 1 -p "Press any key to continue . . ."
 	echo ""
 	;;
 	"3")
 	clear
+	[[ $(echo *.sha) != "*.sha" ]] && rm *.sha
 	TESTDEPLOYMENT=1 SKYBIAN=skybian.opi3.IMGBUILD ./image.sh zip
 	read -s -n 1 -p "Press any key to continue . . ."
 	echo ""
