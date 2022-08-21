@@ -30,8 +30,10 @@ if [[ "$1" != "1" ]]; then
 	#PKGEXT must be a valid format that makepkg can produce
 	export PKGEXT='.pkg.tar.zst'
 	makepkg -fp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN}
+	mv ${pkgname}-${pkgver}-${pkgrel}-any.${PKGEXT/./} ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.${PKGEXT/.pkg./}
 	export PKGEXT='.pkg.tar.xz'
 	makepkg -fp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN} || makepkg -fRp  ${SKYBIAN}
+	mv ${pkgname}-${pkgver}-${pkgrel}-any.${PKGEXT/./} ${pkgname}-${pkgver}-${pkgrel}-${_imgarch}.img.${PKGEXT/.pkg./}
 	unset PKGEXT
 fi
 if [[ "$1" == "zip" ]]; then
