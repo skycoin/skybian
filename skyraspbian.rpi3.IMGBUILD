@@ -2,7 +2,7 @@ pkgname=skyraspbian-rpi3
 pkgdesc="Skyraspbian armhf image build"
 _imgarch="armhf"
 pkgver='1.1.0'
-pkgrel=1
+pkgrel=2
 arch=('any')
 _hostarch=$(dpkg --print-architecture)
 _img="2022-04-04-raspios-bullseye-${_imgarch}-lite.img"
@@ -28,7 +28,7 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('cff9b71924560032bb6884d7f78a8c84852f5c38171385aa1446f5281ecbb6a6'
-            '30e4bc452c30efaa165f549750a3aa6cce31be96b3f2edc1886f09c41fd5c58f'
+            'b505eff4e76711f37d055024ccadbbc0d233439339cfc16cae57fcec92818e5a'
             'a744ee72349e693d55c9bc0941c6b040531037703c9a7537175ef3eb06eb4814')
 
 prepare() {
@@ -80,6 +80,9 @@ _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
 sudo arch-chroot ${_mntdir} sudo /sbin/fake-hwclock save force
 _msg2 "CHROOT: Generating locale en_US.UTF-8..."
 sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
+#set SKYBIAN=true
+_msg2 "CHROOT: exporting SKYBIAN=true in /root/.bashrc"
+echo 'export SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
 _msg2 "Unmounting image root partition"
 sudo umount ${_mntdir}
 ######################## end chroot modifications ##############################

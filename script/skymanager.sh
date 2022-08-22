@@ -42,24 +42,28 @@ DNS=${_gateway}" | tee /etc/systemd/network/10-eth.network
 systemctl restart systemd-networkd
 #start the http endpoint for the hypervisor public key
 systemctl enable --now srvpk 2> /dev/null
-#else
+else
+NOHV=1
 ##query remote node for pk
 #_pubkey=$(curl ${_ip}:7998)
 #rough errorcheck
 #if [[ ("${_pubkey}" == *"FATAL"*) || ("${_pubkey}" == *"Failed"*) ]] ; then
 #_pubkey="0"
 #fi
+
 fi
 
 #configure skywire
 #skywire-autoconfig ${_pubkey}
-skywire-autoconfig
+
+skywire-autoconfig $NOHV
 
 if [[ -f /opt/skywire/skywire.json ]] ; then
 #create the service conf
 [[ ! -d /etc/systemd/system/skywire.conf.d/ ]] && mkdir -p /etc/systemd/system/skywire.conf.d
 echo "[Service]
-Environment=AUTOPEER=1" | sudo tee /etc/systemd/system/skywire.conf.d/skywire.conf
+Environment=AUTOPEER=1
+Environment=SKYBIAN=true" | sudo tee /etc/systemd/system/skywire.conf.d/skywire.conf
 systemctl daemon-reload
 #disable this script's service
 systemctl disable skymanager 2> /dev/null

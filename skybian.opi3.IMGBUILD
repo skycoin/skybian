@@ -7,7 +7,7 @@ _imgshalink="https://redirect.armbian.com/orangepi3/${_imgsha}"
 _xzlink="https://www.armbian.com/dl/orangepi3/archive/${_imgxz}"
 #pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
 pkgver='1.1.0'
-pkgrel=1
+pkgrel=2
 arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
@@ -32,8 +32,8 @@ source=("${_torrent}"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('a1f45edd642d86adb987acff564e11e71f0f49d96837bc10653084570707fa6c'
             '17302d6d67f268d3bc588d6f47ff26c68da25493528936b390c1489d2e785bff'
-            'e010a3600fe65c92e8367ded82ce547f2291a11647e17456b807e42dad66b8e6'
-            '34abebcbcc672f73901e61374007530bcc0eb76ab10c86564b44b2fa2f0b1da8'
+            '6534b32d8b305cdd66fea6681e2b3ecf2681d2dbf471d186a6817886e99f0275'
+            'da23b4006962942cf2296f761850f2d1a6dcbffe8e156ececfb154606467e2a8'
             '83e4c96994ce7e4dbe06fad1bfe64930e3d196328a8a7905aaff3d65c415ce4d')
 
 prepare() {
@@ -99,6 +99,9 @@ sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
 #fix console / tty
 _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
 echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
+#set SKYBIAN=true
+_msg2 "CHROOT: exporting SKYBIAN=true in /root/.bashrc"
+echo 'export SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
 _msg2 "CHROOT: configuring unattended-upgrades"
 echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
 sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
