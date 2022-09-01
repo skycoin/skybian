@@ -1,7 +1,7 @@
 #export ENABLEAUTOPEER="-autopeer"
 pkgname=skybian-prime${ENABLEAUTOPEER}
 pkgdesc="Skybian orange pi prime image build"
-_img="Armbian_22.05.3_Orangepiprime_bullseye_current_5.15.48.img"
+_img="Armbian_22.08.1_Orangepiprime_bullseye_current_5.15.63.img"
 _imgxz="${_img}.xz"
 _imgsha="Bullseye_current.sha"
 _imgshalink="https://redirect.armbian.com/orangepiprime/${_imgsha}"
@@ -33,8 +33,8 @@ source=("${_torrent}"
 )
 #"https://fl.us.mirror.archlinuxarm.org/aarch64/extra/gnu-netcat-0.7.1-8-aarch64.pkg.tar.xz"
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('f4376c3da56fddfa8518e846cbd34ee63d99a308ec9045575f070cc490f9af83'
-            '15473ca38a1c4784a6cf95d698a8a2492240b84543f88399092b46e22b080240'
+sha256sums=('29af44d04419fec5070a2919e6c3b656bfe113dabcd04179af4e5786de8b0107'
+            '944abd576ed93434b88a4b9b24c95a3d744cc79a16962468bd3647177c3b7dd6'
             '8ec92b6015761ad25641049593b38d8771858ebf827aa0728ef0d91235c34ddd'
             '1949f6d6c1204cea27bbc1e6776d9549daaf64bb79b7145b897a690476cb763e'
             'ef0e00774ab3a1170cbb165a5f82b737d27dbdc75f0ba3a968aabb89ba488518')

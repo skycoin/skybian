@@ -1,6 +1,6 @@
 pkgname=skybian-opi3
 pkgdesc="Skybian orange pi 3 image build"
-_img="Armbian_22.05.4_Orangepi3_bullseye_current_5.15.48.img"
+_img="Armbian_22.08.1_Orangepi3_bullseye_current_5.15.63.img"
 _imgxz="${_img}.xz"
 _imgsha="Bullseye_current.sha"
 _imgshalink="https://redirect.armbian.com/orangepi3/${_imgsha}"
@@ -30,8 +30,8 @@ source=("${_torrent}"
 "${_aptrepo}/archive/${_skybiandeb}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
-sha256sums=('a1f45edd642d86adb987acff564e11e71f0f49d96837bc10653084570707fa6c'
-            '17302d6d67f268d3bc588d6f47ff26c68da25493528936b390c1489d2e785bff'
+sha256sums=('1ee4e520317c28c1a4d347d1c9994625ab7d52c47363558ab2fa75767fc20017'
+            '2ff57465b18cdc8be9e285dd53e1de48a21d555f716e7a5e5a1205446a4656af'
             'db8f02fdfa740a6e107aadee45d8b9b83b2b1fa9d83d399b921ec8c74d583934'
             '1949f6d6c1204cea27bbc1e6776d9549daaf64bb79b7145b897a690476cb763e'
             'ef0e00774ab3a1170cbb165a5f82b737d27dbdc75f0ba3a968aabb89ba488518')
