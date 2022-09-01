@@ -62,7 +62,7 @@ if [[ -f /opt/skywire/skywire.json ]] ; then
 #create the service conf
 [[ ! -d /etc/systemd/system/skywire.service.d/ ]] && mkdir -p /etc/systemd/system/skywire.service.d
 echo "[Service]
-Environment=AUTOPEER=1
+Environment=AUTOPEERHV=-m
 Environment=SKYBIAN=true" | sudo tee /etc/systemd/system/skywire.service.d/10-skywire_10.conf
 systemctl daemon-reload
 #disable this script's service

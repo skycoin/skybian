@@ -251,6 +251,7 @@ esac
 main_menu
 }
 
+clear
 while true; do
 main_menu
 done

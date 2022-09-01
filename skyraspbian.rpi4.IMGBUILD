@@ -2,7 +2,7 @@ pkgname=skyraspbian-rpi4
 pkgdesc="Skyraspbian arm64 image build"
 _imgarch="arm64"
 pkgver='1.1.0'
-pkgrel=2
+pkgrel=1
 arch=('any')
 _hostarch=$(dpkg --print-architecture)
 _img="2022-04-04-raspios-bullseye-${_imgarch}-lite.img"
@@ -28,8 +28,8 @@ source=("${_torrent}"
 )
 noextract=("${_skywiredeb}" "${_skybiandeb}")
 sha256sums=('113eed9f7facaefd01ea9903c4a108679d6c2ba621d754bbd701440e54127a00'
-            'da23b4006962942cf2296f761850f2d1a6dcbffe8e156ececfb154606467e2a8'
-            '83e4c96994ce7e4dbe06fad1bfe64930e3d196328a8a7905aaff3d65c415ce4d')
+            '1949f6d6c1204cea27bbc1e6776d9549daaf64bb79b7145b897a690476cb763e'
+            'ef0e00774ab3a1170cbb165a5f82b737d27dbdc75f0ba3a968aabb89ba488518')
 
 prepare() {
 cd "${srcdir}"
