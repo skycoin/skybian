@@ -1,0 +1,13 @@
+[Unit]
+Description=http endpoint for skywire logs
+Wants=skywire.service
+
+[Service]
+Type=simple
+ExecStart=/bin/nc -vlc -p 7998 -e 'printf "HTTP/1.0 200 OK\r\nContent-Length: "; journalctl -x -u skywire.service -b | wc -m ; printf "\r\n"; journalctl -x -u skywire.service -b'
+Restart=always
+StartLimitInterval=1min
+StartLimitBurst=60
+
+[Install]
+WantedBy=multi-user.target
