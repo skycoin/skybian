@@ -1,10 +1,11 @@
 [Unit]
 Description=http endpoint for skywire logs
-Wants=skywire.service
 
 [Service]
 Type=simple
-ExecStart=/bin/nc -vlc -p 7998 -e 'printf "HTTP/1.0 200 OK\r\nContent-Length: "; journalctl -x -u skywire.service -b | wc -m ; printf "\r\n"; journalctl -x -u skywire.service -b'
+Environment="SYSTEMD_COLORS=true"
+ExecStartPre=/bin/bash -c 'systemctl status skywire --lines=0 | tee /opt/skywire/skylog2.html > /dev/null ; echo -e "\nshowing last 300 lines of skywire logs most recent first\n" | tee -a /opt/skywire/skylog2.html  > /dev/null ; journalctl -x -u skywire.service -b --output cat | tail -n 300 | tac | tee /opt/skywire/skylog.html > /dev/null ; lolcat -f /opt/skywire/skylog.html | tee -a /opt/skywire/skylog2.html > /dev/null ; printf "end of the rainbow\n" | tee -a /opt/skywire/skylog2.html  > /dev/null ; ansifilter --html -i /opt/skywire/skylog2.html -o /opt/skywire/skylog0.html ; sed -i -e "s/●/\&#9679;/g" -e "s/─/\&#9472;/g" -e "s/└/\&#9492;/g" -e "s/├/\&#9500;/g" -e "s/<body>/<body style=\\"background-color:black;color:white;\\">/g" /opt/skywire/skylog0.html ; tail -n 1 /opt/skywire/skylog0.html | wc -c | xargs -I {} truncate /opt/skywire/skylog0.html -s -{} ; cat /opt/skywire/skylog0.html | wc -m | tee /opt/skywire/skylog.wc > /dev/null'
+ExecStart=/bin/nc -vlc -p 7998 -e 'printf "HTTP/1.0 200 OK\r\nContent-Length: " ; cat /opt/skywire/skylog.wc ; printf "\r\n" ; cat /opt/skywire/skylog0.html'
 Restart=always
 StartLimitInterval=1min
 StartLimitBurst=60
