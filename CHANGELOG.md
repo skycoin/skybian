@@ -17,6 +17,12 @@ This is a note for developers about the recommended tags to keep track of the ch
 
 Dates must be YEAR-MONTH-DAY
 -->
+## [1.2.1] - 2022-10-3
+### Changed
+
+- update skywire to 1.2.1
+- APT repo and skybian releases migrated to github.
+
 ## [1.1.0] - 2022-08-27
 ### Changed
 
