@@ -3,7 +3,7 @@ _pkgname=skybian
 pkgdesc="Packaged modifications to the skybian image, including repo configuration - debian package"
 pkgver='1.1.0'
 _pkgver=${pkgver}
-pkgrel=3
+pkgrel=4
 _pkgrel=${pkgrel}
 arch=( 'any' )
 _pkgarches=('amd64' 'arm64' 'armhf' 'armel')
@@ -48,24 +48,26 @@ package() {
   mkdir -p ${_pkgdir}/etc/apt/sources.list.d/
   mkdir -p ${_pkgdir}/etc/apt/trusted.gpg.d
   mkdir -p ${_pkgdir}/usr/bin/
+	mkdir -p ${_pkgdir}/etc/update-motd.d/
+	mkdir -p ${_pkgdir}/etc/default/
+	mkdir -p ${_pkgdir}/etc/profile.d/
+	mkdir -p ${_pkgdir}/etc/systemd/system/
   if [[ $_pkgarch != "amd64" ]]; then
 	  _msg2 "Installing skybian modifications"
-	  mkdir -p ${_pkgdir}/etc/update-motd.d/
-	  mkdir -p ${_pkgdir}/etc/default/
-	  mkdir -p ${_pkgdir}/etc/profile.d/
-	  mkdir -p ${_pkgdir}/etc/systemd/system/
 	  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
 	  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
-	  _msg2 "Installing skybian scripts"
+	  _msg2 "Installing skybian scripts for arm architectures"
 #	  install -Dm755 ${srcdir}/script/skyenv.sh ${_pkgdir}/etc/profile.d/skyenv.sh
 	  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
 	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
-	  install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
-	  _msg2 "Installing systemd services"
+	  _msg2 "Installing systemd services for arm architectures"
 	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
 	  install -Dm644 ${srcdir}/script/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
-	  install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
   fi
+	_msg2 "Installing install-skywire.sh skywire installation script"
+	install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
+	_msg2 "Installing install-skywire systemd service"
+	install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
   _msg2 "Installing skybian-chrootconfig" #called by postinstall
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
   _msg2 "Installing apt repository configuration to:\n    /etc/apt/sources.list.d/skycoin.list"
