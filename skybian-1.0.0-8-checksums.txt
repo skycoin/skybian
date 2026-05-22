@@ -1,0 +1,8 @@
+72a189507fe02ca86c0ec93abd548e2ceb105c45a82d8ba6ac3372a30c706e54  skybian-opi3-1.0.0-8-arm64.img.tar.xz
+b5e563f5a187d004e322710086427478ba380ce8ca708def6f2f8ad213d4104b  skybian-opi3-1.0.0-8-arm64.img.tar.zst
+38b5204cfd801b86caf619aaa00e478d5fa9b3bb6aabb115d1ca367f50baa8fd  skybian-prime-1.0.0-8-arm64.img.tar.xz
+ff974df021b2185a90cdf859e60920ceaa2f273465f9f3b8e3f4d6aa78ce26e0  skybian-prime-1.0.0-8-arm64.img.tar.zst
+0aefee0ae0f985ba9792113ada14c396e41c2566c28b4ea1207d5833e1c3e359  skyraspbian-rpi3-1.0.0-8-armhf.img.tar.xz
+6a114ab97e1a2cf5ba6f19d542a6ccac242a8c4a52f0fe1077c794f66b762ee0  skyraspbian-rpi3-1.0.0-8-armhf.img.tar.zst
+c636678a3537a10712046ac40bba879f25046e013df42cfbcf36ac67e37e1089  skyraspbian-rpi4-1.0.0-8-arm64.img.tar.xz
+8072bc3e80056413911a1550c4567092bad946938f8ff4e3d13db41ff8f6ede2  skyraspbian-rpi4-1.0.0-8-arm64.img.tar.zst

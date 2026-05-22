@@ -1,0 +1,15 @@
+*.img
+*.xz
+*.zst
+*.deb
+*.zip
+*.torrent
+*.md5
+*.asc
+*pkg.tar.gz
+*latest.tar.gz
+*.sha
+.*/*
+/pkg
+/src
+updskybian.sh

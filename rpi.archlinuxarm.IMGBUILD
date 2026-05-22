@@ -1,0 +1,106 @@
+_dist=ArchLinuxARM
+_pkgname=rpi
+pkgname=rpi-ArchlinuxARM
+pkgdesc="ArchlinuxARM image creator - rpi"
+pkgver=20220520
+pkgrel=1
+arch=( 'any') #<--this effectively only limits host architecture
+url="http://os.archlinuxarm.org/os"
+_r1="armv7"
+_r2="aarch64"
+_imgarches=("armv7" "aarch64")
+_gz1="${_dist}-rpi-${_r1}-latest.tar.gz"
+_gz2="${_dist}-rpi-${_r2}-latest.tar.gz"
+makedepends=()
+depends=()
+source=(
+"${url}/${_gz1}"
+"${url}/${_gz1}.md5"
+"${url}/${_gz2}"
+"${url}/${_gz2}.md5"
+)
+noextract=(
+"${_gz1}"
+"${_gz2}"
+)
+sha256sums=('0e6ea566bb757f7a8529667d6ee59e6d5966db043d4ffde77f776ad01d15de14'
+            '89e76d97f0a89a1ebd13a362eece21c6cf6e7fd2d53d75410a7b60d7b636ab20'
+            '6911be93c4b8a7b46bb734e58c4787c3386b175d271a24b1f73e0de498ee4bdf'
+            '6c7d43936fff4c7be83558f64af011a6455d1a0a8f835fcaf501322a04a4b2f5')
+
+pkgver() {
+echo $(date +%Y%m%d)
+}
+
+build() {
+#set -x
+  for i in ${_imgarches[@]}; do
+  cd ${srcdir}
+  local _img="${pkgname}-${pkgver}-${i}.img"
+  sudo losetup /dev/loop0 && exit 1 || true
+	[[ ${i} != *"aarch64"* ]] && sudo truncate -s 1536M ${_img} || sudo truncate -s 1636M ${_img}
+	sudo losetup /dev/loop0 ${_img}
+	sudo parted -s /dev/loop0 mklabel msdos
+	sudo parted -s /dev/loop0 unit MiB mkpart primary fat32 -- 1 128
+	sudo parted -s /dev/loop0 set 1 boot on
+	sudo parted -s /dev/loop0 unit MiB mkpart primary ext2 -- 128 -1
+	sudo parted -s /dev/loop0 print
+	sudo sfdisk -d /dev/loop0
+	sudo losetup -d /dev/loop0
+	sudo gnome-disk-image-mounter -w ${_img}
+	sudo mkfs.vfat -n SYSTEM /dev/loop0p1
+	sudo mkfs.ext4 -L root -b 4096 -E stride=4,stripe_width=1024 /dev/loop0p2
+	sudo mkdir -p arch-boot
+	sudo mount /dev/loop0p1 arch-boot
+	sudo mkdir -p arch-root
+	sudo mount /dev/loop0p2 arch-root
+  _gz0="${_dist}-${i}-latest.tar.gz"
+	sudo bsdtar -xpf $_gz0 -C arch-root
+	sudo sed -i "s/ defaults / defaults,noatime /" arch-root/etc/fstab
+  ###CUSTOM CONFIGURATION GOES HERE###
+  ##Set a package mirror
+  #sudo echo "Server = http://192.168.0.2:8079/" > arch-root/root/mirrorlist
+  #sudo cat arch-root/etc/pacman.d/mirrorlist >> arch-root/root/mirrorlist
+  #sudo mv arch-root/root/mirrorlist arch-root/etc/pacman.d/mirrorlist
+  ##set up custom local repo
+  #sudo cat arch-root/etc/pacman.conf > arch-root/root/pacman.conf
+  #sudo echo -e "[hypervisor]\nInclude = /etc/pacman.d/mirrorlist\nSigLevel = Never" >> arch-root/root/pacman.conf
+  #sudo mv arch-root/root/pacman.conf arch-root/etc/pacman.conf
+  ###END CUSTOM CONFIGURATION###
+	sudo mv arch-root/boot/* arch-boot/
+	sudo umount arch-boot arch-root
+	sudo losetup -d /dev/loop0
+  sudo rm -rf arch-root arch-boot
+  yes | mv ${_img} ../${_img}
+  cd ..
+  echo "created image(s):"
+  ls ${_img}
+done
+}
+
+package() {
+  #Just let makepkg compress the archive as it does automatically for a package
+  #and then remove the metadata from the archive and change the extension
+  #avoid the compression step with makepkg --noarchive
+  #package only, assuming ${_imgfinal} exists with makepkg -R
+  for i in ${_imgarches[@]}; do
+    local _img="${pkgname}-${pkgver}-${i}.img"
+install -Dm644 ${srcdir}/../${_img} ${pkgdir}/
+done
+cd ${pkgdir}
+_msg2 "Creating image checksum"
+sha256sum *.img > img.sha
+cat img.sha
+if [[ ! -f ../../${pkgname}-${pkgver}-${pkgrel}-any.img.zip ]]; then
+  cd ..
+  _msg2 "Creating .zip archive for windows"
+  zip -r ${pkgname}-${pkgver}-${pkgrel}-any.img.zip ${pkgname}
+  mv *.zip ../
+fi
+}
+
+_msg2() {
+	(( QUIET )) && return
+	local mesg=$1; shift
+	printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}

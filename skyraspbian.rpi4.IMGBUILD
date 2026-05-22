@@ -1,0 +1,6 @@
+_imgarch="arm64"
+source skyraspbian-conf.sh
+sha256sums=('113eed9f7facaefd01ea9903c4a108679d6c2ba621d754bbd701440e54127a00'
+            'cc69909c80c952d2e6ede9b4bb5bd45414ae21d499931615a07c34d71fdaec1e'
+            '823f73dd44003c80bb0c7900a0ce50820d417bbadd8e977f9c58f44163c91f39'
+            '15c2164c9cea421c8eed3515d46c1cdc0503743641984eb933b9bf62743bfe55')
