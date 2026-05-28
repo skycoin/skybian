@@ -107,25 +107,26 @@ When the image boots for the first time:
 1. `install-skywire.service` (from `skyrepo`) runs `apt update && apt reinstall
    skywire-bin` and then self-disables. This guarantees the latest skywire is on the
    board even if the image is months stale.
-2. `skymanager.service` (from `skybian`) runs `skywire-cli config gen` to
-   materialize the visor's keypair, then checks for any device on the LAN at
-   `<gateway>.2`:
-   * **Nothing there** → claim `.2` as static IP, become hypervisor, start
-     `skywire.service` with hypervisor UI enabled on `:8000` (and the
-     unauthenticated `/api/pk` discovery route exposed thanks to
-     `enable_pk_endpoint: true` in the generated config).
-   * **Already taken** → stay on DHCP, fetch the hypervisor's pubkey via
-     `GET http://<gw>.2:8000/api/pk` carrying its own pubkey in the `SW-Public`
-     header (66-hex; curve-validated by the hypervisor). Configures self as a
-     visor of the returned pubkey.
+2. `skymanager.service` (from `skybian`, ordered `After=install-skywire.service`)
+   writes `ENABLEPKENDPOINT=true` into `/etc/skywire.conf` so every
+   subsequent `skywire cli config gen` flips on the unauthenticated
+   `GET /api/pk` route in the generated config, then probes
+   `<gateway>.2:8000/api/ping`:
+   * **Nothing there** → claim `.2` as static IP and `skywire autoconfig 0`
+     (local hypervisor with UI on `:8000` and `/api/pk` registered).
+   * **Already taken** → `skywire autoconfig 1` first (materializes the
+     visor config + keypair, no remote hypervisor wired yet), then
+     `curl -H "SW-Public: <our-pk>" http://<gw>.2:8000/api/pk` to discover
+     the hypervisor's pk, then `skywire autoconfig <hv-pk>` to register it
+     (`-r` retention keeps our keypair stable across the second regen).
 
    The `/api/pk` route landed in skywire develop
    ([#2895](https://github.com/skycoin/skywire/pull/2895),
    [#2896](https://github.com/skycoin/skywire/pull/2896)). It's gated on
-   `EnablePKEndpoint` in `HypervisorConfig`, off by default; skybian flips it on
-   via `ENABLEPKENDPOINT=true` in `/etc/profile.d/skyenv.sh` so every
-   `skywire-cli config gen` call (whether by `skymanager` or
-   `skywire-autoconfig`) keeps the route registered.
+   `EnablePKEndpoint` in `HypervisorConfig`, off by default. The toggle has
+   to live in the **SKYENV file** (`/etc/skywire.conf`) — not OS env, not
+   `/etc/profile.d/skyenv.sh` — because `cmdutil.SkyenvFile.Eval` reads
+   only from the parsed env file (no `os.Getenv` fallback).
 3. After successful configuration, `skymanager` self-disables. On reboot, no further
    network changes happen unless the operator runs `skybian-reset` to redo the dance.
 

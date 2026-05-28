@@ -47,22 +47,13 @@ sudo -u builder mkdir -p "$BUILDDIR"
 sudo -u builder git -C "$BUILDDIR" clone https://aur.archlinux.org/skywire-bin.git
 sudo -u builder bash -c "cd $BUILDDIR/skywire-bin && makepkg -si --noconfirm"
 
-# 4. Set ENABLEPKENDPOINT=true so any future `skywire-cli config gen`
-#    (notably skywire-autoconfig calls) keeps the /api/pk route registered
-#    on this hypervisor — `config gen -r` retains hypervisors but not
-#    EnablePKEndpoint. skymanager exports it inline too; this is for the
-#    longer-lived path.
-mkdir -p /etc/profile.d
-if ! grep -q ENABLEPKENDPOINT /etc/profile.d/skyenv.sh 2>/dev/null ; then
-    echo 'export ENABLEPKENDPOINT=true' >> /etc/profile.d/skyenv.sh
-fi
-
-# 5. Enable + start the skywire autoconfig pieces. skymanager runs the
-#    static-IP claim + hypervisor pubkey fetch. After it succeeds it
-#    self-disables (see /usr/bin/skymanager).
+# 4. Enable + start skymanager. It writes ENABLEPKENDPOINT=true into
+#    /etc/skywire.conf (the only place cli config gen will read it from —
+#    OS env doesn't propagate through SkyenvFile.Eval), runs the static-IP
+#    claim, then `skywire autoconfig <role>`. Self-disables on success.
 systemctl enable --now skymanager.service
 
-# 6. Mark done and self-disable.
+# 5. Mark done and self-disable.
 mkdir -p "$(dirname "$MARKER")"
 date -Is > "$MARKER"
 systemctl disable skyalarm-firstboot.service

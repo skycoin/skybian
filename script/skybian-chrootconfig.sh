@@ -16,14 +16,10 @@ fi
 if [[ $(cat /etc/profile.d/skyenv.sh | grep VPNSERVER ) != *"VPNSERVER"* ]] ; then
 	echo "export VPNSERVER=1" | tee -a /etc/profile.d/skyenv.sh
 fi
-if [[ $(cat /etc/profile.d/skyenv.sh | grep ENABLEPKENDPOINT ) != *"ENABLEPKENDPOINT"* ]] ; then
-	# Sets `enable_pk_endpoint: true` on every `skywire-cli config gen` —
-	# read by the --pk-endpoint flag's default. Required so skymanager's
-	# discovery probe (GET /api/pk) works against fellow skybian/ALARM
-	# boards that ended up being hypervisor. `config gen -r` does NOT
-	# preserve this field across regens, so we set it via env instead.
-	echo "export ENABLEPKENDPOINT=true" | tee -a /etc/profile.d/skyenv.sh
-fi
+# ENABLEPKENDPOINT lives in /etc/skywire.conf (the SKYENV file), not in a
+# shell profile. cli config gen evaluates ${ENABLEPKENDPOINT:-false} against
+# the skyenvfile contents (no OS env fallback — see pkg/cmdutil/skyenv_parse.go
+# SkyenvFile.Eval). skymanager pokes /etc/skywire.conf on first boot.
 if [[ $(cat /etc/profile.d/skyenv.sh | grep VISORISPUBLIC ) != *"VISORISPUBLIC"* ]] ; then
 	if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
 		echo "export VISORISPUBLIC=1" | tee -a /etc/profile.d/skyenv.sh

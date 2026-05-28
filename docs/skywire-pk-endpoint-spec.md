@@ -159,18 +159,32 @@ hypervisor itself.
 1. Ensure the visor's keypair exists before issuing `GET /api/pk`.
    `cipher.PubKey.Set()` goes through `secp256k1.VerifyPubkey` (actual curve
    membership check) — synthetic strings of the form `02|03 + 64 hex` do
-   **not** pass it, so we cannot fake a PK for the discovery probe. Concrete
-   path used in skybian: run `skywire-cli config gen -o /opt/skywire/skywire.json`
-   once at the top of `skymanager`, grep the PK out of the resulting JSON,
-   and pass it via `-H "SW-Public: <pk>"`. `skywire-autoconfig` later
-   regenerates with `-r`, which retains the keypair (so the PK we
-   advertised in the probe stays stable).
-2. Set `ENABLEPKENDPOINT=true` in the environment seen by every
-   `skywire-cli config gen` call. The `--pk-endpoint` flag's default is
-   `scriptExecBool("${ENABLEPKENDPOINT:-false}")` and `config gen -r`
-   resets `EnablePKEndpoint` from the flag (not from the prior config) on
-   every regen, so this **must** live in the env — `/etc/profile.d/skyenv.sh`
-   is the right place since `skywire-autoconfig` sources it on every run.
+   **not** pass it, so we cannot fake a PK for the discovery probe.
+   Concrete path used in skybian: call `skywire autoconfig 1` (visor with
+   no remote hypervisor — its first action is `cli config gen` which
+   materializes `/opt/skywire/skywire.json` + keypair). Then grep the PK
+   out of the resulting JSON and pass it via `-H "SW-Public: <pk>"`. The
+   second `skywire autoconfig <hv-pk>` regenerates with `-r`, which
+   retains the keypair, so the PK we advertised stays stable.
+2. Write `ENABLEPKENDPOINT=true` into the **SKYENV file** (default
+   `/etc/skywire.conf`) before the first `skywire autoconfig` call. The
+   `--pk-endpoint` flag's default is
+   `cmdutil.SkyenvBool("${ENABLEPKENDPOINT:-false}", skyenvfile)` and
+   `cmdutil.SkyenvFile.Eval` reads only from the parsed env file — there
+   is **no `os.Getenv` fallback**. Setting `ENABLEPKENDPOINT=true` in
+   the process environment (or in `/etc/profile.d/skyenv.sh`) does
+   nothing. `cli config gen` sets `EnablePKEndpoint` unconditionally from
+   the flag on every regen, so `-r` retention doesn't help either — the
+   skyenv file is the only durable home for this value.
+3. The new `skywire autoconfig` subcommand (Go) supersedes the old
+   `skywire-autoconfig` bash script; all calls in `skymanager.sh` use
+   the subcommand form. `collectSkyenvEdits` in autoconfig.go does NOT
+   map `--pk-endpoint` to a skyenv edit, so we can't rely on
+   `skywire autoconfig --pk-endpoint` — the line has to be written
+   directly. If you'd prefer to surface `ENABLEPKENDPOINT` as a
+   first-class `skywire autoconfig` flag in the future, the wiring would
+   live in `pkg/skywireconfig/autoconfigcmd` + `collectSkyenvEdits` +
+   `pkg/skywireconfig/autoconfigcmd.EnvMap()`.
 
 ### Out of scope
 

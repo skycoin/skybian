@@ -1,7 +1,7 @@
 [Unit]
 Description=skymanager service
-After=systemd-networkd.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service network-online.target NetworkManager-wait-online.service
-Before=skywire.service skywire-visor.service skywire-autoconfig.service
+After=systemd-networkd.service network.target armbian-firstrun.service armbian-resize-filesystem.service systemd-user-sessions.service network-online.target NetworkManager-wait-online.service install-skywire.service
+Before=skywire.service
 Wants=network-online.target
 
 [Service]
