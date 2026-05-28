@@ -8,9 +8,10 @@ pkgdesc="Skyraspbian ${_imgarch} image build"
 pkgver='1.3.59'
 pkgrel=1
 
-#skyrepo version (apt config + install-skywire service)
+#skyrepo version (apt config + install-skywire service).
+#1.3.56-4 is the first release with install-skywire.service Type=oneshot.
 _skyrepover='1.3.56'
-_skyreporel=3
+_skyreporel=4
 
 arch=('any')
 _hostarch=$(dpkg --print-architecture)

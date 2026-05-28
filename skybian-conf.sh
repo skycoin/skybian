@@ -8,9 +8,11 @@ pkgdesc="Skybian ${_board} image build"
 pkgver='1.3.59'
 pkgrel=1
 
-#skyrepo version (apt config + install-skywire service) — separate cadence from skywire
+#skyrepo version (apt config + install-skywire service) — separate cadence from skywire.
+#1.3.56-4 is the first release with install-skywire.service Type=oneshot;
+#earlier revs race against followers ordered After=install-skywire.service.
 _skyrepover='1.3.56'
-_skyreporel=3
+_skyreporel=4
 
 arch=('any')
 _imgarch="arm64"

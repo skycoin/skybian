@@ -21,7 +21,7 @@ makedepends=('dpkg')
 depends=()
 # skyrepo: apt config, signing key, install-skywire.service, skywire-chrootconfig.
 # skywire-bin: the actual skywire binary + systemd unit our autoconfig drives.
-_debdeps="skyrepo (>= 1.3.56), skywire-bin (>= 1.3.59)"
+_debdeps="skyrepo (>= 1.3.56-4), skywire-bin (>= 1.3.59)"
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
 sha256sums=('SKIP'
