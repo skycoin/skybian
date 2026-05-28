@@ -78,8 +78,16 @@ Build all five at once:
 ### ArchLinuxARM images
 
 ```
-makepkg -fp skyalarm.prime.IMGBUILD          # OPi Prime aarch64
+makepkg -fp skyalarm.prime.IMGBUILD          # OPi Prime aarch64 (with skybian autoconfig)
 makepkg -fp skyalarm.rpi.IMGBUILD            # RPi (armv7 + aarch64, one PKGBUILD produces both)
+```
+
+For the bare ALARM image (no skywire, no skymanager — useful as a base for
+operators who want to install skywire themselves, or for QA/repro work):
+
+```
+BASEONLY=1 makepkg -fp skyalarm.prime.IMGBUILD       # → skyalarm-orangepiprime-base-*.img
+BASEONLY=1 makepkg -fp skyalarm.rpi.IMGBUILD         # → skyalarm-rpi-base-*-{armv7,aarch64}.img
 ```
 
 `skyalarm.prime.IMGBUILD` extracts the sunxi U-Boot SPL+proper blob from an Armbian image

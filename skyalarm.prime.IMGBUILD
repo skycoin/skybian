@@ -12,8 +12,16 @@
 #
 # Ported from the standalone build-image.sh on the skyalarm branch.
 
-pkgname=skyalarm-orangepiprime
-pkgdesc="ArchLinuxARM aarch64 image for Orange Pi Prime, skybian-style autoconfig"
+# BASEONLY=1 builds the vanilla ALARM image (boot + rootfs + resize-firstboot
+# only — no skywire, no skymanager, no autoconfig). Useful as a base for
+# operators who want to install skywire themselves, or for QA/repro work.
+# Default (BASEONLY unset) ships the full skybian-style autoconfig stack.
+pkgname=skyalarm-orangepiprime${BASEONLY:+-base}
+if [[ -n "${BASEONLY}" ]]; then
+    pkgdesc="ArchLinuxARM aarch64 image for Orange Pi Prime, bare (no skywire)"
+else
+    pkgdesc="ArchLinuxARM aarch64 image for Orange Pi Prime, skybian-style autoconfig"
+fi
 pkgver='1.3.59'
 pkgrel=1
 arch=('any')
@@ -164,21 +172,25 @@ EOF
         exit 1
     fi
 
-    # === skybian autoconfig payload ===
-    # Stage skymanager + srvpk + skylog + skyalarm-firstboot from script/ +
-    # static/ in this repo. No dpkg involved (we're not in a debian chroot).
-    _msg2 "Installing skybian autoconfig payload"
-    sudo install -Dm755 ../script/skymanager.sh           "${srcdir}/mnt/usr/bin/skymanager"
-    sudo install -Dm755 ../script/skybian-reset.sh        "${srcdir}/mnt/usr/bin/skybian-reset"
-    sudo install -Dm755 ../script/skyalarm-firstboot.sh   "${srcdir}/mnt/usr/bin/skyalarm-firstboot"
-    sudo install -Dm644 ../script/skymanager.service      "${srcdir}/mnt/etc/systemd/system/skymanager.service"
-    sudo install -Dm644 ../script/skyalarm-firstboot.service \
-        "${srcdir}/mnt/etc/systemd/system/skyalarm-firstboot.service"
+    if [[ -z "${BASEONLY}" ]]; then
+        # === skybian autoconfig payload ===
+        # Stage skymanager + skyalarm-firstboot from script/. No dpkg
+        # involved (we're not in a debian chroot).
+        _msg2 "Installing skybian autoconfig payload"
+        sudo install -Dm755 ../script/skymanager.sh           "${srcdir}/mnt/usr/bin/skymanager"
+        sudo install -Dm755 ../script/skybian-reset.sh        "${srcdir}/mnt/usr/bin/skybian-reset"
+        sudo install -Dm755 ../script/skyalarm-firstboot.sh   "${srcdir}/mnt/usr/bin/skyalarm-firstboot"
+        sudo install -Dm644 ../script/skymanager.service      "${srcdir}/mnt/etc/systemd/system/skymanager.service"
+        sudo install -Dm644 ../script/skyalarm-firstboot.service \
+            "${srcdir}/mnt/etc/systemd/system/skyalarm-firstboot.service"
 
-    # Enable skyalarm-firstboot (it'll enable skymanager once skywire is installed).
-    sudo mkdir -p "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants"
-    sudo ln -sf /etc/systemd/system/skyalarm-firstboot.service \
-        "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants/skyalarm-firstboot.service"
+        # Enable skyalarm-firstboot (it'll enable skymanager once skywire is installed).
+        sudo mkdir -p "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants"
+        sudo ln -sf /etc/systemd/system/skyalarm-firstboot.service \
+            "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants/skyalarm-firstboot.service"
+    else
+        _msg2 "BASEONLY=1: skipping skybian autoconfig payload (bare ALARM image)"
+    fi
 
     _msg2 "Installing first-boot resize service"
     sudo tee "${srcdir}/mnt/usr/local/sbin/firstboot-resize.sh" > /dev/null <<'EOF'
@@ -218,9 +230,14 @@ EOF
     sudo ln -sf /etc/systemd/system/firstboot-resize.service \
         "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants/firstboot-resize.service"
 
-    # Set hostname so the board is identifiable on the LAN before skymanager
-    # has done anything. skymanager will rename if it claims hypervisor role.
-    echo 'skyalarm' | sudo tee "${srcdir}/mnt/etc/hostname" > /dev/null
+    # Set hostname. Skyalarm marker on the autoconfig image; plain "alarm"
+    # for the bare variant so operators starting from it don't carry an
+    # unexpected name.
+    if [[ -n "${BASEONLY}" ]]; then
+        echo 'alarm' | sudo tee "${srcdir}/mnt/etc/hostname" > /dev/null
+    else
+        echo 'skyalarm' | sudo tee "${srcdir}/mnt/etc/hostname" > /dev/null
+    fi
 
     sync
     _msg2 "Unmounting"
