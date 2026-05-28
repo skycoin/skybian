@@ -107,14 +107,25 @@ When the image boots for the first time:
 1. `install-skywire.service` (from `skyrepo`) runs `apt update && apt reinstall
    skywire-bin` and then self-disables. This guarantees the latest skywire is on the
    board even if the image is months stale.
-2. `skymanager.service` (from `skybian`) checks for any device on the LAN at
+2. `skymanager.service` (from `skybian`) runs `skywire-cli config gen` to
+   materialize the visor's keypair, then checks for any device on the LAN at
    `<gateway>.2`:
    * **Nothing there** → claim `.2` as static IP, become hypervisor, start
-     `skywire.service` with hypervisor UI enabled on `:8000`.
-   * **Already taken** → stay on DHCP, fetch hypervisor pubkey from the
-     unauthenticated `GET http://<gw>.2:8000/api/pk` route, configure self as a visor of
-     that pubkey. **Note**: the `/api/pk` endpoint must be present in the hypervisor —
-     see the matching change in [skycoin/skywire](https://github.com/skycoin/skywire).
+     `skywire.service` with hypervisor UI enabled on `:8000` (and the
+     unauthenticated `/api/pk` discovery route exposed thanks to
+     `enable_pk_endpoint: true` in the generated config).
+   * **Already taken** → stay on DHCP, fetch the hypervisor's pubkey via
+     `GET http://<gw>.2:8000/api/pk` carrying its own pubkey in the `SW-Public`
+     header (66-hex; curve-validated by the hypervisor). Configures self as a
+     visor of the returned pubkey.
+
+   The `/api/pk` route landed in skywire develop
+   ([#2895](https://github.com/skycoin/skywire/pull/2895),
+   [#2896](https://github.com/skycoin/skywire/pull/2896)). It's gated on
+   `EnablePKEndpoint` in `HypervisorConfig`, off by default; skybian flips it on
+   via `ENABLEPKENDPOINT=true` in `/etc/profile.d/skyenv.sh` so every
+   `skywire-cli config gen` call (whether by `skymanager` or
+   `skywire-autoconfig`) keeps the route registered.
 3. After successful configuration, `skymanager` self-disables. On reboot, no further
    network changes happen unless the operator runs `skybian-reset` to redo the dance.
 

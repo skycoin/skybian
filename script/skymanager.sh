@@ -3,26 +3,30 @@
 # Runs once on first boot (via skymanager.service).
 #
 # Flow:
-#  1. Look at ${gateway%.*}.2 (i.e. the .2 IP on the current subnet).
-#  2. If nothing answers there: claim .2 as a static address via
-#     /etc/systemd/network/10-eth.network, become hypervisor.
-#  3. If something is there: stay on DHCP, fetch its pubkey from the
-#     hypervisor UI's unauthenticated /api/pk endpoint on port 8000,
-#     configure self as a visor pointed at that hypervisor pk.
-#  4. In either case, run skywire-autoconfig and start skywire, then
-#     self-disable so subsequent boots don't redo the dance.
+#  1. Ensure a visor config exists at /opt/skywire/skywire.json so we have a
+#     real pubkey to identify ourselves to a peer hypervisor (the hypervisor's
+#     /api/pk route enforces a soft SW-Public header check; the header must
+#     be a curve-valid cipher.PubKey, so we can't fake one).
+#  2. Probe ${gateway%.*}.2:8000/api/ping. If something answers, fetch the
+#     hypervisor's pubkey from :8000/api/pk (carrying our own PK in SW-Public)
+#     and configure as a visor of that hypervisor.
+#  3. If nothing answers on .2, claim it as a static address and become the
+#     hypervisor (the /api/pk route is registered because
+#     ENABLEPKENDPOINT=true is in /etc/profile.d/skyenv.sh, set by
+#     skybian-chrootconfig / skyalarm-firstboot).
+#  4. Hand off to skywire-autoconfig, then self-disable.
 #
-# Discovery used to use a separate `srvpk` http endpoint on :7998. That's
-# been retired in favor of the hypervisor's own UI port (:8000). The pubkey
-# endpoint must be unauthenticated — see /api/pk in skywire's hypervisor.go.
+# Discovery used to use a separate `srvpk` http endpoint on :7998. That was
+# retired in favor of the hypervisor's UI port (:8000). `skywire-cli`'s
+# local RPC (:3435) is localhost-only and must stay that way.
 
 if [[ $EUID -ne 0 ]]; then
 	echo "root permissions required"
 	exit 1
 fi
 
-# Reset path: if a previous skymanager run already wrote network config,
-# remove it and exit (handy for skybian-reset).
+# Reset path: if a previous skymanager run wrote network config, remove it
+# and exit (used by skybian-reset).
 if [[ -f /etc/systemd/network/10-eth.network ]] ; then
 	echo "removing static ip configuration"
 	rm /etc/systemd/network/10-eth.network
@@ -32,32 +36,55 @@ if [[ -f /etc/systemd/network/10-eth.network ]] ; then
 	exit 0
 fi
 
-# Determine the gateway IP and the target hypervisor address (.2 on the
-# current subnet).
+# Belt-and-braces — chrootconfig writes this to skyenv.sh at image-build
+# time, but on ALARM images skyenv.sh may not yet exist when skymanager
+# first runs. Export it here so the config gen below picks up the
+# --pk-endpoint default.
+export ENABLEPKENDPOINT=true
+
+# --- Step 1: materialize visor config to get our own PK ---
+_skyconf=/opt/skywire/skywire.json
+mkdir -p "$(dirname "${_skyconf}")"
+if [[ ! -f "${_skyconf}" ]]; then
+	# Plain visor config — skywire-autoconfig will re-gen with -r later to
+	# add -i (hypervisor) or -j PK (remote hypervisor) as appropriate.
+	# -r retains the keypair, so our PK below stays stable.
+	skywire-cli config gen -o "${_skyconf}" >/dev/null
+fi
+
+# Extract our own pubkey from the generated config.
+_my_pk="$(grep -oE '"pk":[[:space:]]*"[0-9a-fA-F]{66}"' "${_skyconf}" \
+	| head -n1 | grep -oE '[0-9a-fA-F]{66}')"
+if [[ -z "${_my_pk}" ]]; then
+	echo "skymanager: could not extract own pubkey from ${_skyconf}"
+	exit 1
+fi
+
+# --- Step 2: probe .2 on the current subnet ---
 _gateway="$(ip route show | awk '/^default via/{print $3; exit}')"
 [[ -z "${_gateway}" ]] && echo "gateway ip unknown" && exit 1
 _ip="${_gateway%.*}.2"
 
-# Probe :8000 — the hypervisor UI port. /api/ping is unauthenticated and
-# cheap. `curl -fsS --max-time 3` returns nonzero if nothing answers within
-# 3 seconds, which is our trigger to claim .2.
 _pubkey=""
 _nohv=""
 if curl -fsS --max-time 3 "http://${_ip}:8000/api/ping" >/dev/null 2>&1 ; then
-	# Something answered — assume it's the hypervisor. Fetch its pubkey
-	# from the (unauthenticated) /api/pk route. The route returns a JSON
-	# envelope {"public_key":"<66-hex>"}; grep for the first 66-hex run
-	# rather than pulling in jq.
-	_pubkey="$(curl -fsS --max-time 5 "http://${_ip}:8000/api/pk" 2>/dev/null | grep -oE '[0-9a-fA-F]{66}' | head -n1)"
+	# Hypervisor is up. Ask for its pubkey, identifying ourselves via the
+	# SW-Public header (66-hex; must pass cipher.PubKey curve verification).
+	_pubkey="$(curl -fsS --max-time 5 \
+		-H "SW-Public: ${_my_pk}" \
+		"http://${_ip}:8000/api/pk" 2>/dev/null \
+		| grep -oE '[0-9a-fA-F]{66}' | head -n1)"
 	if [[ -z "${_pubkey}" ]]; then
-		echo "warning: hypervisor responded at ${_ip}:8000 but /api/pk returned no usable pubkey; coming up without remote hypervisor"
-		_pubkey=""
+		# Possible causes: the peer doesn't have EnablePKEndpoint set,
+		# our SW-Public was rejected, or it's not actually a hypervisor.
+		# Come up standalone; operator can re-run skywire-autoconfig.
+		echo "warning: peer at ${_ip}:8000 didn't return a usable pubkey; coming up standalone"
 		_nohv=1
 	else
 		echo "hypervisor detected at ${_ip}, pk=${_pubkey}"
 	fi
 else
-	# Nothing on .2 — claim it.
+	# --- Step 3: nobody on .2 — claim it ---
 	echo "no hypervisor at ${_ip}:8000; claiming static IP and becoming hypervisor"
 	cat > /etc/systemd/network/10-eth.network <<EOF
 [Match]
@@ -71,17 +98,15 @@ EOF
 	systemctl restart systemd-networkd
 fi
 
-# Hand off to skywire-autoconfig. If we have a pubkey, pass it as the remote
-# hypervisor pk; otherwise pass nothing (autoconfig defaults to making this
-# node a hypervisor when no arg is given).
+# --- Step 4: skywire-autoconfig + finalize ---
 if [[ -n "${_pubkey}" ]]; then
+	# Visor of discovered hypervisor.
 	skywire-autoconfig "${_pubkey}"
 elif [[ -n "${_nohv}" ]]; then
-	# Detected a peer but couldn't get a pk: come up as a standalone visor
-	# (no hypervisor wired). Operator can rerun skywire-autoconfig manually.
+	# Standalone visor (no hypervisor wired).
 	skywire-autoconfig 1
 else
-	# .2 was free — we're the hypervisor.
+	# Local hypervisor.
 	skywire-autoconfig 0
 fi
 
