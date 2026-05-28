@@ -110,15 +110,25 @@ When the image boots for the first time:
 2. `skymanager.service` (from `skybian`, ordered `After=install-skywire.service`)
    writes `ENABLEPKENDPOINT=true` into `/etc/skywire.conf` so every
    subsequent `skywire cli config gen` flips on the unauthenticated
-   `GET /api/pk` route in the generated config, then probes
-   `<gateway>.2:8000/api/ping`:
-   * **Nothing there** → claim `.2` as static IP and `skywire autoconfig 0`
-     (local hypervisor with UI on `:8000` and `/api/pk` registered).
-   * **Already taken** → `skywire autoconfig 1` first (materializes the
+   `GET /api/pk` route in the generated config, then **polls**
+   `<gateway>.2:8000/api/ping` every 5s for up to 2 minutes:
+   * **Nothing there after the full window** → sleep a random 0–30s
+     (race-break for the case where all 8 boards reach timeout at once),
+     re-probe one more time, and if still nothing claim `.2` as static IP
+     and `skywire autoconfig 0` (local hypervisor with UI on `:8000` and
+     `/api/pk` registered). If the final re-probe finds something,
+     fall through to the visor path.
+   * **Pong** → `skywire autoconfig 1` first (materializes the
      visor config + keypair, no remote hypervisor wired yet), then
      `curl -H "SW-Public: <our-pk>" http://<gw>.2:8000/api/pk` to discover
      the hypervisor's pk, then `skywire autoconfig <hv-pk>` to register it
      (`-r` retention keeps our keypair stable across the second regen).
+
+   The polling window accommodates the skyminer power-bus hardware
+   constraint: when the main switch turns on all 8 boards at once, voltage
+   dips can stall the (preboot'd) hypervisor's startup for tens of
+   seconds. A single-shot probe would race ahead and visors would try to
+   claim `.2` themselves.
 
    The `/api/pk` route landed in skywire develop
    ([#2895](https://github.com/skycoin/skywire/pull/2895),
