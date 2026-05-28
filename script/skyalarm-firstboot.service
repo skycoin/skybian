@@ -1,0 +1,14 @@
+[Unit]
+Description=skyalarm first-boot installer (installs skywire-bin from AUR, enables skymanager)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/skyalarm/firstboot-done
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/bin/skyalarm-firstboot
+TimeoutStartSec=30min
+
+[Install]
+WantedBy=multi-user.target

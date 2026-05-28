@@ -1,186 +1,143 @@
 # Skybian Image
 
-The Skybian image is a Debian-based ARM Operating System image with skywire pre-installed.
+Skybian is a Debian/Armbian-derived ARM image preconfigured to run [skywire](https://github.com/skycoin/skywire) for the [Skyminer](https://github.com/skycoin/skyminer-hardware).
 
-Currently, the following SBCs (Single Board Computer) are supported:
+Supported SBCs:
 
-* Orange Pi Prime
-* Orange Pi 3
-* Raspberry Pi 32-bit and 64-bit
+* Orange Pi Prime  (Armbian, arm64)
+* Orange Pi 3      (Armbian, arm64)
+* Raspberry Pi 3   (Raspberry Pi OS, armhf)
+* Raspberry Pi 4   (Raspberry Pi OS, arm64)
 
-This repository has two types of builds:
+ArchLinuxARM variants are available via [`skyalarm.prime.IMGBUILD`](skyalarm.prime.IMGBUILD)
+(Orange Pi Prime, aarch64) and [`skyalarm.rpi.IMGBUILD`](skyalarm.rpi.IMGBUILD) (RPi armv7
+and aarch64). They ship the same `skymanager` / `srvpk` / `skylog` autoconfig, but install
+`skywire-bin` from the AUR on first boot rather than baking it into the image.
 
-The first is a [PKGBUILD](PKGBUILD) for the skybian.deb packaged modifications to the base image.
+## Layout
 
-The second are [IMGBUILD](skybian.prime.IMGBUILD)s, which modify a base Armbian or Raspbian images by installing the skybian and skywire-bin packages, setting the password, etc.
+This repo contains two related build flavors:
 
-Release images for can be found at [https://deb.skywire.skycoin.com/img/](https://deb.skywire.skycoin.com/img)
+* **[PKGBUILD](PKGBUILD)** — builds the per-arch `skybian.deb` shipping only the autoconfig
+  (`skymanager`, `skybian-reset`, motd snippets).
+  Apt-repo configuration and the `install-skywire` service live in the `skyrepo` deb built
+  out of [skycoin/apt-repo](https://github.com/skycoin/apt-repo); `skybian.deb`
+  `Depends:` on `skyrepo` and `skywire-bin`.
 
-### Prerequisite
+* **[IMGBUILD](skybian.prime.IMGBUILD)s** — drive the per-board image builds. Each IMGBUILD
+  sources [`skybian-conf.sh`](skybian-conf.sh) (Armbian-based) or
+  [`skyraspbian-conf.sh`](skyraspbian-conf.sh) (Raspbian-based), downloads the upstream
+  image, mounts it via loop device, and installs three debs into the chroot in this order:
 
-To build everything in this repo requires:
+  1. `skyrepo` — adds `deb.skywire.skycoin.com` apt source + `install-skywire.service`
+  2. `skywire-bin` — the skywire binaries + systemd units
+  3. `skybian` — autoconfig (skymanager + motd)
 
-* archlinux host
-* ~15gb of disk space
+Release images: <https://deb.skywire.skycoin.com/img/>
 
-### Build Skybian image:
+## Build dependencies
 
-install dependencies from AUR:
+Host: Arch Linux, ~15 GB free.
+
 ```
-yay -S 'arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'qemu-arm-static' 'zip'
-```
-Note: be sure to install the binary package `qemu-arm-static-bin` if you don't have `qemu-arm-static` installed already.
-
-Build only without creating an archive:
-```
-makepkg --noarchive -p skybian.prime.IMGBUILD
-```
-
-Once the image is created, it can be compressed into the desired archive format:
-```
-PKGEXT='.img.tar.zst' makepkg -fRp skybian.prime.IMGBUILD
-PKGEXT='.img.tar.xz' makepkg -fRp skybian.prime.IMGBUILD
-PKGEXT='.img.tar.gz' makepkg -fRp skybian.prime.IMGBUILD
-```
-
-Update checksums on changes to source files:
-```
-updpkgsums skybian.prime.IMGBUILD
+yay -S arch-install-scripts aria2 dpkg dtrx qemu-arm-static qemu-user-static \
+       qemu-user-static-binfmt gnome-disk-utility zip
 ```
 
-### Skybian .deb package:
+## Build the skybian.deb
 
-The skybian amd64 package includes only the apt repo configuration and repository signing key.
-
-The skybian armhf and arm64 packages additionally contain the modifications to the base image ; when installed in a chroot, the skybian package enables the automatic remote hypervisor configuration on the first boot of the skybian image to a hypervisor running on the xxx.xxx.xxx.2 ip address of the current subnet.
-
-to build the skybian package, first install dpkg from the AUR:
 ```
-yay -S dpkg
+./skybian.sh
 ```
 
-Build the skybian .deb package:
-```
-makepkg
-```
+This regenerates `skybian-script.tar.gz` / `skybian-static.tar.gz` from `script/` and
+`static/`, refreshes `pkgver` checksums, and runs `makepkg` against `PKGBUILD`. Output:
+`skybian-${pkgver}-${pkgrel}-${arch}.deb` for arm64 and armhf.
 
-On changes to source files in [script](script) or [static](static) dir ; re-create the source archive(s):
-```
-tar -czvf skybian-static.tar.gz static
-tar -czvf skybian-script.tar.gz script
-```
+## Build an image
 
-Update checksums of source archives in the [PKGBUILD](PKGBUILD):
 ```
-updpkgsums
+SKYBIAN=skybian.prime.IMGBUILD ./image.sh            # OPi Prime, no autopeering
+ENABLEAUTOPEER="-autopeer" SKYBIAN=skybian.prime.IMGBUILD ./image.sh   # OPi Prime w/ autopeer
+SKYBIAN=skybian.opi3.IMGBUILD       ./image.sh       # OPi 3
+SKYBIAN=skyraspbian.rpi3.IMGBUILD   ./image.sh       # RPi 3 (armhf)
+SKYBIAN=skyraspbian.rpi4.IMGBUILD   ./image.sh       # RPi 4 (arm64)
 ```
 
-### Building Both
+`./image.sh 1` builds without compression (faster, for iterating). `./image.sh zip` adds a
+`.zip` for the Windows imagers. `./image.sh 0` only refreshes source checksums.
 
- An automated development workflow is made possible with the skybian-prime.sh and skybian.sh scripts, which build the image and package respectively. The version of the skybian and skywire packages *must match* the version referenced in the skybian.prime.IMGBUILD:
- ```
- ./skybian.sh
- SKYBIAN=skybian.prime.IMGBUILD ./image.sh
+Build all five at once:
+```
+./images.sh        # production
+./images.sh 0      # refresh checksums only
 ```
 
-### Building Image Variants
-orange pi prime
+`build.sh` provides a `dialog`-based menu for the same operations.
+
+### ArchLinuxARM images
+
 ```
-SKYBIAN=skybian.prime.IMGBUILD ./image.sh 1
-./skybian-prime.sh 1
-```
-orange pi prime with autopeering
-```
-ENABLEAUTOPEER="-autopeer" SKYBIAN=skybian.prime.IMGBUILD ./image.sh 1
+makepkg -fp skyalarm.prime.IMGBUILD          # OPi Prime aarch64
+makepkg -fp skyalarm.rpi.IMGBUILD            # RPi (armv7 + aarch64, one PKGBUILD produces both)
 ```
 
-orange pi 3
-```
-SKYBIAN=skybian.opi3.IMGBUILD ./image.sh 1
- ```
-raspberry pi 3
- ```
- SKYBIAN=skyraspbian.rpi3.IMGBUILD ./image.sh 1
- ```
-raspberry pi 4
- ```
- SKYBIAN=skyraspbian.rpi4.IMGBUILD ./image.sh 1
- ```
+`skyalarm.prime.IMGBUILD` extracts the sunxi U-Boot SPL+proper blob from an Armbian image
+on first run and caches it as `../u-boot-sunxi-with-spl.bin`. Subsequent builds reuse the
+cache. The ALARM rootfs itself comes straight from
+[archlinuxarm.org](http://os.archlinuxarm.org/os).
 
-### Skybian Auto-Peering Explained
+On first boot the [`skyalarm-firstboot.service`](script/skyalarm-firstboot.service)
+runs `pacman -Syyu && yay-equivalent skywire-bin` (precompiled tarball, no Go build on
+the board) and then enables `skymanager`. After that, autoconfig behaves identically to
+the deb-based images: `.2` becomes hypervisor, everyone else joins as visors. The first
+boot consumes one connected-to-internet window on the order of 10–15 minutes; subsequent
+boots are fast.
 
-The Skybian orange pi prime image, when booted, checks for any machine on the network at the xxx.xxx.xxx.2 ip address of the current subnet; i.e. 192.168.0.2 [skymanager.sh](/skymanager.sh).
+## Testing repo deployment
 
-#### _If nothing is on that ip address;_
-* a static IP is set to that address via systemd-networkd in `/etc/systemd/network/10-eth.network`
-* A hypervisor configuration is created by the skywire-autoconfig script.
-* skywire.service is started
-* srvpk.service is started ; which is an http endpoint runing on :7998 for querying the hypervisor's public key (`skywire-cli visor pk -w`)
+`TESTDEPLOYMENT=1` causes the chroot config to set `VISORISPUBLIC=1` and
+`NOAUTOCONNECT=1` in `/etc/profile.d/skyenv.sh`. The actual apt-repo URL switching is
+handled by the `skyrepo` deb (which ships all three mirror URLs by default).
 
-#### _If a machine is on that ip address;_
-* the skywire systemd service is started.
-* the hypervisor running at the .2 ip address of the current subnet is queried for its public key
-* the public key is not written to the config, but established at runtime
-* upon loss of connection to the hypervisor, the srvpk endpoint is queried until a hypervisor responds with its public key or until the previous hypervisor connection is re-established
+## First-boot auto-config
 
-If no configuration file was generated, the process is attempted again on reboot.
+When the image boots for the first time:
 
-### Using the Skybian image
+1. `install-skywire.service` (from `skyrepo`) runs `apt update && apt reinstall
+   skywire-bin` and then self-disables. This guarantees the latest skywire is on the
+   board even if the image is months stale.
+2. `skymanager.service` (from `skybian`) checks for any device on the LAN at
+   `<gateway>.2`:
+   * **Nothing there** → claim `.2` as static IP, become hypervisor, start
+     `skywire.service` with hypervisor UI enabled on `:8000`.
+   * **Already taken** → stay on DHCP, fetch hypervisor pubkey from the
+     unauthenticated `GET http://<gw>.2:8000/api/pk` route, configure self as a visor of
+     that pubkey. **Note**: the `/api/pk` endpoint must be present in the hypervisor —
+     see the matching change in [skycoin/skywire](https://github.com/skycoin/skywire).
+3. After successful configuration, `skymanager` self-disables. On reboot, no further
+   network changes happen unless the operator runs `skybian-reset` to redo the dance.
 
-Refer to the [Skybian User Guide](https://github.com/skycoin/skywire/wiki/Skybian-User-Guide) in the [skywire github wiki](https://github.com/skycoin/skywire/wiki).
+User experience target: flash → boot → browse to `http://<gw>.2:8000`. No SSH, no
+pre-flash imager, no manual configuration.
 
-### Troubleshooting
+See [`script/skymanager.sh`](script/skymanager.sh) for the detection logic.
 
-If for some reason the hypervisor is not accessible or the visor never shows up in the hypervisor, first try rebooting that board.
+## APT repository
 
-If the visor or hypervisor still does not show up online, ssh to the board or access it via keyboard and HDMI monitor.
+The Skycoin apt repository is at <https://deb.skywire.skycoin.com> with mirrors at
+<https://deb.theskywirenetwork.net> and <https://deb.skywire.dev> (the latter is the
+release-candidate channel). Configuration ships in the `skyrepo` deb — install it on any
+debian-derived arm/arm64/amd64 system to make `apt install skywire-bin` work. Testing
+images live at <https://deb.skywire.dev/img/>.
 
-For troubleshooting the skywire package, see [Skywire Package Installation](https://github.com/skycoin/skywire/wiki/Skywire-Package-Installation).
+## Script and service reference
 
-### APT repository
+* [`skymanager.sh`](script/skymanager.sh) — static-IP claim + hypervisor election (called by `skymanager.service` on first boot)
+* [`skymanager.service`](script/skymanager.service) — runs `skymanager` after `network-online.target`
+* [`skybian-chrootconfig.sh`](script/skybian-chrootconfig.sh) — called from `postinst`, sets env defaults and enables `skymanager` under `CHROOTCONFIG=1`
+* [`skybian-reset.sh`](script/skybian-reset.sh) — disables skywire services and removes generated config, for re-running first-boot autoconfig
+* [`skyenv.sh`](script/skyenv.sh) — defaults sourced by `skywire-autoconfig` on first run when `/etc/skywire.conf` is absent
 
-Skywire is now available as a package from the repository at [https://deb.skywire.skycoin.com](https://deb.skywire.skycoin.com).
-
-This package repository will work with any .deb based arm / arm64 / amd64 system and is pre-configured in the provided Skybian and Skyraspbian images.
-
-To configure this repository please refer to [Skywire Package Installation](https://github.com/skycoin/skywire/wiki/Skywire-Package-Installation).
-
-### Additional notes
-
-Images for testing can be found at [https://deb.skywire.dev/img/](https://deb.skywire.dev/img)
-
-### Script and systemd service reference
-
-#### Skybian
-* [skymanager.sh](/script/skymanager.sh) (formerly skybian-firstrun)
-    - produces static IP configuration (hypervisor)
-    - sets hostname (hypervisor)
-    - generates the appropriate config with skywire-autoconfig (local or remote hypervisor)
-    - disables skymanager.service
-* [skymanager.service](/script/skymanager.service)
-    - runs on skybian first boot; wants network-online.target and the wait-online.services
-* [srvpk.service](/util/srvpk.service)
-    - wants skywire.service
-	- runs `skywire-cli hv srvpk`
-* [skybian-chrootconfig.sh](/script/skybian-chrootconfig.sh) (expected to run in chroot)
-    - called by [postinst.sh](/script/postinst.sh) of the skybian.deb package upon installation
-    - disables and enables required systemd services
-    - removes any autogenerated skywire config
-	- produces the drop-in configuration for skywire systemd service to enable autopeering
-* /etc/systemd/system/skywire.service.conf.d/skywire.conf
-	- `Environment=AUTOPEER=1`
-* [skybian-reset.sh](/script/skybian-reset.sh)
-    - resets skybian; except for the static ip configuration and hostname
-
-
-#### Skywire
-* skywire-autoconfig.sh
-    - produces or updates a skywire configuration
-    - determines the correct systemd service to enable and start by the presence of the config file
-    - takes public key as argument to create a remote hypervisor configuration
-* skywire.service
-    - `skywire -p`
-
-### ArchlinuxARM image
-
-An archlinuxARM IMGBUILD for raspberry pis has been provided for advanced users. This image contains the unmodified archlinuxARM root filesystem. It is left to the user to install skywire or skywire-bin from the [AUR](aur.archlinux.org) after they have completed initial system configuration. It is recommended to use `yay` to install skywire-bin from the AUR. The same scripts are included with the AUR package of skywire as the debian package, and the installation paths are identical.
+The actual skywire configuration is produced by `skywire-autoconfig` (shipped with
+`skywire-bin`); see <https://github.com/skycoin/skywire> for the upstream script.

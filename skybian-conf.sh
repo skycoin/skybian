@@ -1,52 +1,88 @@
 #skybian-conf.sh
+# Shared logic for skybian.${board}.IMGBUILD variants (orangepiprime, orangepi3).
+# The per-board IMGBUILDs set _board / _imgname and source this file.
 pkgname=skybian-${_board}${ENABLEAUTOPEER}
 pkgdesc="Skybian ${_board} image build"
-_img="Armbian_22.08.2_${_imgname}_bullseye_current_5.15.69.img"
-_imgxz="${_img}.xz"
-_imgsha="Bullseye_current.sha"
-_imgshalink="https://redirect.armbian.com/${_board}/${_imgsha}"
-_xzlink="https://www.armbian.com/dl/${_board}/archive/${_imgxz}"
-#pkgver & pkgrel match the version & release of the skywire .deb in the apt repo
-pkgver='1.2.1'
+
+#pkgver/pkgrel track the skywire-bin release in the apt repo
+pkgver='1.3.59'
 pkgrel=1
+
+#skyrepo version (apt config + install-skywire service) — separate cadence from skywire
+_skyrepover='1.3.56'
+_skyreporel=3
+
 arch=('any')
 _imgarch="arm64"
 _hostarch="$(dpkg --print-architecture)"
-_torrent="${_xzlink}.torrent"
-_imgfinal="${pkgname}-${pkgver}.img"
-_root_partition=/dev/loop0p1
-_defaultuser=root
-_skywiredeb="skywire-bin-${pkgver}-${pkgrel}-${_imgarch}.deb"
-_skybiandeb="skybian-${_imgarch}.deb"
+
+# Armbian images for these boards are now community/rolling builds. The exact
+# image filename embeds a build identifier that changes frequently, so we
+# resolve it at build time from the .sha file instead of hardcoding it.
+# These .sha / .torrent URLs are the stable indirection.
+_armbianbranch="Trixie_current_minimal"
+_imgsha="${_armbianbranch}.sha"
+_imgshalink="https://dl.armbian.com/${_board}/${_imgsha}"
+_torrent="https://dl.armbian.com/${_board}/${_armbianbranch}.torrent"
+
+#deb names use standard dpkg underscore convention
+_skywiredeb="skywire-bin_${pkgver}-${pkgrel}_${_imgarch}.deb"
+_skyrepodeb="skyrepo_${_skyrepover}-${_skyreporel}_all.deb"
+_skybiandeb="skybian-${_imgarch}.deb"     # locally built by ./skybian.sh from PKGBUILD
+
+#canonical apt repo over plain HTTP — every published deb is at /pool/main/s/<pkg>/
+_aptrepo="http://deb.skywire.skycoin.com/pool/main/s"
+
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-user-static' 'qemu-user-static-binfmt')
-_aptrepo="https://github.com/skycoin/apt-repo/releases/download"
 source=("${_torrent}"
-"${_torrent}.md5"
 "${_imgshalink}"
-"${_aptrepo}/archive/${_skywiredeb}"
-"${_aptrepo}/current/${_skybiandeb}"
+"${_aptrepo}/skywire-bin/${_skywiredeb}"
+"${_aptrepo}/skyrepo/${_skyrepodeb}"
 "skybian-conf.sh"
 )
-#"https://fl.us.mirror.archlinuxarm.org/aarch64/extra/gnu-netcat-0.7.1-8-aarch64.pkg.tar.xz"
-noextract=("${_skywiredeb}" "${_skybiandeb}")
+noextract=("${_skywiredeb}" "${_skyrepodeb}")
+
+# Resolved at build() time by reading ${_imgsha}. Keep _img/_imgxz/_imgfinal
+# accessors as functions so prepare() can use the torrent before we've parsed
+# the sha (aria2 reads the filename out of the torrent).
+_parse_img_from_sha() {
+	# .sha format: "<sha256hex>  <filename>" (filename may contain underscores/dots).
+	awk '{print $2}' "${srcdir}/${_imgsha}" | head -n1
+}
 
 prepare() {
 cd "${srcdir}"
+# .sha is small and gives us the upstream filename; fetch first to know what
+# the torrent will deliver.
+if [[ ! -f ${_imgsha} ]]; then
+	_msg2 "Downloading image .sha (${_imgsha})"
+	aria2c --console-log-level=warn -o "${_imgsha}" "${_imgshalink}"
+fi
+_img="$(_parse_img_from_sha)"
+_imgxz="${_img}.xz"
+[[ -z "${_img}" ]] && _error "could not parse image filename from ${_imgsha}" && exit 1
+_msg2 "Upstream image: ${_imgxz}"
+
 if [[ ! -f ${_imgxz} ]] && [[ ! -f ../${_imgxz} ]]; then
-_msg2 "Downloading sources via torrent"	#	very fast!
-aria2c -V --seed-time=0 ${_torrent}
-mv ${_imgxz} ../${_imgxz}
+_msg2 "Downloading image via torrent"	#	very fast!
+aria2c -V --seed-time=0 "${_torrent}"
+mv "${_imgxz}" "../${_imgxz}"
 else
-_msg2 "found downloaded sources"
+_msg2 "found previously downloaded image"
 if [[ ! -f ../${_imgxz} ]]; then
-mv ${_imgxz} ../${_imgxz}
+mv "${_imgxz}" "../${_imgxz}"
 fi
 fi
 }
 
 build() {
-#standard extraction utilities don't recognizes the armbian archive for some reason.
+_img="$(_parse_img_from_sha)"
+_imgxz="${_img}.xz"
+_imgfinal="${pkgname}-${pkgver}.img"
+_root_partition=/dev/loop0p1
+
+#standard extraction utilities don't recognize the armbian archive for some reason.
 [[ ! -f ../${_img} ]] &&  _msg2 "extracting with dtrx" && dtrx ../${_imgxz} && mv ${_img} ../${_img}
 _msg2 "checking image archive integrity"
 _sum=$(sha256sum ../${_imgxz})
@@ -54,7 +90,7 @@ _msg2 "image sha256sum: ${_sum%%' '*}"
 _check=$(cat ${_imgsha})
 _msg2 "${_imgsha}: ${_check%%' '*}"
 [[ "${_check%%' '*}" != "${_sum%%' '*}" ]] &&  _error "image integrity verification failed" && rm ${_imgsha} && exit 1
-[[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified" && rm ${_imgsha}
+[[ "${_check%%' '*}" == "${_sum%%' '*}" ]] &&  _msg2 "image checksums verified"
 _msg2 "copying image.." #so we don't have to extract it every time
 cp -b ../${_img} ${_imgfinal}
 _msg2 "adding extra space" #may or may not be necessary
@@ -71,31 +107,34 @@ _msg2 "mounting ${_root_partition} to mount point"
 sudo mount ${_root_partition} ${srcdir}/mnt
 _msg2 "copying packages into image"
 sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
-sudo install -Dm644 ${srcdir}/${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
-#_msg2 "installing newer version of netcat binary to the image"
-#sudo install -Dm755 ${srcdir}/usr/bin/netcat ${srcdir}/mnt/usr/bin/
-#sudo install -Dm755 ${srcdir}/usr/bin/nc ${srcdir}/mnt/usr/bin/
+sudo install -Dm644 ${srcdir}/${_skyrepodeb} ${srcdir}/mnt/root/${_skyrepodeb}
+sudo install -Dm644 ${srcdir}/../${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
 _msg2 "copying qemu-aarch64-static command to chroot bin"
 sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
-################## chroot modifications for apt repo & package #################
+################## chroot modifications #################
 #sudo is used for all commands to give correct environmental vars in chroot
 _msg2 "disabling user creation on first login"
 sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
-##set password for _defaultuser
-_msg2 "CHROOT: setting password skybian for ${_defaultuser}"
-echo ${_defaultuser}:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
+_msg2 "CHROOT: setting password skybian for root"
+echo root:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
 sleep 1
-_msg2 "CHROOT: installing skywire with dpkg"
+# Order matters: skyrepo first (installs the apt sources + signing key + the
+# install-skywire service used on every subsequent boot), then skywire-bin
+# (with NOAUTOCONFIG so the postinst doesn't try to start the service from
+# inside the chroot), then the locally-built skybian deb for autoconfig.
+_msg2 "CHROOT: installing skyrepo (apt config + install-skywire service)"
+sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skyrepodeb}
+sudo rm ${srcdir}/mnt/root/${_skyrepodeb}
+_msg2 "CHROOT: installing skywire-bin"
 sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
 sudo rm ${srcdir}/mnt/root/${_skywiredeb}
-_msg2 "CHROOT: installing packages in chroot with dpkg"
+_msg2 "CHROOT: installing skybian (autoconfig: skymanager/srvpk/skylog)"
 if [[ ${ENABLEAUTOPEER} == "-autopeer" ]] ; then
-sudo arch-chroot ${srcdir}/mnt sudo  INSTALLFIRSTBOOT=1 CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
+sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
 else
-sudo arch-chroot ${srcdir}/mnt sudo  INSTALLFIRSTBOOT=1 dpkg -i /root/${_skybiandeb}
+sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skybiandeb}
 fi
 sudo rm ${srcdir}/mnt/root/${_skybiandeb}
-## included from chroot-commands.sh
 _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
 sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
 _msg2 "CHROOT: Generating locale en_US.UTF-8..."
@@ -103,16 +142,12 @@ sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
 #fix console / tty
 _msg2 "CHROOT: setting TERM=linux in /root/.bashrc"
 echo 'TERM=linux' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
-#set SKYBIAN=true
 _msg2 "CHROOT: exporting SKYBIAN=true in /root/.bashrc"
 echo 'export SKYBIAN=true' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
 if [[ ${ENABLEAUTOPEER} == "-autopeer" ]] ; then
 _msg2 "CHROOT: exporting AUTOPEER=1 in /root/.bashrc"
 echo 'export AUTOPEER=1' | sudo arch-chroot ${srcdir}/mnt tee -a /root/.bashrc
 fi
-_msg2 "CHROOT: configuring unattended-upgrades"
-echo unattended-upgrades unattended-upgrades/enable_auto_updates boolean true | sudo arch-chroot ${srcdir}/mnt sudo debconf-set-selections
-sudo arch-chroot ${srcdir}/mnt sudo dpkg-reconfigure -f noninteractive unattended-upgrades
 ######################## end chroot modifications ##############################
 [[ -d ${srcdir}/mnt/lost+found ]] && sudo rm -rf ${srcdir}/mnt/lost+found
 _msg2 "Unmounting image"
@@ -126,6 +161,7 @@ ls $_imgfinal
 }
 
 package() {
+_imgfinal="${pkgname}-${pkgver}.img"
 #let makepkg compress the archive as it does automatically for any package
 #afterwards remove the metadata from the archive and change the extension
 #avoid the compression step with makepkg --noarchive

@@ -1,0 +1,119 @@
+#makepkg -fp skyalarm.rpi.IMGBUILD
+# ArchLinuxARM images for Raspberry Pi (armv7 + aarch64), configured with the
+# skybian autoconfig stack (skymanager / srvpk / skylog) and a first-boot
+# service that installs skywire-bin from the AUR.
+#
+# Boots via the Raspberry Pi firmware on the FAT32 partition. ALARM ships
+# bootcode.bin / start*.elf / *.dtb / kernel*.img inside its rootfs tarball;
+# we just move them out of /boot onto the boot partition.
+
+_dist=ArchLinuxARM
+pkgname=skyalarm-rpi
+pkgdesc="ArchLinuxARM images for Raspberry Pi, skybian-style autoconfig"
+pkgver='1.3.59'
+pkgrel=1
+arch=('any')
+url="https://github.com/skycoin/skybian"
+_imgarches=("armv7" "aarch64")
+_alarm_url="http://os.archlinuxarm.org/os"
+makedepends=('aria2' 'dtrx' 'arch-install-scripts' 'qemu-user-static' 'qemu-user-static-binfmt' 'gnome-disk-utility' 'libarchive')
+
+source=(
+    "${_alarm_url}/${_dist}-rpi-armv7-latest.tar.gz"
+    "${_alarm_url}/${_dist}-rpi-armv7-latest.tar.gz.md5"
+    "${_alarm_url}/${_dist}-rpi-aarch64-latest.tar.gz"
+    "${_alarm_url}/${_dist}-rpi-aarch64-latest.tar.gz.md5"
+)
+noextract=(
+    "${_dist}-rpi-armv7-latest.tar.gz"
+    "${_dist}-rpi-aarch64-latest.tar.gz"
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+prepare() {
+    cd "${srcdir}"
+    for _arch in "${_imgarches[@]}"; do
+        _msg2 "Verifying ALARM rpi-${_arch} rootfs md5"
+        md5sum -c "${_dist}-rpi-${_arch}-latest.tar.gz.md5"
+    done
+}
+
+build() {
+    cd "${srcdir}"
+    for _arch in "${_imgarches[@]}"; do
+        local _img="${pkgname}-${pkgver}-${_arch}.img"
+        local _tar="${_dist}-rpi-${_arch}-latest.tar.gz"
+
+        sudo umount -R "${srcdir}/arch-boot" 2>/dev/null || true
+        sudo umount -R "${srcdir}/arch-root" 2>/dev/null || true
+        sudo losetup -d /dev/loop0 2>/dev/null || true
+
+        # Size: ALARM rpi rootfs ~1.5GB; bump aarch64 a touch since the
+        # kernel+modules trees are larger.
+        local _size_mb
+        [[ "${_arch}" == "aarch64" ]] && _size_mb=1636 || _size_mb=1536
+        _msg2 "Creating ${_size_mb} MiB image: ${_img}"
+        sudo truncate -s "${_size_mb}M" "${_img}"
+
+        sudo losetup /dev/loop0 "${_img}"
+        sudo parted -s /dev/loop0 mklabel msdos
+        sudo parted -s /dev/loop0 unit MiB mkpart primary fat32 -- 1 128
+        sudo parted -s /dev/loop0 set 1 boot on
+        sudo parted -s /dev/loop0 unit MiB mkpart primary ext2 -- 128 -1
+        sudo losetup -d /dev/loop0
+
+        sudo gnome-disk-image-mounter -w "${_img}"
+        sudo mkfs.vfat -n SYSTEM /dev/loop0p1
+        sudo mkfs.ext4 -F -L root -b 4096 -E stride=4,stripe_width=1024 /dev/loop0p2
+
+        sudo mkdir -p arch-boot arch-root
+        sudo mount /dev/loop0p1 arch-boot
+        sudo mount /dev/loop0p2 arch-root
+
+        _msg2 "Extracting ALARM ${_arch} rootfs"
+        sudo bsdtar -xpf "${_tar}" -C arch-root
+        sudo sed -i "s/ defaults / defaults,noatime /" arch-root/etc/fstab
+
+        # === skybian autoconfig payload ===
+        _msg2 "Installing skybian autoconfig payload"
+        sudo install -Dm755 ../script/skymanager.sh         arch-root/usr/bin/skymanager
+        sudo install -Dm755 ../script/skybian-reset.sh      arch-root/usr/bin/skybian-reset
+        sudo install -Dm755 ../script/skyalarm-firstboot.sh arch-root/usr/bin/skyalarm-firstboot
+        sudo install -Dm644 ../script/skymanager.service    arch-root/etc/systemd/system/skymanager.service
+        sudo install -Dm644 ../script/skyalarm-firstboot.service \
+            arch-root/etc/systemd/system/skyalarm-firstboot.service
+        sudo mkdir -p arch-root/etc/systemd/system/multi-user.target.wants
+        sudo ln -sf /etc/systemd/system/skyalarm-firstboot.service \
+            arch-root/etc/systemd/system/multi-user.target.wants/skyalarm-firstboot.service
+
+        echo 'skyalarm' | sudo tee arch-root/etc/hostname > /dev/null
+
+        # RPi firmware needs /boot to be the FAT32 partition. ALARM ships the
+        # boot files inside the rootfs at /boot; move them to the FAT32 part.
+        sudo mv arch-root/boot/* arch-boot/
+
+        sudo umount arch-boot arch-root
+        sudo losetup -d /dev/loop0
+        sudo rm -rf arch-root arch-boot
+
+        yes | mv "${_img}" "../${_img}"
+        _msg2 "Created image: ${_img}  ($(du -h "../${_img}" | cut -f1))"
+    done
+}
+
+package() {
+    for _arch in "${_imgarches[@]}"; do
+        local _img="${pkgname}-${pkgver}-${_arch}.img"
+        install -Dm644 "${srcdir}/../${_img}" "${pkgdir}/"
+    done
+    cd "${pkgdir}"
+    _msg2 "Creating image checksums"
+    sha256sum *.img > img.sha
+    cat img.sha
+}
+
+_msg2() {
+    (( QUIET )) && return
+    local mesg=$1; shift
+    printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}

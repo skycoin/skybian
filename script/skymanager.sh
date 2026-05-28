@@ -1,74 +1,99 @@
 #!/bin/bash
-#script runs on first boot via skymanager.service
-#expects CHROOTCONFIG=1 skybian-chrootconfig was run
-#determines static ip configuration and adds the service configuration for autopeering
-#check for root
+#/usr/bin/skymanager
+# Runs once on first boot (via skymanager.service).
+#
+# Flow:
+#  1. Look at ${gateway%.*}.2 (i.e. the .2 IP on the current subnet).
+#  2. If nothing answers there: claim .2 as a static address via
+#     /etc/systemd/network/10-eth.network, become hypervisor.
+#  3. If something is there: stay on DHCP, fetch its pubkey from the
+#     hypervisor UI's unauthenticated /api/pk endpoint on port 8000,
+#     configure self as a visor pointed at that hypervisor pk.
+#  4. In either case, run skywire-autoconfig and start skywire, then
+#     self-disable so subsequent boots don't redo the dance.
+#
+# Discovery used to use a separate `srvpk` http endpoint on :7998. That's
+# been retired in favor of the hypervisor's own UI port (:8000). The pubkey
+# endpoint must be unauthenticated — see /api/pk in skywire's hypervisor.go.
+
 if [[ $EUID -ne 0 ]]; then
 	echo "root permissions required"
 	exit 1
 fi
 
-#remove any previous config and exit
+# Reset path: if a previous skymanager run already wrote network config,
+# remove it and exit (handy for skybian-reset).
 if [[ -f /etc/systemd/network/10-eth.network ]] ; then
 	echo "removing static ip configuration"
-	rm  /etc/systemd/network/10-eth.network
-	systemctl restart systemd-networkd networking NetworkManager
-	systemctl disable --now srvpk 2> /dev/null
-	[[ -f /etc/systemd/system/skywire.conf.d/skywire.conf ]] && rm /etc/systemd/system/skywire.conf.d/skywire.conf
-	 exit 0
- fi
- [[ -f /etc/systemd/system/skywire.conf.d/skywire.conf ]] && 	echo "removing /etc/systemd/system/skywire.conf.d/skywire.conf" && rm /etc/systemd/system/skywire.conf.d/skywire.conf && exit 0
+	rm /etc/systemd/network/10-eth.network
+	systemctl restart systemd-networkd networking NetworkManager 2>/dev/null || true
+	[[ -f /etc/systemd/system/skywire.service.d/10-skywire_10.conf ]] && \
+		rm /etc/systemd/system/skywire.service.d/10-skywire_10.conf
+	exit 0
+fi
 
-#generate the config for static IP address on the hypervisor
-#or query the rpc of the hypervisor at the designated .2 static ip for its public key
-#192.168.xxx.1	expected generally
-_gateway="$(ip route show | grep -i 'default via'| awk '{print $3 }')"
-#192.168.xxx.2 default value
-_ip=${_gateway%.*}.2
-#exit if no gateway
-[[ ${_gateway} == "" ]] && echo "gateway ip unknown" &&  exit 1
-#need to try to make a connection for `ip neigh` to work
-skywire-cli visor pk --rpc ${_ip}:3435 &> /dev/null
-if [[ $(ip neigh show | grep ${_ip} | grep -v "FAILED" | grep -v "INCOMPLETE") == "" ]]; then
-# Set static ip if the .2 ip address is available
-echo "[Match]
+# Determine the gateway IP and the target hypervisor address (.2 on the
+# current subnet).
+_gateway="$(ip route show | awk '/^default via/{print $3; exit}')"
+[[ -z "${_gateway}" ]] && echo "gateway ip unknown" && exit 1
+_ip="${_gateway%.*}.2"
+
+# Probe :8000 — the hypervisor UI port. /api/ping is unauthenticated and
+# cheap. `curl -fsS --max-time 3` returns nonzero if nothing answers within
+# 3 seconds, which is our trigger to claim .2.
+_pubkey=""
+_nohv=""
+if curl -fsS --max-time 3 "http://${_ip}:8000/api/ping" >/dev/null 2>&1 ; then
+	# Something answered — assume it's the hypervisor. Fetch its pubkey
+	# from the (unauthenticated) /api/pk route. The route returns a JSON
+	# envelope {"public_key":"<66-hex>"}; grep for the first 66-hex run
+	# rather than pulling in jq.
+	_pubkey="$(curl -fsS --max-time 5 "http://${_ip}:8000/api/pk" 2>/dev/null | grep -oE '[0-9a-fA-F]{66}' | head -n1)"
+	if [[ -z "${_pubkey}" ]]; then
+		echo "warning: hypervisor responded at ${_ip}:8000 but /api/pk returned no usable pubkey; coming up without remote hypervisor"
+		_pubkey=""
+		_nohv=1
+	else
+		echo "hypervisor detected at ${_ip}, pk=${_pubkey}"
+	fi
+else
+	# Nothing on .2 — claim it.
+	echo "no hypervisor at ${_ip}:8000; claiming static IP and becoming hypervisor"
+	cat > /etc/systemd/network/10-eth.network <<EOF
+[Match]
 Name=eth*
 
 [Network]
 Address=${_ip}/24
 Gateway=${_gateway}
-DNS=${_gateway}" | tee /etc/systemd/network/10-eth.network
-#refresh the networking to use the static configuration
-systemctl restart systemd-networkd
-#start the http endpoint for the hypervisor public key
-systemctl enable --now srvpk 2> /dev/null
-else
-NOHV=1
-##query remote node for pk
-#_pubkey=$(curl ${_ip}:7998)
-#rough errorcheck
-#if [[ ("${_pubkey}" == *"FATAL"*) || ("${_pubkey}" == *"Failed"*) ]] ; then
-#_pubkey="0"
-#fi
-
+DNS=${_gateway}
+EOF
+	systemctl restart systemd-networkd
 fi
 
-#configure skywire
-#skywire-autoconfig ${_pubkey}
-
-skywire-autoconfig $NOHV
+# Hand off to skywire-autoconfig. If we have a pubkey, pass it as the remote
+# hypervisor pk; otherwise pass nothing (autoconfig defaults to making this
+# node a hypervisor when no arg is given).
+if [[ -n "${_pubkey}" ]]; then
+	skywire-autoconfig "${_pubkey}"
+elif [[ -n "${_nohv}" ]]; then
+	# Detected a peer but couldn't get a pk: come up as a standalone visor
+	# (no hypervisor wired). Operator can rerun skywire-autoconfig manually.
+	skywire-autoconfig 1
+else
+	# .2 was free — we're the hypervisor.
+	skywire-autoconfig 0
+fi
 
 if [[ -f /opt/skywire/skywire.json ]] ; then
-#create the service conf
-[[ ! -d /etc/systemd/system/skywire.service.d/ ]] && mkdir -p /etc/systemd/system/skywire.service.d
-echo "[Service]
-Environment=AUTOPEERHV=-m
-Environment=SKYBIAN=true" | sudo tee /etc/systemd/system/skywire.service.d/10-skywire_10.conf
-systemctl daemon-reload
-#disable this script's service
-systemctl disable skymanager 2> /dev/null
-#start skywire & enable the service
-systemctl enable --now skywire 2> /dev/null
-systemctl restart skywire 2> /dev/null
-#the service will be disabled by the user upon satisfactory configuratiomn
+	mkdir -p /etc/systemd/system/skywire.service.d
+	{
+		echo "[Service]"
+		echo "Environment=SKYBIAN=true"
+		[[ -n "${_pubkey}" ]] && echo "Environment=AUTOPEERHV=${_pubkey}"
+	} > /etc/systemd/system/skywire.service.d/10-skywire_10.conf
+	systemctl daemon-reload
+	systemctl disable skymanager 2>/dev/null || true
+	systemctl enable --now skywire 2>/dev/null || true
+	systemctl restart skywire 2>/dev/null || true
 fi

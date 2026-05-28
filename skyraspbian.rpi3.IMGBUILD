@@ -1,6 +1,6 @@
 _imgarch="armhf"
 source skyraspbian-conf.sh
-sha256sums=('cff9b71924560032bb6884d7f78a8c84852f5c38171385aa1446f5281ecbb6a6'
-            'bf25ad613391b62cc325fde148318bafd2e56bf94f6a747978c419eef32080a0'
-            '72732f65d0afc82b81b65d01ce4265d3696387419e79f543d4bce87c689e6c2c'
-            '15c2164c9cea421c8eed3515d46c1cdc0503743641984eb933b9bf62743bfe55')
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP')

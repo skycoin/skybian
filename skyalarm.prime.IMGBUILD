@@ -1,0 +1,257 @@
+#makepkg -fp skyalarm.prime.IMGBUILD
+# ArchLinuxARM aarch64 image for the Orange Pi Prime, configured with the
+# skybian autoconfig stack (skymanager / srvpk / skylog) and a first-boot
+# service that installs skywire-bin from the AUR.
+#
+# Boot flow:
+#   BROM -> SPL at sector 16 -> U-Boot proper -> /boot/extlinux/extlinux.conf
+#          -> /boot/Image + sun50i-h5-orangepi-prime.dtb + initramfs-linux.img
+#          -> Linux
+#   Boot 1: skyalarm-firstboot.service installs skywire-bin from AUR, then
+#           enables skymanager which performs static-IP / hypervisor election.
+#
+# Ported from the standalone build-image.sh on the skyalarm branch.
+
+pkgname=skyalarm-orangepiprime
+pkgdesc="ArchLinuxARM aarch64 image for Orange Pi Prime, skybian-style autoconfig"
+pkgver='1.3.59'
+pkgrel=1
+arch=('any')
+_imgarch="aarch64"
+_board="orangepiprime"
+_imgname="Orangepiprime"
+url="https://github.com/skycoin/skybian"
+makedepends=('aria2' 'dtrx' 'arch-install-scripts' 'qemu-user-static' 'qemu-user-static-binfmt')
+
+# ALARM aarch64 generic rootfs tarball (mainline kernel, allwinner DTBs included).
+_alarm_url="http://os.archlinuxarm.org/os"
+_alarm_tar="ArchLinuxARM-aarch64-latest.tar.gz"
+
+# Armbian image — we don't ship this OS, but we need its u-boot SPL+proper
+# (the only consistently-working sunxi u-boot blob for this board). We pull
+# the same .sha / .torrent indirection that skybian-conf.sh uses and dd the
+# first 4 MiB out of the resulting img as our u-boot.
+_armbianbranch="Trixie_current_minimal"
+_imgsha="${_armbianbranch}.sha"
+_imgshalink="https://dl.armbian.com/${_board}/${_imgsha}"
+_armbian_torrent="https://dl.armbian.com/${_board}/${_armbianbranch}.torrent"
+
+# skybian.deb provides the autoconfig payload (skymanager/srvpk/skylog).
+# Built locally by ./skybian.sh — we install it onto the image via dd then
+# extract-from-deb at build time, since we can't dpkg in an Arch chroot.
+_skybiandeb="skybian-${_imgarch/aarch64/arm64}.deb"   # arch uses aarch64, dpkg uses arm64
+
+source=(
+    "${_alarm_url}/${_alarm_tar}"
+    "${_alarm_url}/${_alarm_tar}.md5"
+    "${_armbian_torrent}"
+    "${_imgshalink}"
+)
+noextract=("${_alarm_tar}")
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+_parse_armbian_img_from_sha() {
+    awk '{print $2}' "${srcdir}/${_imgsha}" | head -n1
+}
+
+prepare() {
+    cd "${srcdir}"
+
+    # 1. ALARM rootfs — verify md5 to catch a corrupted download. ALARM only
+    #    publishes md5, not sha256.
+    _msg2 "Verifying ALARM aarch64 rootfs md5"
+    md5sum -c "${_alarm_tar}.md5"
+
+    # 2. U-Boot blob: extract from the Armbian image, cache it. Skip if the
+    #    cached blob is already present from a previous build.
+    if [[ -f ../u-boot-sunxi-with-spl.bin ]]; then
+        _msg2 "Using cached ../u-boot-sunxi-with-spl.bin"
+        cp ../u-boot-sunxi-with-spl.bin u-boot-sunxi-with-spl.bin
+        return 0
+    fi
+
+    _img_xz_name="$(_parse_armbian_img_from_sha)"
+    [[ -z "${_img_xz_name}" ]] && _error "could not parse image filename from ${_imgsha}" && exit 1
+    _img_name="${_img_xz_name%.xz}"
+
+    if [[ ! -f ../${_img_xz_name} && ! -f ${_img_xz_name} ]]; then
+        _msg2 "Downloading Armbian image via torrent (one-time, to extract u-boot)"
+        aria2c -V --seed-time=0 "${_armbian_torrent}"
+        mv "${_img_xz_name}" "../${_img_xz_name}"
+    fi
+    [[ ! -f ../${_img_name} ]] && _msg2 "extracting with dtrx" && dtrx -no "../${_img_xz_name}" && mv "${_img_name}" "../${_img_name}"
+
+    _msg2 "Extracting u-boot-sunxi-with-spl.bin from Armbian image (sector 16)"
+    # SPL+U-Boot proper lives in sectors 16 .. ~2048 on sunxi boards. Reading
+    # 2048 sectors (1 MiB) is generous; the actual blob is ~600 KiB.
+    dd if="../${_img_name}" of=u-boot-sunxi-with-spl.bin bs=512 skip=16 count=2048 status=none
+    cp u-boot-sunxi-with-spl.bin ../u-boot-sunxi-with-spl.bin
+    _msg2 "Cached u-boot blob to ../u-boot-sunxi-with-spl.bin for future builds"
+}
+
+build() {
+    cd "${srcdir}"
+    local _imgfinal="${pkgname}-${pkgver}.img"
+    local _img_size_mb=2700        # ALARM aarch64 rootfs ~2150 MiB + headroom
+    local _part_start_sector=8192  # 4 MiB. Matches Armbian; leaves room for SPL+U-Boot.
+
+    sudo umount -R "${srcdir}/mnt" 2>/dev/null && _msg2 "unmounted lingering mount" || true
+    sudo losetup -j "${srcdir}/${_imgfinal}" 2>/dev/null | cut -d: -f1 | while read -r dev; do
+        [[ -n "$dev" ]] && _msg2 "detaching stale loop $dev" && sudo losetup -d "$dev"
+    done
+
+    _msg2 "Creating ${_img_size_mb} MiB sparse image: ${_imgfinal}"
+    rm -f "${_imgfinal}"
+    truncate -s "${_img_size_mb}M" "${_imgfinal}"
+
+    _msg2 "Partitioning (MBR, single ext4 starting at sector ${_part_start_sector})"
+    sfdisk "${_imgfinal}" <<EOF
+label: dos
+unit: sectors
+
+start=${_part_start_sector}, type=83, bootable
+EOF
+
+    _msg2 "Attaching loop device"
+    local _loop
+    _loop="$(sudo losetup --show -fP "${_imgfinal}")"
+    sudo partprobe "$_loop"
+    local _part="${_loop}p1"
+
+    _msg2 "Formatting $_part as ext4"
+    # Disable metadata_csum_seed/orphan_file: older U-Boot ext4 drivers don't grok them.
+    sudo mkfs.ext4 -F -L ALARM_ROOT -O '^metadata_csum_seed,^orphan_file' "$_part"
+
+    _msg2 "Mounting and extracting rootfs (this takes a minute)"
+    mkdir -p "${srcdir}/mnt"
+    sudo mount "$_part" "${srcdir}/mnt"
+    # GNU tar (not bsdtar) — libarchive trips on a couple of /var entries in
+    # current ALARM aarch64 tarball. --numeric-owner / --xattrs / --acls
+    # preserve security.capability on binaries like ping.
+    sudo tar --numeric-owner --xattrs --xattrs-include='*' --acls \
+        -xpf "${_alarm_tar}" -C "${srcdir}/mnt"
+    sync
+
+    _msg2 "Writing /etc/fstab"
+    local _root_uuid
+    _root_uuid="$(sudo blkid -s UUID -o value "$_part")"
+    echo "UUID=$_root_uuid  /  ext4  defaults,noatime  0  1" | sudo tee "${srcdir}/mnt/etc/fstab" > /dev/null
+
+    _msg2 "Writing /boot/extlinux/extlinux.conf"
+    sudo mkdir -p "${srcdir}/mnt/boot/extlinux"
+    sudo tee "${srcdir}/mnt/boot/extlinux/extlinux.conf" > /dev/null <<'EOF'
+DEFAULT alarm
+TIMEOUT 10
+PROMPT 0
+
+LABEL alarm
+    MENU LABEL Arch Linux ARM (Orange Pi Prime)
+    LINUX /boot/Image
+    FDT /boot/dtbs/allwinner/sun50i-h5-orangepi-prime.dtb
+    INITRD /boot/initramfs-linux.img
+    APPEND console=ttyS0,115200 console=tty1 root=LABEL=ALARM_ROOT rw rootwait
+EOF
+
+    # Fail loudly if the kernel/dtb that extlinux expects aren't actually present.
+    local _missing=()
+    for _f in /boot/Image /boot/dtbs/allwinner/sun50i-h5-orangepi-prime.dtb /boot/initramfs-linux.img; do
+        [[ -e "${srcdir}/mnt$_f" ]] || _missing+=("$_f")
+    done
+    if (( ${#_missing[@]} > 0 )); then
+        _error "required boot files missing from rootfs: ${_missing[*]}"
+        sudo umount -R "${srcdir}/mnt"
+        sudo losetup -d "$_loop"
+        exit 1
+    fi
+
+    # === skybian autoconfig payload ===
+    # Stage skymanager + srvpk + skylog + skyalarm-firstboot from script/ +
+    # static/ in this repo. No dpkg involved (we're not in a debian chroot).
+    _msg2 "Installing skybian autoconfig payload"
+    sudo install -Dm755 ../script/skymanager.sh           "${srcdir}/mnt/usr/bin/skymanager"
+    sudo install -Dm755 ../script/skybian-reset.sh        "${srcdir}/mnt/usr/bin/skybian-reset"
+    sudo install -Dm755 ../script/skyalarm-firstboot.sh   "${srcdir}/mnt/usr/bin/skyalarm-firstboot"
+    sudo install -Dm644 ../script/skymanager.service      "${srcdir}/mnt/etc/systemd/system/skymanager.service"
+    sudo install -Dm644 ../script/skyalarm-firstboot.service \
+        "${srcdir}/mnt/etc/systemd/system/skyalarm-firstboot.service"
+
+    # Enable skyalarm-firstboot (it'll enable skymanager once skywire is installed).
+    sudo mkdir -p "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants"
+    sudo ln -sf /etc/systemd/system/skyalarm-firstboot.service \
+        "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants/skyalarm-firstboot.service"
+
+    _msg2 "Installing first-boot resize service"
+    sudo tee "${srcdir}/mnt/usr/local/sbin/firstboot-resize.sh" > /dev/null <<'EOF'
+#!/bin/bash
+set -euo pipefail
+ROOT_DEV="$(findmnt -no SOURCE /)"
+ROOT_DEV="$(readlink -f "$ROOT_DEV")"
+PARENT="$(lsblk -no PKNAME "$ROOT_DEV" | head -n1)"
+DISK="/dev/$PARENT"
+PARTNUM="$(echo "$ROOT_DEV" | grep -oE '[0-9]+$')"
+echo ", +" | sfdisk -N "$PARTNUM" --no-reread --force "$DISK"
+partprobe "$DISK" || true
+sleep 1
+resize2fs "$ROOT_DEV"
+systemctl disable firstboot-resize.service
+rm -f /etc/systemd/system/firstboot-resize.service
+rm -f /etc/systemd/system/multi-user.target.wants/firstboot-resize.service
+rm -f /usr/local/sbin/firstboot-resize.sh
+EOF
+    sudo chmod +x "${srcdir}/mnt/usr/local/sbin/firstboot-resize.sh"
+    sudo tee "${srcdir}/mnt/etc/systemd/system/firstboot-resize.service" > /dev/null <<'EOF'
+[Unit]
+Description=Resize root partition and filesystem to fill SD card on first boot
+DefaultDependencies=no
+After=local-fs.target systemd-remount-fs.service
+Before=basic.target sshd.service skyalarm-firstboot.service
+ConditionPathExists=/usr/local/sbin/firstboot-resize.sh
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/local/sbin/firstboot-resize.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo ln -sf /etc/systemd/system/firstboot-resize.service \
+        "${srcdir}/mnt/etc/systemd/system/multi-user.target.wants/firstboot-resize.service"
+
+    # Set hostname so the board is identifiable on the LAN before skymanager
+    # has done anything. skymanager will rename if it claims hypervisor role.
+    echo 'skyalarm' | sudo tee "${srcdir}/mnt/etc/hostname" > /dev/null
+
+    sync
+    _msg2 "Unmounting"
+    sudo umount -R "${srcdir}/mnt"
+
+    _msg2 "Writing U-Boot SPL + proper to sector 16"
+    sudo dd if=u-boot-sunxi-with-spl.bin of="$_loop" bs=512 seek=16 conv=notrunc,fsync status=none
+
+    _msg2 "Detaching loop device"
+    sudo losetup -d "$_loop"
+
+    mv "${_imgfinal}" "../${_imgfinal}"
+    cd ..
+    _msg2 "Created image: ${_imgfinal}  ($(du -h "${_imgfinal}" | cut -f1))"
+}
+
+package() {
+    local _imgfinal="${pkgname}-${pkgver}.img"
+    install -Dm644 "${srcdir}/../${_imgfinal}" "${pkgdir}/"
+    cd "${pkgdir}"
+    sha256sum "${_imgfinal}" > "${_imgfinal}.sha"
+    cat "${_imgfinal}.sha"
+}
+
+_msg2() {
+    (( QUIET )) && return
+    local mesg=$1; shift
+    printf "${BLUE}  ->${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@"
+}
+
+_error() {
+    local mesg=$1; shift
+    printf "${RED}==> $(gettext "ERROR:")${ALL_OFF}${BOLD} ${mesg}${ALL_OFF}\n" "$@" >&2
+}

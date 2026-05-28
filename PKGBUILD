@@ -1,21 +1,31 @@
 pkgname=skybian
 _pkgname=skybian
-pkgdesc="Packaged modifications to the skybian image, including repo configuration - debian package"
-pkgver='1.1.0'
+pkgdesc="Skybian autoconfig: skymanager for skyminer first-boot - debian package"
+# Tracks skywire-bin pkgver so they ship together. skybian.deb itself contains
+# only the skymanager autoconfig script + service; apt-repo configuration
+# and the install-skywire service live in the skyrepo deb (apt-repo/PKGBUILD).
+# srvpk and skylog were retired in 1.3.59 — pubkey discovery now uses the
+# hypervisor's unauthenticated /api/pk endpoint on port 8000.
+pkgver='1.3.59'
 _pkgver=${pkgver}
-pkgrel=4
+pkgrel=1
 _pkgrel=${pkgrel}
 arch=( 'any' )
-_pkgarches=('amd64' 'arm64' 'armhf' 'armel')
+# Only the architectures we actually image: arm64 (OPi Prime/3, RPi4) and
+# armhf (RPi3). amd64/armel variants used to ship only apt-repo bits — those
+# now live in skyrepo, so we no longer build those variants here.
+_pkgarches=('arm64' 'armhf')
 _pkgpath="github.com/skycoin/${_pkgname}"
 url="https://${_pkgpath}"
 makedepends=('dpkg')
 depends=()
-_debdeps=""
+# skyrepo: apt config, signing key, install-skywire.service, skywire-chrootconfig.
+# skywire-bin: the actual skywire binary + systemd unit our autoconfig drives.
+_debdeps="skyrepo (>= 1.3.56), skywire-bin (>= 1.3.59)"
 source=("skybian-static.tar.gz"
 		"skybian-script.tar.gz")
-sha256sums=('3111f03858e7aa857b938e6b7902fcf615bcb80e8167eeac0f58212fc9fa48c9'
-            '1009a6672475ad6b051e322f022f4a8c983f616d35031d4ee7d382c9303515d6')
+sha256sums=('SKIP'
+            'SKIP')
 
 build() {
   for i in ${_pkgarches[@]}; do
@@ -38,48 +48,29 @@ package() {
   for i in ${_pkgarches[@]}; do
   _msg2 "_pkgarch=${i}"
   local _pkgarch=${i}
-   echo ${_pkgarch}
-  #set up to create a .deb package with dpkg
   _debpkgdir="${_pkgname}-${pkgver}-${_pkgrel}-${_pkgarch}"
   _pkgdir="${pkgdir}/${_debpkgdir}"
   #########################################################################
-  #package normally here using ${_pkgdir} instead of ${pkgdir}
   _msg2 "Creating dirs"
-  mkdir -p ${_pkgdir}/etc/apt/sources.list.d/
-  mkdir -p ${_pkgdir}/etc/apt/trusted.gpg.d
   mkdir -p ${_pkgdir}/usr/bin/
-	mkdir -p ${_pkgdir}/etc/update-motd.d/
-	mkdir -p ${_pkgdir}/etc/default/
-	mkdir -p ${_pkgdir}/etc/profile.d/
-	mkdir -p ${_pkgdir}/etc/systemd/system/
-  if [[ $_pkgarch != "amd64" ]]; then
-	  _msg2 "Installing skybian modifications"
-	  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/
-	  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/
-	  _msg2 "Installing skybian scripts for arm architectures"
-#	  install -Dm755 ${srcdir}/script/skyenv.sh ${_pkgdir}/etc/profile.d/skyenv.sh
-	  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
-	  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
-	  _msg2 "Installing systemd services for arm architectures"
-	  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
-	  install -Dm644 ${srcdir}/script/srvpk.service ${_pkgdir}/etc/systemd/system/srvpk.service
-  fi
-	_msg2 "Installing install-skywire.sh skywire installation script"
-	install -Dm755 ${srcdir}/script/install-skywire.sh ${_pkgdir}/usr/bin/install-skywire
-	_msg2 "Installing install-skywire systemd service"
-	install -Dm644 ${srcdir}/script/install-skywire.service ${_pkgdir}/etc/systemd/system/install-skywire.service
-  _msg2 "Installing skybian-chrootconfig" #called by postinstall
+  mkdir -p ${_pkgdir}/etc/update-motd.d/
+  mkdir -p ${_pkgdir}/etc/default/
+  mkdir -p ${_pkgdir}/etc/systemd/system/
+
+  _msg2 "Installing motd"
+  install -Dm644 ${srcdir}/static/armbian-motd ${_pkgdir}/etc/default/armbian-motd
+  install -Dm755 ${srcdir}/static/10-skybian-header ${_pkgdir}/etc/update-motd.d/10-skybian-header
+
+  _msg2 "Installing autoconfig scripts"
+  install -Dm755 ${srcdir}/script/skymanager.sh ${_pkgdir}/usr/bin/skymanager
+  install -Dm755 ${srcdir}/script/skybian-reset.sh ${_pkgdir}/usr/bin/skybian-reset
+
+  _msg2 "Installing autoconfig systemd service"
+  install -Dm644 ${srcdir}/script/skymanager.service ${_pkgdir}/etc/systemd/system/skymanager.service
+
+  _msg2 "Installing skybian-chrootconfig (env setup; called by postinst)"
   install -Dm755 ${srcdir}/script/skybian-chrootconfig.sh ${_pkgdir}/usr/bin/skybian-chrootconfig
-  _msg2 "Installing apt repository configuration to:\n    /etc/apt/sources.list.d/skycoin.list"
-  install -Dm644 ${srcdir}/script/skycoin.list ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
-  #export TESTDEPLOYMENT=1
-  if [[ "${TESTDEPLOYMENT}" == "1" ]] ; then
-	  _msg2 "substituiting test repository http://deb.skywire.dev" #called by postinstall
-	  echo "deb http://deb.skywire.dev  sid main
-# deb-src http://deb.skywire.dev sid main" | tee ${_pkgdir}/etc/apt/sources.list.d/skycoin.list
-  fi
-  _msg2 "Installing apt repository signing key to:\n    /etc/apt/trusted.gpg.d/skycoin.gpg"
-  install -Dm644 ${srcdir}/script/skycoin.gpg ${_pkgdir}/etc/apt/trusted.gpg.d/skycoin.gpg
+
   #########################################################################
   _msg2 'Installing control file and postinst script'
   install -Dm755 ${srcdir}/${_pkgarch}.control ${_pkgdir}/DEBIAN/control

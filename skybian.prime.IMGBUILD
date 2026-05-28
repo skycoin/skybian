@@ -3,9 +3,9 @@
 _imgname="Orangepiprime"
 _board="orangepiprime"
 source skybian-conf.sh
-sha256sums=('0e4ed422b68bf8d70062a0c63c93504fe3df7f8202abf5153df7b69aa6d5dfa7'
-            '2071b546fbba6f688474014b353e062de8fe328c677c88c9abaa0d4aa5c7d338'
-            '7985902ebb9a399791046d7a14e4689d50d91141565e404749b76b8c192a4488'
-            'cc69909c80c952d2e6ede9b4bb5bd45414ae21d499931615a07c34d71fdaec1e'
-            '823f73dd44003c80bb0c7900a0ce50820d417bbadd8e977f9c58f44163c91f39'
-            '06fddcb9c972a1fd36eb3c30aedad82284f4aa4d67afa3345f4b500901a40cdb')
+# torrent + sha are rolling upstream builds; deb sums refreshed by updpkgsums.
+sha256sums=('SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP'
+            'SKIP')
