@@ -44,19 +44,24 @@ _imgsha="${_armbianbranch}.sha"
 _imgshalink="https://dl.armbian.com/${_board}/${_imgsha}"
 _armbian_torrent="https://dl.armbian.com/${_board}/${_armbianbranch}.torrent"
 
-# skybian.deb provides the autoconfig payload (skymanager/srvpk/skylog).
-# Built locally by ./skybian.sh — we install it onto the image via dd then
-# extract-from-deb at build time, since we can't dpkg in an Arch chroot.
-_skybiandeb="skybian-${_imgarch/aarch64/arm64}.deb"   # arch uses aarch64, dpkg uses arm64
+# skyrepo.deb ships skymanager + skybian-reset + skywire-chrootconfig +
+# motd snippets. We can't dpkg-install on an Arch rootfs, so we
+# dpkg-deb -x the data tree at build time and copy the autoconfig files
+# directly into the ALARM image.
+_skyrepover='1.3.59'
+_skyreporel=2
+_skyrepodeb="skyrepo_${_skyrepover}-${_skyreporel}_all.deb"
+_aptrepo="http://deb.skywire.skycoin.com/pool/main/s"
 
 source=(
     "${_alarm_url}/${_alarm_tar}"
     "${_alarm_url}/${_alarm_tar}.md5"
     "${_armbian_torrent}"
     "${_imgshalink}"
+    "${_aptrepo}/skyrepo/${_skyrepodeb}"
 )
-noextract=("${_alarm_tar}")
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+noextract=("${_alarm_tar}" "${_skyrepodeb}")
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 _parse_armbian_img_from_sha() {
     awk '{print $2}' "${srcdir}/${_imgsha}" | head -n1
@@ -174,13 +179,24 @@ EOF
 
     if [[ -z "${BASEONLY}" ]]; then
         # === skybian autoconfig payload ===
-        # Stage skymanager + skyalarm-firstboot from script/. No dpkg
-        # involved (we're not in a debian chroot).
-        _msg2 "Installing skybian autoconfig payload"
-        sudo install -Dm755 ../script/skymanager.sh           "${srcdir}/mnt/usr/bin/skymanager"
-        sudo install -Dm755 ../script/skybian-reset.sh        "${srcdir}/mnt/usr/bin/skybian-reset"
-        sudo install -Dm755 ../script/skyalarm-firstboot.sh   "${srcdir}/mnt/usr/bin/skyalarm-firstboot"
-        sudo install -Dm644 ../script/skymanager.service      "${srcdir}/mnt/etc/systemd/system/skymanager.service"
+        # Extract skyrepo.deb's data tree and copy the autoconfig files
+        # (skymanager + skymanager.service + skybian-reset + motd) into the
+        # ALARM rootfs. install-skywire.service / skywire-chrootconfig are
+        # in the deb too but they're debian-apt specific — ignore them on
+        # ALARM. The skyalarm-firstboot service replaces them.
+        _msg2 "Extracting skyrepo.deb autoconfig payload"
+        rm -rf "${srcdir}/skyrepo-extract"
+        mkdir -p "${srcdir}/skyrepo-extract"
+        dpkg-deb -x "${srcdir}/${_skyrepodeb}" "${srcdir}/skyrepo-extract"
+        sudo install -Dm755 "${srcdir}/skyrepo-extract/usr/bin/skymanager"      "${srcdir}/mnt/usr/bin/skymanager"
+        sudo install -Dm755 "${srcdir}/skyrepo-extract/usr/bin/skybian-reset"   "${srcdir}/mnt/usr/bin/skybian-reset"
+        sudo install -Dm644 "${srcdir}/skyrepo-extract/etc/systemd/system/skymanager.service" \
+            "${srcdir}/mnt/etc/systemd/system/skymanager.service"
+        sudo install -Dm755 "${srcdir}/skyrepo-extract/etc/update-motd.d/10-skybian-header" \
+            "${srcdir}/mnt/etc/update-motd.d/10-skybian-header"
+        sudo install -Dm755 "${srcdir}/skyrepo-extract/etc/profile.d/skyenv.sh" \
+            "${srcdir}/mnt/etc/profile.d/skyenv.sh"
+        sudo install -Dm755 ../script/skyalarm-firstboot.sh "${srcdir}/mnt/usr/bin/skyalarm-firstboot"
         sudo install -Dm644 ../script/skyalarm-firstboot.service \
             "${srcdir}/mnt/etc/systemd/system/skyalarm-firstboot.service"
 

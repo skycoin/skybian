@@ -1,17 +1,16 @@
 #skyraspbian-conf.sh
 # Shared logic for skyraspbian.rpi3.IMGBUILD (armhf) / rpi4.IMGBUILD (arm64).
 # Per-arch IMGBUILDs set _imgarch and source this file.
-pkgname=skyraspbian-${_imgarch}
+pkgname=skyraspbian-${_imgarch}${ENABLEAUTOPEER}
 pkgdesc="Skyraspbian ${_imgarch} image build"
 
 #pkgver/pkgrel track the skywire-bin release in the apt repo
 pkgver='1.3.59'
 pkgrel=1
 
-#skyrepo version (apt config + install-skywire service).
-#1.3.56-4 is the first release with install-skywire.service Type=oneshot.
-_skyrepover='1.3.56'
-_skyreporel=4
+#skyrepo version. 1.3.59-2 absorbed the old skybian.deb role.
+_skyrepover='1.3.59'
+_skyreporel=2
 
 arch=('any')
 _hostarch=$(dpkg --print-architecture)
@@ -32,7 +31,6 @@ _boot_partition=/dev/loop0p1
 
 _skywiredeb="skywire-bin_${pkgver}-${pkgrel}_${_imgarch}.deb"
 _skyrepodeb="skyrepo_${_skyrepover}-${_skyreporel}_all.deb"
-_skybiandeb="skybian-${_imgarch}.deb"
 url="http://github.com/skycoin/skybian"
 makedepends=('arch-install-scripts' 'aria2' 'dpkg' 'dtrx' 'gnome-disk-utility' 'qemu-user-static')
 depends=()
@@ -73,7 +71,6 @@ sudo mount ${_root_partition} ${_mntdir}
 _msg2 "copy packages into apt cache"
 sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
 sudo install -Dm644 ${srcdir}/${_skyrepodeb} ${srcdir}/mnt/root/${_skyrepodeb}
-sudo install -Dm644 ${srcdir}/../${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
 _msg2 "copy qemu static command to chroot bin"
 if [[ ${_imgarch} == "armhf" ]] ; then
 sudo cp "$(command -v qemu-arm-static)" "${srcdir}/mnt/usr/bin/"
@@ -81,16 +78,20 @@ else
 sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 fi
 ################# chroot modifications for apt repo & package #################
-_msg2 "CHROOT: installing skyrepo (apt config + install-skywire service)"
-sudo arch-chroot ${_mntdir} sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skyrepodeb}
+# skyrepo ships the autoconfig payload (skymanager + skybian-reset + motd
+# snippets) and the install-skywire.service. CHROOTCONFIG=1 enables
+# skymanager on the autopeer variants.
+if [[ ${ENABLEAUTOPEER} == "-autopeer" ]] ; then
+	_msg2 "CHROOT: installing skyrepo (autopeer: enables skymanager)"
+	sudo arch-chroot ${_mntdir} sudo INSTALLFIRSTBOOT=1 CHROOTCONFIG=1 dpkg -i /root/${_skyrepodeb}
+else
+	_msg2 "CHROOT: installing skyrepo (no autopeer)"
+	sudo arch-chroot ${_mntdir} sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skyrepodeb}
+fi
 sudo rm ${_mntdir}/root/${_skyrepodeb}
 _msg2 "CHROOT: installing skywire-bin"
 sudo arch-chroot ${_mntdir} sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
 sudo rm ${_mntdir}/root/${_skywiredeb}
-_msg2 "CHROOT: installing skybian (autoconfig: skymanager/srvpk/skylog)"
-sudo arch-chroot ${_mntdir} sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skybiandeb}
-sudo rm ${_mntdir}/root/${_skybiandeb}
-sudo arch-chroot ${_mntdir} sudo systemctl enable skywire-autoconfig 2>/dev/null || true
 # Trixie raspios: no default `pi` user. Set root password for headless ssh.
 # Operators can create user accounts after first login as needed.
 _msg2 "CHROOT: setting root password to 'skybian'"

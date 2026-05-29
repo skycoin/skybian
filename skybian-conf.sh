@@ -8,11 +8,11 @@ pkgdesc="Skybian ${_board} image build"
 pkgver='1.3.59'
 pkgrel=1
 
-#skyrepo version (apt config + install-skywire service) — separate cadence from skywire.
-#1.3.56-4 is the first release with install-skywire.service Type=oneshot;
-#earlier revs race against followers ordered After=install-skywire.service.
-_skyrepover='1.3.56'
-_skyreporel=4
+#skyrepo version. 1.3.59-1 absorbed the old skybian.deb role — ships
+#skymanager / skybian-reset / motd snippets / skyenv defaults in addition
+#to the apt config + install-skywire service.
+_skyrepover='1.3.59'
+_skyreporel=2
 
 arch=('any')
 _imgarch="arm64"
@@ -30,7 +30,6 @@ _torrent="https://dl.armbian.com/${_board}/${_armbianbranch}.torrent"
 #deb names use standard dpkg underscore convention
 _skywiredeb="skywire-bin_${pkgver}-${pkgrel}_${_imgarch}.deb"
 _skyrepodeb="skyrepo_${_skyrepover}-${_skyreporel}_all.deb"
-_skybiandeb="skybian-${_imgarch}.deb"     # locally built by ./skybian.sh from PKGBUILD
 
 #canonical apt repo over plain HTTP — every published deb is at /pool/main/s/<pkg>/
 _aptrepo="http://deb.skywire.skycoin.com/pool/main/s"
@@ -111,7 +110,6 @@ sudo mount ${_root_partition} ${srcdir}/mnt
 _msg2 "copying packages into image"
 sudo install -Dm644 ${srcdir}/${_skywiredeb} ${srcdir}/mnt/root/${_skywiredeb}
 sudo install -Dm644 ${srcdir}/${_skyrepodeb} ${srcdir}/mnt/root/${_skyrepodeb}
-sudo install -Dm644 ${srcdir}/../${_skybiandeb} ${srcdir}/mnt/root/${_skybiandeb}
 _msg2 "copying qemu-aarch64-static command to chroot bin"
 sudo cp "$(command -v qemu-aarch64-static)" "${srcdir}/mnt/usr/bin/"
 ################## chroot modifications #################
@@ -121,23 +119,22 @@ sudo rm -f  ${srcdir}/mnt/root/.not_logged_in_yet
 _msg2 "CHROOT: setting password skybian for root"
 echo root:skybian | sudo arch-chroot ${srcdir}/mnt sudo chpasswd
 sleep 1
-# Order matters: skyrepo first (installs the apt sources + signing key + the
-# install-skywire service used on every subsequent boot), then skywire-bin
-# (with NOAUTOCONFIG so the postinst doesn't try to start the service from
-# inside the chroot), then the locally-built skybian deb for autoconfig.
-_msg2 "CHROOT: installing skyrepo (apt config + install-skywire service)"
-sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skyrepodeb}
+# Order: skyrepo first (apt config + install-skywire.service +
+# skymanager + skybian-reset + motd snippets + skywire-chrootconfig
+# which uses INSTALLFIRSTBOOT/CHROOTCONFIG to enable services), then
+# skywire-bin (NOAUTOCONFIG=true so the postinst doesn't try to start
+# the service from inside the qemu chroot).
+if [[ ${ENABLEAUTOPEER} == "-autopeer" ]] ; then
+	_msg2 "CHROOT: installing skyrepo (autopeer: enables skymanager)"
+	sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 CHROOTCONFIG=1 dpkg -i /root/${_skyrepodeb}
+else
+	_msg2 "CHROOT: installing skyrepo (no autopeer)"
+	sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skyrepodeb}
+fi
 sudo rm ${srcdir}/mnt/root/${_skyrepodeb}
 _msg2 "CHROOT: installing skywire-bin"
 sudo arch-chroot ${srcdir}/mnt sudo NOAUTOCONFIG=true dpkg -i /root/${_skywiredeb}
 sudo rm ${srcdir}/mnt/root/${_skywiredeb}
-_msg2 "CHROOT: installing skybian (autoconfig: skymanager/srvpk/skylog)"
-if [[ ${ENABLEAUTOPEER} == "-autopeer" ]] ; then
-sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 CHROOTCONFIG=true dpkg -i /root/${_skybiandeb}
-else
-sudo arch-chroot ${srcdir}/mnt sudo INSTALLFIRSTBOOT=1 dpkg -i /root/${_skybiandeb}
-fi
-sudo rm ${srcdir}/mnt/root/${_skybiandeb}
 _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
 sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
 _msg2 "CHROOT: Generating locale en_US.UTF-8..."

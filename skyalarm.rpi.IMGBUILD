@@ -25,17 +25,27 @@ _imgarches=("armv7" "aarch64")
 _alarm_url="http://os.archlinuxarm.org/os"
 makedepends=('aria2' 'dtrx' 'arch-install-scripts' 'qemu-user-static' 'qemu-user-static-binfmt' 'gnome-disk-utility' 'libarchive')
 
+# skyrepo.deb ships the autoconfig payload (skymanager + skybian-reset +
+# motd snippets + skyenv). We dpkg-deb -x it at build time and copy the
+# files into each ALARM rootfs.
+_skyrepover='1.3.59'
+_skyreporel=2
+_skyrepodeb="skyrepo_${_skyrepover}-${_skyreporel}_all.deb"
+_aptrepo="http://deb.skywire.skycoin.com/pool/main/s"
+
 source=(
     "${_alarm_url}/${_dist}-rpi-armv7-latest.tar.gz"
     "${_alarm_url}/${_dist}-rpi-armv7-latest.tar.gz.md5"
     "${_alarm_url}/${_dist}-rpi-aarch64-latest.tar.gz"
     "${_alarm_url}/${_dist}-rpi-aarch64-latest.tar.gz.md5"
+    "${_aptrepo}/skyrepo/${_skyrepodeb}"
 )
 noextract=(
     "${_dist}-rpi-armv7-latest.tar.gz"
     "${_dist}-rpi-aarch64-latest.tar.gz"
+    "${_skyrepodeb}"
 )
-sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 prepare() {
     cd "${srcdir}"
@@ -83,11 +93,22 @@ build() {
 
         if [[ -z "${BASEONLY}" ]]; then
             # === skybian autoconfig payload ===
-            _msg2 "Installing skybian autoconfig payload"
-            sudo install -Dm755 ../script/skymanager.sh         arch-root/usr/bin/skymanager
-            sudo install -Dm755 ../script/skybian-reset.sh      arch-root/usr/bin/skybian-reset
+            # Extract from skyrepo.deb once per loop. install-skywire.service
+            # and skywire-chrootconfig from the deb are debian-apt specific —
+            # skyalarm-firstboot.service replaces them on ALARM.
+            _msg2 "Extracting skyrepo.deb autoconfig payload"
+            rm -rf "${srcdir}/skyrepo-extract"
+            mkdir -p "${srcdir}/skyrepo-extract"
+            dpkg-deb -x "${srcdir}/${_skyrepodeb}" "${srcdir}/skyrepo-extract"
+            sudo install -Dm755 "${srcdir}/skyrepo-extract/usr/bin/skymanager"    arch-root/usr/bin/skymanager
+            sudo install -Dm755 "${srcdir}/skyrepo-extract/usr/bin/skybian-reset" arch-root/usr/bin/skybian-reset
+            sudo install -Dm644 "${srcdir}/skyrepo-extract/etc/systemd/system/skymanager.service" \
+                arch-root/etc/systemd/system/skymanager.service
+            sudo install -Dm755 "${srcdir}/skyrepo-extract/etc/update-motd.d/10-skybian-header" \
+                arch-root/etc/update-motd.d/10-skybian-header
+            sudo install -Dm755 "${srcdir}/skyrepo-extract/etc/profile.d/skyenv.sh" \
+                arch-root/etc/profile.d/skyenv.sh
             sudo install -Dm755 ../script/skyalarm-firstboot.sh arch-root/usr/bin/skyalarm-firstboot
-            sudo install -Dm644 ../script/skymanager.service    arch-root/etc/systemd/system/skymanager.service
             sudo install -Dm644 ../script/skyalarm-firstboot.service \
                 arch-root/etc/systemd/system/skyalarm-firstboot.service
             sudo mkdir -p arch-root/etc/systemd/system/multi-user.target.wants
