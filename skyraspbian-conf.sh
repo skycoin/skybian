@@ -97,7 +97,9 @@ _msg2 "CHROOT: enabling root login over ssh"
 sudo arch-chroot ${_mntdir} sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
 sleep 1
 _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
-sudo arch-chroot ${_mntdir} sudo /sbin/fake-hwclock save force
+# fake-hwclock isn't on every base image (raspios trixie dropped it).
+sudo arch-chroot ${_mntdir} bash -c 'command -v fake-hwclock >/dev/null && fake-hwclock save force' \
+	|| _msg2 "(fake-hwclock not present in chroot, skipping)"
 _msg2 "CHROOT: Generating locale en_US.UTF-8..."
 sudo arch-chroot ${_mntdir} sudo locale-gen en_US.UTF-8
 _msg2 "CHROOT: exporting SKYBIAN=true in /root/.bashrc"

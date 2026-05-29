@@ -132,7 +132,11 @@ else
 fi
 sudo rm ${srcdir}/mnt/root/${_skyrepodeb}
 _msg2 "CHROOT: Setting the chroot clock to now to avoid bugs with the date..."
-sudo arch-chroot ${srcdir}/mnt sudo /sbin/fake-hwclock save force
+# fake-hwclock isn't on every base image (raspios trixie dropped it).
+# Skip silently when the binary isn't there ; the chroot's clock already
+# matches the host's so there's nothing important to save.
+sudo arch-chroot ${srcdir}/mnt bash -c 'command -v fake-hwclock >/dev/null && fake-hwclock save force' \
+	|| _msg2 "(fake-hwclock not present in chroot, skipping)"
 _msg2 "CHROOT: Generating locale en_US.UTF-8..."
 sudo arch-chroot ${srcdir}/mnt sudo locale-gen en_US.UTF-8
 #fix console / tty
