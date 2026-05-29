@@ -65,10 +65,13 @@ build() {
         sudo umount -R "${srcdir}/arch-root" 2>/dev/null || true
         sudo losetup -d /dev/loop0 2>/dev/null || true
 
-        # Size: ALARM rpi rootfs ~1.5GB; bump aarch64 a touch since the
-        # kernel+modules trees are larger.
-        local _size_mb
-        [[ "${_arch}" == "aarch64" ]] && _size_mb=1636 || _size_mb=1536
+        # Size: 2700 MiB matches the OPi Prime build. Current ALARM rpi
+        # tarballs (with /var/log/{journal,private,old}, firmware blobs,
+        # and the skybian autoconfig payload on top) blow past 1.5GB and
+        # need the headroom. The RPi image is flashed at this size — no
+        # firstboot-resize service on this path yet, so users on small SD
+        # cards may want to resize the root partition manually after flash.
+        local _size_mb=2700
         _msg2 "Creating ${_size_mb} MiB image: ${_img}"
         sudo truncate -s "${_size_mb}M" "${_img}"
 
