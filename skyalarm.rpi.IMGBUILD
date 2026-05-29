@@ -124,6 +124,50 @@ build() {
             echo 'alarm' | sudo tee arch-root/etc/hostname > /dev/null
         fi
 
+        # === First-boot resize (always installed, both variants) ===
+        # Grows partition #2 (ext4 root) to fill the SD card, then runs
+        # resize2fs and self-disables. Mirrors the OPi Prime build's
+        # firstboot-resize service. Independent of skyalarm-firstboot
+        # (which does the pacman + AUR skywire-bin install).
+        _msg2 "Installing first-boot resize service"
+        sudo mkdir -p arch-root/usr/local/sbin arch-root/etc/systemd/system arch-root/etc/systemd/system/multi-user.target.wants
+        sudo tee arch-root/usr/local/sbin/firstboot-resize.sh > /dev/null <<'RESIZE_EOF'
+#!/bin/bash
+set -euo pipefail
+ROOT_DEV="$(findmnt -no SOURCE /)"
+ROOT_DEV="$(readlink -f "$ROOT_DEV")"
+PARENT="$(lsblk -no PKNAME "$ROOT_DEV" | head -n1)"
+DISK="/dev/$PARENT"
+PARTNUM="$(echo "$ROOT_DEV" | grep -oE '[0-9]+$')"
+echo ", +" | sfdisk -N "$PARTNUM" --no-reread --force "$DISK"
+partprobe "$DISK" || true
+sleep 1
+resize2fs "$ROOT_DEV"
+systemctl disable firstboot-resize.service
+rm -f /etc/systemd/system/firstboot-resize.service
+rm -f /etc/systemd/system/multi-user.target.wants/firstboot-resize.service
+rm -f /usr/local/sbin/firstboot-resize.sh
+RESIZE_EOF
+        sudo chmod +x arch-root/usr/local/sbin/firstboot-resize.sh
+        sudo tee arch-root/etc/systemd/system/firstboot-resize.service > /dev/null <<'SVC_EOF'
+[Unit]
+Description=Resize root partition and filesystem to fill SD card on first boot
+DefaultDependencies=no
+After=local-fs.target systemd-remount-fs.service
+Before=basic.target sshd.service skyalarm-firstboot.service
+ConditionPathExists=/usr/local/sbin/firstboot-resize.sh
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/local/sbin/firstboot-resize.sh
+
+[Install]
+WantedBy=multi-user.target
+SVC_EOF
+        sudo ln -sf /etc/systemd/system/firstboot-resize.service \
+            arch-root/etc/systemd/system/multi-user.target.wants/firstboot-resize.service
+
         # RPi firmware needs /boot to be the FAT32 partition. ALARM ships the
         # boot files inside the rootfs at /boot; move them to the FAT32 part.
         sudo mv arch-root/boot/* arch-boot/
