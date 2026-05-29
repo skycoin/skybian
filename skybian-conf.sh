@@ -50,6 +50,7 @@ noextract=("${_skywiredeb}" "${_skyrepodeb}")
 # the sha (aria2 reads the filename out of the torrent).
 _parse_img_from_sha() {
 	# .sha format: "<sha256hex>  <filename>" (filename may contain underscores/dots).
+	# The filename already includes the .xz extension.
 	awk '{print $2}' "${srcdir}/${_imgsha}" | head -n1
 }
 
@@ -61,8 +62,8 @@ if [[ ! -f ${_imgsha} ]]; then
 	_msg2 "Downloading image .sha (${_imgsha})"
 	aria2c --console-log-level=warn -o "${_imgsha}" "${_imgshalink}"
 fi
-_img="$(_parse_img_from_sha)"
-_imgxz="${_img}.xz"
+_imgxz="$(_parse_img_from_sha)"
+_img="${_imgxz%.xz}"
 [[ -z "${_img}" ]] && _error "could not parse image filename from ${_imgsha}" && exit 1
 _msg2 "Upstream image: ${_imgxz}"
 
@@ -79,8 +80,8 @@ fi
 }
 
 build() {
-_img="$(_parse_img_from_sha)"
-_imgxz="${_img}.xz"
+_imgxz="$(_parse_img_from_sha)"
+_img="${_imgxz%.xz}"
 _imgfinal="${pkgname}-${pkgver}.img"
 _root_partition=/dev/loop0p1
 
